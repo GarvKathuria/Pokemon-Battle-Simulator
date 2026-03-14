@@ -1721,7 +1721,7 @@ function DailyChallengesScreen({challenges, onClose}){
 }
 
 
-const WS_URL = process.env.REACT_APP_WS_URL || "ws://localhost:3001";
+const WS_URL = "ws://localhost:3001";
 const STARTER_COUNT = 6;
 const UNLOCK_COST = 300;
 const PAGE = 30;
