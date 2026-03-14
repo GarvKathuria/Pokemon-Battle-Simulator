@@ -187,7 +187,127 @@ const STARTER_CHOICES = [
   {id:255,name:"Torchic"},{id:258,name:"Mudkip"},{id:387,name:"Turtwig"},
 ];
 
-const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges"};
+const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history"};
+
+// ── Supabase analytics (fire-and-forget, non-blocking) ───────────────
+// Replace SUPABASE_URL and SUPABASE_KEY with your project values
+const SUPA_URL = "https://YOUR_PROJECT.supabase.co";
+const SUPA_KEY = "YOUR_ANON_KEY";
+function supaTrack(table, data){
+  if(!SUPA_URL.includes("supabase.co")||SUPA_URL.includes("YOUR_PROJECT")) return; // not configured
+  fetch(`${SUPA_URL}/rest/v1/${table}`,{
+    method:"POST",
+    headers:{"Content-Type":"application/json","apikey":SUPA_KEY,"Authorization":`Bearer ${SUPA_KEY}`,"Prefer":"return=minimal"},
+    body:JSON.stringify({...data, ts: new Date().toISOString()})
+  }).catch(()=>{}); // silent fail
+}
+function supaLogin(username, email){ supaTrack("players",{username,email,action:"login"}); }
+function supaRegister(username, email){ supaTrack("players",{username,email,action:"register"}); }
+function supaBattle(winner, pName, eName, turns){ supaTrack("battles",{winner,player_pokemon:pName,enemy_pokemon:eName,turns}); }
+
+// ── EXP & Evolution ─────────────────────────────────────────────────
+const EXP_TO_LEVEL = lvl => Math.floor(100 * Math.pow(lvl, 2.2));
+const LEVEL_FROM_EXP = exp => { let l=1; while(EXP_TO_LEVEL(l+1)<=exp&&l<100) l++; return l; };
+const EVOLVE_MAP = {
+  1:{evolvesTo:2,minLevel:16},2:{evolvesTo:3,minLevel:32},4:{evolvesTo:5,minLevel:16},5:{evolvesTo:6,minLevel:36},
+  7:{evolvesTo:8,minLevel:16},8:{evolvesTo:9,minLevel:36},10:{evolvesTo:11,minLevel:7},11:{evolvesTo:12,minLevel:10},
+  13:{evolvesTo:14,minLevel:7},14:{evolvesTo:15,minLevel:10},16:{evolvesTo:17,minLevel:18},17:{evolvesTo:18,minLevel:36},
+  19:{evolvesTo:20,minLevel:20},21:{evolvesTo:22,minLevel:20},23:{evolvesTo:24,minLevel:22},
+  27:{evolvesTo:28,minLevel:22},29:{evolvesTo:30,minLevel:16},30:{evolvesTo:31,minLevel:36},
+  32:{evolvesTo:33,minLevel:16},33:{evolvesTo:34,minLevel:36},41:{evolvesTo:42,minLevel:22},
+  43:{evolvesTo:44,minLevel:21},46:{evolvesTo:47,minLevel:24},48:{evolvesTo:49,minLevel:31},
+  50:{evolvesTo:51,minLevel:28},52:{evolvesTo:53,minLevel:28},54:{evolvesTo:55,minLevel:33},
+  56:{evolvesTo:57,minLevel:28},58:{evolvesTo:59,minLevel:28},60:{evolvesTo:61,minLevel:25},
+  63:{evolvesTo:64,minLevel:16},64:{evolvesTo:65,minLevel:36},66:{evolvesTo:67,minLevel:28},
+  67:{evolvesTo:68,minLevel:36},69:{evolvesTo:70,minLevel:21},70:{evolvesTo:71,minLevel:31},
+  72:{evolvesTo:73,minLevel:30},74:{evolvesTo:75,minLevel:25},75:{evolvesTo:76,minLevel:36},
+  77:{evolvesTo:78,minLevel:40},79:{evolvesTo:80,minLevel:37},81:{evolvesTo:82,minLevel:30},
+  84:{evolvesTo:85,minLevel:31},86:{evolvesTo:87,minLevel:34},88:{evolvesTo:89,minLevel:38},
+  92:{evolvesTo:93,minLevel:25},96:{evolvesTo:97,minLevel:26},98:{evolvesTo:99,minLevel:28},
+  100:{evolvesTo:101,minLevel:30},104:{evolvesTo:105,minLevel:28},109:{evolvesTo:110,minLevel:35},
+  111:{evolvesTo:112,minLevel:42},116:{evolvesTo:117,minLevel:32},118:{evolvesTo:119,minLevel:33},
+  129:{evolvesTo:130,minLevel:20},147:{evolvesTo:148,minLevel:30},148:{evolvesTo:149,minLevel:55},
+  152:{evolvesTo:153,minLevel:17},153:{evolvesTo:154,minLevel:32},155:{evolvesTo:156,minLevel:17},
+  156:{evolvesTo:157,minLevel:36},158:{evolvesTo:159,minLevel:18},159:{evolvesTo:160,minLevel:30},
+  161:{evolvesTo:162,minLevel:15},163:{evolvesTo:164,minLevel:20},165:{evolvesTo:166,minLevel:31},
+  167:{evolvesTo:168,minLevel:22},170:{evolvesTo:171,minLevel:27},179:{evolvesTo:180,minLevel:15},
+  180:{evolvesTo:181,minLevel:30},183:{evolvesTo:184,minLevel:18},187:{evolvesTo:188,minLevel:18},
+  188:{evolvesTo:189,minLevel:27},194:{evolvesTo:195,minLevel:20},209:{evolvesTo:210,minLevel:23},
+  216:{evolvesTo:217,minLevel:30},218:{evolvesTo:219,minLevel:38},220:{evolvesTo:221,minLevel:33},
+  223:{evolvesTo:224,minLevel:20},228:{evolvesTo:229,minLevel:24},231:{evolvesTo:232,minLevel:25},
+  246:{evolvesTo:247,minLevel:30},247:{evolvesTo:248,minLevel:55},252:{evolvesTo:253,minLevel:16},
+  253:{evolvesTo:254,minLevel:36},255:{evolvesTo:256,minLevel:16},256:{evolvesTo:257,minLevel:36},
+  258:{evolvesTo:259,minLevel:16},259:{evolvesTo:260,minLevel:36},261:{evolvesTo:262,minLevel:18},
+  263:{evolvesTo:264,minLevel:20},270:{evolvesTo:271,minLevel:14},273:{evolvesTo:274,minLevel:14},
+  274:{evolvesTo:275,minLevel:36},276:{evolvesTo:277,minLevel:22},278:{evolvesTo:279,minLevel:25},
+  280:{evolvesTo:281,minLevel:20},281:{evolvesTo:282,minLevel:30},285:{evolvesTo:286,minLevel:23},
+  287:{evolvesTo:288,minLevel:18},288:{evolvesTo:289,minLevel:36},290:{evolvesTo:291,minLevel:20},
+  293:{evolvesTo:294,minLevel:20},294:{evolvesTo:295,minLevel:40},296:{evolvesTo:297,minLevel:24},
+  300:{evolvesTo:301,minLevel:18},304:{evolvesTo:305,minLevel:32},305:{evolvesTo:306,minLevel:42},
+  307:{evolvesTo:308,minLevel:37},309:{evolvesTo:310,minLevel:26},316:{evolvesTo:317,minLevel:26},
+  318:{evolvesTo:319,minLevel:30},320:{evolvesTo:321,minLevel:30},325:{evolvesTo:326,minLevel:32},
+  328:{evolvesTo:329,minLevel:35},329:{evolvesTo:330,minLevel:45},333:{evolvesTo:334,minLevel:35},
+  349:{evolvesTo:350,minLevel:20},353:{evolvesTo:354,minLevel:32},355:{evolvesTo:356,minLevel:37},
+  361:{evolvesTo:362,minLevel:42},363:{evolvesTo:364,minLevel:22},364:{evolvesTo:365,minLevel:44},
+  371:{evolvesTo:372,minLevel:30},372:{evolvesTo:373,minLevel:50},374:{evolvesTo:375,minLevel:30},
+  375:{evolvesTo:376,minLevel:45},387:{evolvesTo:388,minLevel:18},388:{evolvesTo:389,minLevel:32},
+  390:{evolvesTo:391,minLevel:14},391:{evolvesTo:392,minLevel:36},393:{evolvesTo:394,minLevel:16},
+  394:{evolvesTo:395,minLevel:36},396:{evolvesTo:397,minLevel:14},397:{evolvesTo:398,minLevel:36},
+  399:{evolvesTo:400,minLevel:15},401:{evolvesTo:402,minLevel:20},403:{evolvesTo:404,minLevel:15},
+  404:{evolvesTo:405,minLevel:42},408:{evolvesTo:409,minLevel:30},410:{evolvesTo:411,minLevel:30},
+  418:{evolvesTo:419,minLevel:26},420:{evolvesTo:421,minLevel:25},422:{evolvesTo:423,minLevel:30},
+  425:{evolvesTo:426,minLevel:28},431:{evolvesTo:432,minLevel:25},434:{evolvesTo:435,minLevel:34},
+  443:{evolvesTo:444,minLevel:24},444:{evolvesTo:445,minLevel:48},447:{evolvesTo:448,minLevel:0,item:true},
+  449:{evolvesTo:450,minLevel:34},451:{evolvesTo:452,minLevel:40},453:{evolvesTo:454,minLevel:37},
+  456:{evolvesTo:457,minLevel:31},459:{evolvesTo:460,minLevel:40},
+};
+
+// Story mode gyms + Elite 4 + Champion
+const STORY_GYMS = [
+  {id:1, name:"Brock",    badge:"Boulder Badge",type:"rock",    level:14,icon:"⛰️", team:[74,95],       reward:500,  hint:"Use Water or Grass moves."},
+  {id:2, name:"Misty",   badge:"Cascade Badge",type:"water",   level:21,icon:"💧", team:[120,121],     reward:700,  hint:"Use Electric or Grass moves."},
+  {id:3, name:"Lt. Surge",badge:"Thunder Badge",type:"electric",level:28,icon:"⚡", team:[100,26],      reward:900,  hint:"Use Ground moves."},
+  {id:4, name:"Erika",   badge:"Rainbow Badge",type:"grass",   level:32,icon:"🌸", team:[71,114,182],  reward:1100, hint:"Use Fire or Flying moves."},
+  {id:5, name:"Koga",    badge:"Soul Badge",   type:"poison",  level:38,icon:"🌫️", team:[109,89,110],  reward:1300, hint:"Use Ground or Psychic moves."},
+  {id:6, name:"Sabrina", badge:"Marsh Badge",  type:"psychic", level:43,icon:"🔮", team:[64,122,65],   reward:1500, hint:"Use Bug, Ghost or Dark moves."},
+  {id:7, name:"Blaine",  badge:"Volcano Badge",type:"fire",    level:47,icon:"🔥", team:[58,77,78],    reward:1700, hint:"Use Water, Ground or Rock."},
+  {id:8, name:"Giovanni",badge:"Earth Badge",  type:"ground",  level:50,icon:"🌍", team:[111,51,112],  reward:2000, hint:"Use Water, Ice or Grass."},
+  {id:9, name:"Lorelei", badge:"Elite 4 I",    type:"ice",     level:54,icon:"❄️", team:[87,91,124,131,139],reward:2500,hint:"Elite 4. Use Electric, Rock or Steel."},
+  {id:10,name:"Bruno",   badge:"Elite 4 II",   type:"fighting",level:58,icon:"💪", team:[95,99,106,107,68],reward:3000,hint:"Elite 4. Use Psychic or Flying."},
+  {id:11,name:"Agatha",  badge:"Elite 4 III",  type:"ghost",   level:60,icon:"👻", team:[92,93,94,93,94],reward:3500,hint:"Elite 4. Use Ghost or Dark."},
+  {id:12,name:"Lance",   badge:"Elite 4 IV",   type:"dragon",  level:62,icon:"🐉", team:[148,148,130,142,149],reward:4000,hint:"Elite 4. Use Ice or Dragon."},
+  {id:13,name:"Blue",    badge:"Champion!",    type:"normal",  level:65,icon:"👑", team:[18,103,65,112,59,149],reward:5000,hint:"Champion. Mixed team. Bring your best!"},
+];
+const storyKey = name => `pkmn_story_${name}`;
+
+// Smarter AI — score each move, pick best
+function aiPickMove(eMon, pMon, eStatus, weather){
+  const moves = eMon.moves;
+  let best = moves[0], bestScore = -Infinity;
+  for(const mv of moves){
+    const {dmg, eff} = calcDmg(eMon, mv, pMon, 50);
+    const wxMult = WEATHER_MULT(weather, mv.type);
+    let score = dmg * wxMult * (eStatus?.type==="burn" ? 0.5 : 1);
+    if(eff >= 2) score *= 2.5;
+    if(eff === 0) score = -999;
+    if(eMon.types.includes(mv.type)) score *= 1.3;
+    if(eff <= 0.5) score *= 0.4;
+    if(score > bestScore){ bestScore = score; best = mv; }
+  }
+  return Math.random() < 0.25 ? moves[Math.floor(Math.random()*moves.length)] : best;
+}
+
+// Animated sprite URL
+const animSpriteUrl = (id, back=false) => back
+  ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`
+  : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
+
+// Battle history record
+const makeBattleRecord = (pMon, eMon, winner, turns, pLevel) => ({
+  id: Date.now(), date: new Date().toLocaleDateString(),
+  pName: pMon.name, pId: pMon.id, pLevel,
+  eName: eMon.name, eId: eMon.id, winner, turns,
+});
 
 // ── Weather ───────────────────────────────────────────────────────────
 const WEATHERS=[
@@ -1011,7 +1131,10 @@ function HPBar({cur,max}){
 }
 
 function PokemonSprite({id, isPlayer, shake, hit, faint, isMega, isGiga, megaSlug}){
-  // Proper URL logic: mega uses pokemondb, normal uses PokeAPI
+  // Animated GIF sprites from PokeAPI (Gen V style) with fallback to static
+  const animUrl = isPlayer
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
   const normalUrl = isPlayer
     ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`
     : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
@@ -1033,12 +1156,12 @@ function PokemonSprite({id, isPlayer, shake, hit, faint, isMega, isGiga, megaSlu
       }.png`
     : normalUrl;
 
-  const [src,setSrc]=useState(isMega?megaUrl:isGiga?gigaUrl:normalUrl);
+  const [src,setSrc]=useState(isMega?megaUrl:isGiga?gigaUrl:animUrl);
   const [fallback,setFallback]=useState(false);
 
   useEffect(()=>{
     setFallback(false);
-    setSrc(isMega?megaUrl:isGiga?gigaUrl:normalUrl);
+    setSrc(isMega?megaUrl:isGiga?gigaUrl:animUrl);
   },[isMega,isGiga,megaSlug,id]);
 
   function onErr(){ if(!fallback){ setFallback(true); setSrc(normalUrl); } }
@@ -1065,7 +1188,234 @@ function PokemonSprite({id, isPlayer, shake, hit, faint, isMega, isGiga, megaSlu
   }}/>;
 }
 
-function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga}){
+// ── Evolution Animation ───────────────────────────────────
+function EvolutionAnim({oldMon, newId, onDone}){
+  const ref=useRef(null);
+  useEffect(()=>{
+    const canvas=ref.current; if(!canvas) return;
+    canvas.width=canvas.offsetWidth||320; canvas.height=canvas.offsetHeight||220;
+    const W=canvas.width,H=canvas.height,ctx=canvas.getContext("2d");
+    let t=0,raf;
+    function draw(){
+      ctx.clearRect(0,0,W,H);
+      const phase=t/120;
+      // Background flash
+      const alpha=Math.sin(phase*Math.PI)*0.7;
+      ctx.fillStyle=`rgba(255,255,255,${alpha.toFixed(3)})`; ctx.fillRect(0,0,W,H);
+      // Spinning stars
+      for(let i=0;i<16;i++){
+        const a=(i/16)*Math.PI*2+t*0.08;
+        const r=50+20*Math.sin(t*0.12+i);
+        const x=W/2+Math.cos(a)*r,y=H/2+Math.sin(a)*r*0.65;
+        const sc=["#FFD54F","#4FC3F7","#FF6B35","#7C4DFF","#66BB6A","#F06292"][i%6];
+        ctx.fillStyle=sc;
+        const sz=5+Math.sin(t*0.2+i)*3;
+        ctx.beginPath(); ctx.arc(x,y,sz,0,Math.PI*2); ctx.fill();
+      }
+      // Center glow
+      const g=ctx.createRadialGradient(W/2,H/2,0,W/2,H/2,60+Math.sin(t*0.1)*15);
+      g.addColorStop(0,`rgba(255,255,255,${(0.9*Math.sin(phase*Math.PI)).toFixed(3)})`);
+      g.addColorStop(1,"rgba(0,0,0,0)");
+      ctx.fillStyle=g; ctx.beginPath(); ctx.arc(W/2,H/2,80,0,Math.PI*2); ctx.fill();
+      // Text
+      if(phase>0.5){
+        const ta=Math.min(1,(phase-0.5)*4);
+        ctx.save(); ctx.shadowBlur=20; ctx.shadowColor="#FFD54F";
+        ctx.fillStyle=`rgba(255,213,79,${ta.toFixed(3)})`;
+        ctx.font="bold 13px 'Press Start 2P',monospace"; ctx.textAlign="center";
+        ctx.fillText("EVOLVING!",W/2,H/2+8); ctx.restore();
+      }
+      t++;
+      if(t>120){onDone(); return;}
+      raf=requestAnimationFrame(draw);
+    }
+    raf=requestAnimationFrame(draw);
+    return()=>cancelAnimationFrame(raf);
+  },[]);
+  return <canvas ref={ref} style={{position:"absolute",inset:0,width:"100%",height:"100%",pointerEvents:"none",zIndex:25}}/>;
+}
+
+// ── EXP Bar ───────────────────────────────────────────────
+function EXPBar({exp, level}){
+  const cur=exp||0;
+  const toNext=EXP_TO_LEVEL(level+1);
+  const fromCur=EXP_TO_LEVEL(level);
+  const pct=level>=100?100:Math.round(((cur-fromCur)/(toNext-fromCur))*100);
+  return(
+    <div style={{width:"100%",marginTop:4}}>
+      <div style={{display:"flex",justifyContent:"space-between",marginBottom:2}}>
+        <span style={{color:"#4FC3F7",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>EXP</span>
+        <span style={{color:"#4FC3F7",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>{pct}%</span>
+      </div>
+      <div style={{width:"100%",background:"rgba(0,0,0,0.4)",borderRadius:3,height:5,overflow:"hidden",border:"1px solid rgba(79,195,247,0.2)"}}>
+        <div style={{width:`${pct}%`,background:"linear-gradient(90deg,#4FC3F7,#7C4DFF)",height:"100%",transition:"width 0.8s ease",boxShadow:"0 0 6px #4FC3F7"}}/>
+      </div>
+    </div>
+  );
+}
+
+// ── Story Mode Screen ─────────────────────────────────────
+function StoryScreen({profile, storyProgress, onStartGym, onBack, allPokemon}){
+  return(
+    <div style={{width:"100%",maxWidth:720}}>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:"28px",marginBottom:6}}>🗺️</div>
+        <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,15px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>STORY MODE</div>
+        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Defeat all 8 Gym Leaders, Elite 4 & Champion!</div>
+      </div>
+      <div style={{display:"flex",flexDirection:"column",gap:10}}>
+        {STORY_GYMS.map((gym,i)=>{
+          const done=storyProgress.includes(gym.id);
+          const prevDone=i===0||storyProgress.includes(STORY_GYMS[i-1].id);
+          const locked=!prevDone&&!done;
+          const typeCol=TC[gym.type]||"#888";
+          return(
+            <div key={gym.id} style={{background:done?"rgba(76,175,80,0.08)":locked?"rgba(4,4,12,0.8)":"rgba(10,10,28,0.98)",border:`1.5px solid ${done?"rgba(76,175,80,0.4)":locked?"rgba(255,255,255,0.04)":`${typeCol}44`}`,borderRadius:14,padding:"14px 16px",opacity:locked?0.5:1,transition:"all 0.2s"}}>
+              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                <div style={{display:"flex",alignItems:"center",gap:12}}>
+                  <div style={{fontSize:"28px"}}>{gym.icon}</div>
+                  <div>
+                    <div style={{color:done?"#4CAF50":locked?"#333":"#fff",fontSize:"clamp(10px,2vw,13px)",fontFamily:"'Press Start 2P',monospace"}}>{gym.name}</div>
+                    <div style={{color:typeCol,fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>{gym.badge}</div>
+                    <div style={{color:"#333",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{gym.hint}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",alignItems:"center",gap:10}}>
+                  <div style={{textAlign:"right"}}>
+                    <div style={{color:"#FFD54F",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Lv {gym.level}</div>
+                    <div style={{color:"#444",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>+{gym.reward}🪙</div>
+                  </div>
+                  {done?(
+                    <div style={{background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.4)",borderRadius:8,padding:"6px 10px",color:"#4CAF50",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>✅ DONE</div>
+                  ):locked?(
+                    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"6px 10px",color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>🔒</div>
+                  ):(
+                    <button onClick={()=>onStartGym(gym)} className="btn" style={{background:`linear-gradient(135deg,${typeCol}22,${typeCol}11)`,border:`1.5px solid ${typeCol}66`,borderRadius:8,padding:"8px 14px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>
+                      CHALLENGE →
+                    </button>
+                  )}
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
+
+// ── Battle History Screen ─────────────────────────────────
+function HistoryScreen({history, onBack}){
+  return(
+    <div style={{width:"100%",maxWidth:600}}>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:"24px",marginBottom:6}}>📜</div>
+        <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>BATTLE HISTORY</div>
+        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Last {history.length} battles</div>
+      </div>
+      {history.length===0?(
+        <div style={{textAlign:"center",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:14,padding:32}}>
+          <div style={{fontSize:"32px",marginBottom:8}}>⚔️</div>
+          <div style={{color:"#333",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>No battles yet!</div>
+        </div>
+      ):(
+        <div style={{display:"flex",flexDirection:"column",gap:8}}>
+          {history.map(r=>(
+            <div key={r.id} style={{background:"rgba(10,10,28,0.98)",border:`1.5px solid ${r.winner==="player"?"rgba(76,175,80,0.3)":"rgba(244,67,54,0.3)"}`,borderRadius:12,padding:"12px 16px",display:"flex",alignItems:"center",gap:12,flexWrap:"wrap"}}>
+              <div style={{fontSize:"24px"}}>{r.winner==="player"?"🏆":"💀"}</div>
+              <div style={{display:"flex",alignItems:"center",gap:8,flex:1}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${r.pId}.png`} style={{width:36,imageRendering:"pixelated"}}/>
+                <div>
+                  <div style={{color:"#fff",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{r.pName} <span style={{color:"#FFD54F"}}>Lv{r.pLevel}</span></div>
+                  <div style={{color:"#444",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>vs</div>
+                  <div style={{color:"#ccc",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{r.eName}</div>
+                </div>
+              </div>
+              <div style={{textAlign:"right"}}>
+                <div style={{color:r.winner==="player"?"#4CAF50":"#f44336",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>{r.winner==="player"?"WIN":"LOSS"}</div>
+                <div style={{color:"#333",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{r.turns} turns</div>
+                <div style={{color:"#222",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>{r.date}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// ── Trade Screen ──────────────────────────────────────────
+function TradeScreen({allPokemon, unlockedIds, starterPokemon, onTrade, profile}){
+  const [offering,setOffering]=useState(null);
+  const [wanting,setWanting]=useState(null);
+  const owned=allPokemon.filter(p=>unlockedIds.has(p.id)||(starterPokemon?.id===p.id));
+  const available=allPokemon.filter(p=>!unlockedIds.has(p.id)&&starterPokemon?.id!==p.id).slice(0,60);
+
+  function doTrade(){
+    if(!offering||!wanting) return;
+    const cost=wanting.legendary?600:wanting.canMega?400:200;
+    if((profile?.coins||0)<cost){ alert(`Need ${cost}🪙 for this trade!`); return; }
+    onTrade(offering,wanting,cost);
+  }
+
+  return(
+    <div style={{width:"100%",maxWidth:720}}>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:"24px",marginBottom:6}}>🔄</div>
+        <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>TRADE CENTER</div>
+        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Give one of yours, get one you don't have</div>
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:12,marginBottom:16,alignItems:"start"}}>
+        {/* Offering */}
+        <div>
+          <div style={{color:"#f44336",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,textAlign:"center"}}>YOU GIVE</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
+            {owned.map(p=>(
+              <div key={p.id} onClick={()=>setOffering(offering?.id===p.id?null:p)}
+                style={{background:offering?.id===p.id?"rgba(244,67,54,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${offering?.id===p.id?"#f44336":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
+                <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* Arrow */}
+        <div style={{textAlign:"center",paddingTop:40}}>
+          <div style={{fontSize:"24px"}}>⇄</div>
+          {offering&&wanting&&(
+            <div style={{marginTop:12}}>
+              <div style={{color:"#FFD54F",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>
+                Cost: {wanting.legendary?600:wanting.canMega?400:200}🪙
+              </div>
+              <button onClick={doTrade} className="btn" style={{background:"rgba(76,175,80,0.2)",border:"1.5px solid rgba(76,175,80,0.5)",borderRadius:8,padding:"8px 10px",color:"#4CAF50",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>
+                TRADE!
+              </button>
+            </div>
+          )}
+        </div>
+
+        {/* Wanting */}
+        <div>
+          <div style={{color:"#4CAF50",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,textAlign:"center"}}>YOU GET</div>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
+            {available.map(p=>(
+              <div key={p.id} onClick={()=>setWanting(wanting?.id===p.id?null:p)}
+                style={{background:wanting?.id===p.id?"rgba(76,175,80,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${wanting?.id===p.id?"#4CAF50":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
+                <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
+                <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>{p.legendary?"⭐":p.canMega?"💎":""}</div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga, exp}){
   const c=TC[mon.types[0]]||"#888";
   const isLeg=LEGENDARY_IDS.has(mon.id);
   const displayTypes = isMega&&mon.megaTypes ? mon.megaTypes : mon.types;
@@ -1075,7 +1425,7 @@ function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga}){
       <div style={{position:"absolute",top:0,left:0,right:0,height:2.5,background:`linear-gradient(90deg,transparent,${borderColor},transparent)`}}/>
       {(isMega||isGiga)&&<div style={{position:"absolute",top:0,left:0,right:0,bottom:0,background:`radial-gradient(ellipse at top,${isGiga?"rgba(255,213,79,0.06)":"rgba(124,77,255,0.06)"},transparent)`,pointerEvents:"none"}}/>}
       <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:3}}>
-        <div style={{fontSize:"13px",fontFamily:"'Press Start 2P',monospace",color:"#fff",fontWeight:700,lineHeight:1.4}}>{(isMega&&mon.megaName?mon.megaName:isGiga&&mon.gigaName?mon.gigaName:mon.name).toUpperCase()}</div>
+        <div style={{fontSize:"clamp(10px,2vw,14px)",fontFamily:"'Press Start 2P',monospace",color:"#fff",fontWeight:700,lineHeight:1.4}}>{(isMega&&mon.megaName?mon.megaName:isGiga&&mon.gigaName?mon.gigaName:mon.name).toUpperCase()}</div>
         <div style={{display:"flex",gap:4,alignItems:"center"}}>
           {isLeg&&<span style={{fontSize:"12px"}}>⭐</span>}
           {isMega&&<span style={{fontSize:"12px"}}>💎</span>}
@@ -1096,6 +1446,7 @@ function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga}){
           <span key={k} style={{fontSize:"9px",color:"#2a2a4a",fontFamily:"'Press Start 2P',monospace"}}>{k} {v}</span>
         ))}
       </div>
+      {exp!==undefined&&<EXPBar exp={exp} level={level||50}/>}
     </div>
   );
 }
@@ -1147,196 +1498,322 @@ function AvatarPreview({hair,face,skin,hairColor,eyes,size=80}){
 }
 
 function CharacterScreen({onDone}){
-  const [name,setName]=useState("");
+  const [mode,setMode]=useState("login"); // "login"|"register"|"avatar"
+  const [email,setEmail]=useState("");
+  const [password,setPassword]=useState("");
+  const [username,setUsername]=useState("");
   const [error,setError]=useState("");
-  const [suggestions,setSuggestions]=useState([]);
-  const [step,setStep]=useState(1);
-  // Avatar builder
-  const [builderMode,setBuilderMode]=useState(false); // false=pick emoji, true=build
+  const [loading,setLoading]=useState(false);
+  const [builderMode,setBuilderMode]=useState(false);
   const [emojiAvatar,setEmojiAvatar]=useState("🔴");
   const [hair,setHair]=useState("short-dark");
   const [face,setFace]=useState("round");
   const [skin,setSkin]=useState("#FDDBB4");
   const [hairColor,setHairColor]=useState("#1a0a00");
   const [eyes,setEyes]=useState("👀");
+  const [showPass,setShowPass]=useState(false);
+  const [pendingProfile,setPendingProfile]=useState(null);
+  const googleBtnRef=useRef(null);
 
-  const EMOJI_AVATARS = ["🔴","🔵","🟡","🟢","🟣","🟠","⚫","⚪","🌟","🔥","💧","⚡","🌿","❄️","👾","🎮","🦊","🐉","🦁","🐺","🦅","🌙","☀️","🎯","💀","👑","🎃","🤖","🦋","🐬"];
-
+  const EMOJIS=["🔴","🔵","🟡","🟢","🟣","🟠","⚫","⚪","🌟","🔥","💧","⚡","🌿","❄️","👾","🎮","🦊","🐉","🦁","🐺","🦅","🌙","☀️","🎯","💀","👑","🎃","🤖","🦋","🐬"];
   const RESERVED=["ash","misty","brock","gary","red","blue","trainer","admin","god","test"];
 
-  function makeSuggestions(base){
-    const clean=base.replace(/[^a-zA-Z0-9]/g,"").slice(0,12)||"Trainer";
-    return [`${clean}_${Math.floor(Math.random()*99)}`,`${clean}${["X","Z","99","Pro","★"][Math.floor(Math.random()*5)]}`,`${clean}${new Date().getFullYear()}`];
+  function getDB(){ try{return JSON.parse(localStorage.getItem("pkmn_auth_db")||"{}")}catch{return {}} }
+  function saveDB(db){ localStorage.setItem("pkmn_auth_db",JSON.stringify(db)); }
+  function hash(p){ let h=0; for(let i=0;i<p.length;i++){h=(h<<5)-h+p.charCodeAt(i);h|=0;} return String(h); }
+
+  // ── Real Google Sign-In via Google Identity Services ──
+  useEffect(()=>{
+    if(mode!=="login"&&mode!=="register") return;
+    const loadGoogle=()=>{
+      if(!window.google||!googleBtnRef.current) return;
+      try{
+        window.google.accounts.id.initialize({
+          client_id:"748392847xxx-abcdefgh.apps.googleusercontent.com",
+          callback: handleGoogleResponse,
+          auto_select: false,
+        });
+        window.google.accounts.id.renderButton(googleBtnRef.current,{
+          theme:"filled_black", size:"large", width:"100%",
+          text: mode==="register"?"signup_with":"signin_with",
+          shape:"rectangular",
+        });
+      }catch(e){}
+    };
+    if(window.google){ loadGoogle(); return; }
+    const s=document.createElement("script");
+    s.src="https://accounts.google.com/gsi/client";
+    s.async=true; s.defer=true;
+    s.onload=loadGoogle;
+    document.head.appendChild(s);
+    return()=>{ try{document.head.removeChild(s);}catch{} };
+  },[mode]);
+
+  function handleGoogleResponse(resp){
+    if(!resp?.credential){ setError("Google sign-in failed. Try again."); return; }
+    // Decode JWT payload (base64)
+    try{
+      const payload=JSON.parse(atob(resp.credential.split(".")[1]));
+      const {email:gEmail, name:gName, sub:googleId}=payload;
+      const db=getDB();
+      // Check if account exists
+      const existing=db[gEmail]||Object.values(db).find(u=>u.googleId===googleId);
+      if(existing){
+        const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+        const prof=profiles.find(p=>p.name===existing.username);
+        if(prof){ supaLogin(existing.username,gEmail); onDone(prof); return; }
+      }
+      // New Google user — go to username+avatar setup
+      const suggested=(gName||gEmail.split("@")[0]).replace(/[^a-zA-Z0-9]/g,"").slice(0,12)||"Trainer";
+      setUsername(suggested);
+      setPendingProfile({email:gEmail,googleId,isGoogle:true,suggestedName:gName});
+      setMode("avatar");
+    }catch(e){ setError("Google sign-in failed. Try again."); }
   }
 
-  function validateName(){
-    const v=name.trim();
-    if(v.length<2){ setError("At least 2 characters needed"); return; }
-    if(v.length>16){ setError("16 characters max"); return; }
-    if(!/^[a-zA-Z0-9_★\-]+$/.test(v)){ setError("Only letters, numbers, _, -, ★"); return; }
-    const existing=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-    if(existing.some(p=>p.name.toLowerCase()===v.toLowerCase())||RESERVED.includes(v.toLowerCase())){
-      setError(`"${v}" is already taken!`);
-      setSuggestions(makeSuggestions(v));
-      return;
-    }
-    setError(""); setStep(2);
+  function handleLogin(){
+    if(!email.trim()||!password){ setError("Fill in all fields"); return; }
+    setLoading(true); setError("");
+    setTimeout(()=>{
+      const db=getDB();
+      const key=email.trim().toLowerCase();
+      const user=db[key]||Object.values(db).find(u=>u.username.toLowerCase()===key);
+      if(!user){ setError("Account not found. Register first!"); setLoading(false); return; }
+      if(user.googleId&&!user.password){ setError("This account uses Google Sign-In."); setLoading(false); return; }
+      if(user.password!==hash(password)){ setError("Incorrect password."); setLoading(false); return; }
+      const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+      const prof=profiles.find(p=>p.name===user.username);
+      supaLogin(user.username, user.email||"");
+      if(prof){ setLoading(false); onDone(prof); }
+      else{
+        const np={name:user.username,avatar:user.avatar||"🔴",avatarData:user.avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
+        localStorage.setItem("pkmn_profiles",JSON.stringify([...profiles,np]));
+        setLoading(false); onDone(np);
+      }
+    },500);
   }
 
-  function getAvatarData(){
-    if(builderMode) return {type:"built",hair,face,skin,hairColor,eyes};
-    return {type:"emoji",emoji:emojiAvatar};
+  function handleRegister(){
+    const e=email.trim().toLowerCase(), u=username.trim(), p=password;
+    if(!e||!u||!p){ setError("Fill in all fields"); return; }
+    if(u.length<2||u.length>16){ setError("Username: 2-16 chars"); return; }
+    if(!/^[a-zA-Z0-9_\-]+$/.test(u)){ setError("Username: letters, numbers, _, - only"); return; }
+    if(p.length<6){ setError("Password needs 6+ characters"); return; }
+    if(!e.includes("@")||!e.includes(".")){ setError("Enter a valid email"); return; }
+    if(RESERVED.includes(u.toLowerCase())){ setError(`"${u}" is reserved`); return; }
+    const db=getDB();
+    if(db[e]){ setError("Email already registered!"); return; }
+    if(Object.values(db).find(x=>x.username.toLowerCase()===u.toLowerCase())){ setError(`Username "${u}" is taken`); return; }
+    setError(""); setPendingProfile({email:e,username:u,password:hash(p),isGoogle:false});
+    setMode("avatar");
   }
 
-  function finish(){
-    const avatarData=getAvatarData();
-    const profile={ name:name.trim(), avatar:builderMode?`[built]`:emojiAvatar, avatarData, coins:500, wins:0, losses:0, badges:[], rank:null, hallRank:null, createdAt:Date.now() };
-    const existing=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-    existing.push(profile);
-    localStorage.setItem("pkmn_profiles",JSON.stringify(existing));
+  function finishCreate(){
+    const avatarData=builderMode?{type:"built",hair,face,skin,hairColor,eyes}:{type:"emoji",emoji:emojiAvatar};
+    const av=builderMode?"[built]":emojiAvatar;
+    const db=getDB();
+    const uname=pendingProfile.username||username.trim()||(pendingProfile.email?.split("@")[0]?.slice(0,12)||"Trainer");
+    db[pendingProfile.email]={username:uname,email:pendingProfile.email,password:pendingProfile.password||null,googleId:pendingProfile.googleId||null,avatar:av,avatarData};
+    saveDB(db);
+    const profile={name:uname,avatar:av,avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
+    const all=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+    localStorage.setItem("pkmn_profiles",JSON.stringify([...all,profile]));
+    supaRegister(uname, pendingProfile.email||"");
     onDone(profile);
   }
 
-  const profileAvatar = (p) => {
-    if(p.avatarData?.type==="built") return <AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>;
-    return <span style={{fontSize:"24px"}}>{p.avatar}</span>;
-  };
+  const existing=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
 
+  // ── AVATAR PICKER ──────────────────────────────────────────────────
+  if(mode==="avatar"){
+    const HAIR_OPTS=["short-dark","long-dark","short-blonde","long-blonde","short-red","curly-brown","afro-black","braids-brown","spiky-blue"];
+    const HAIR_COLS=["#1a0a00","#3b1f00","#8B4513","#D4A017","#C0392B","#F0F0F0","#2C3E50","#9B59B6","#1ABC9C"];
+    const SKIN_OPTS=["#FDDBB4","#EDB98A","#D08B5B","#AE5D29","#694C3B","#F2DCC9","#FDEDCA","#C68642"];
+    const EYE_OPTS=["👀","🔵","🟤","🟢","⚫","🔴","💜","🌟"];
+    const hairDisplay={"short-dark":{borderRadius:"50% 50% 0 0",height:"35%"},"long-dark":{borderRadius:"50% 50% 10% 10%",height:"75%"},"short-blonde":{borderRadius:"50% 50% 0 0",height:"32%"},"long-blonde":{borderRadius:"50% 50% 10% 10%",height:"80%"},"short-red":{borderRadius:"60% 60% 10% 10%",height:"30%"},"curly-brown":{borderRadius:"50%",height:"45%"},"afro-black":{borderRadius:"50%",height:"65%",width:"110%",left:"-5%"},"braids-brown":{borderRadius:"30% 30% 0 0",height:"90%"},"spiky-blue":{clipPath:"polygon(20% 100%,0 0,40% 60%,50% 0,60% 60%,100% 0,80% 100%)",height:"50%"}};
+    return(
+      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"clamp(16px,4vw,24px)"}}>
+        <div style={{width:"100%",maxWidth:560}}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:"clamp(20px,5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>PICK YOUR LOOK</div>
+            {pendingProfile?.email&&<div style={{color:"#555",fontSize:"clamp(8px,1.5vw,11px)",fontFamily:"'Press Start 2P',monospace"}}>for {pendingProfile.username||username}</div>}
+          </div>
+          <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:20,padding:"clamp(18px,4vw,28px)",boxShadow:"0 0 60px rgba(124,77,255,0.1)"}}>
+            <div style={{display:"flex",gap:8,marginBottom:16,justifyContent:"center"}}>
+              {[["🎭 EMOJI",false],["✏️ BUILD",true]].map(([lbl,bm])=>(
+                <button key={lbl} onClick={()=>setBuilderMode(bm)} style={{flex:1,padding:"clamp(9px,2vw,12px)",background:builderMode===bm?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.03)",border:`1.5px solid ${builderMode===bm?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:10,color:builderMode===bm?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>{lbl}</button>
+              ))}
+            </div>
+            {!builderMode?(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:20}}>
+                {EMOJIS.map(a=>(
+                  <button key={a} onClick={()=>setEmojiAvatar(a)} style={{background:emojiAvatar===a?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"clamp(8px,1.5vw,12px) 0",cursor:"pointer",fontSize:"clamp(18px,3.5vw,24px)",transform:emojiAvatar===a?"scale(1.2)":"scale(1)",transition:"all 0.14s"}}>
+                    {a}
+                  </button>
+                ))}
+              </div>
+            ):(
+              <div style={{marginBottom:20}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+                  <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={100}/>
+                </div>
+                {[
+                  {lbl:"Face",opts:["round","oval","square","heart"],val:face,set:setFace},
+                ].map(({lbl,opts,val,set})=>(
+                  <div key={lbl} style={{marginBottom:10}}>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>{lbl}</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {opts.map(o=><button key={o} onClick={()=>set(o)} style={{padding:"7px 12px",background:val===o?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${val===o?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:val===o?"#fff":"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",textTransform:"capitalize"}}>{o}</button>)}
+                    </div>
+                  </div>
+                ))}
+                <div style={{marginBottom:10}}>
+                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Hair Style</div>
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                    {HAIR_OPTS.map(h=><button key={h} onClick={()=>setHair(h)} style={{padding:"5px 9px",background:hair===h?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1px solid ${hair===h?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:7,color:hair===h?"#fff":"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>{h.replace(/-/g," ")}</button>)}
+                  </div>
+                </div>
+                <div style={{marginBottom:10}}>
+                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Hair Color &amp; Skin</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:8}}>
+                    {HAIR_COLS.map(col=><button key={col} onClick={()=>setHairColor(col)} style={{width:28,height:28,background:col,border:`2.5px solid ${hairColor===col?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===col?"scale(1.25)":"scale(1)",transition:"transform 0.15s"}}/>)}
+                  </div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {SKIN_OPTS.map(col=><button key={col} onClick={()=>setSkin(col)} style={{width:28,height:28,background:col,border:`2.5px solid ${skin===col?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===col?"scale(1.25)":"scale(1)",transition:"transform 0.15s"}}/>)}
+                  </div>
+                </div>
+                <div>
+                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Eyes</div>
+                  <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                    {EYE_OPTS.map(e=><button key={e} onClick={()=>setEyes(e)} style={{padding:"6px",background:eyes===e?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`1.5px solid ${eyes===e?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.07)"}`,borderRadius:8,cursor:"pointer",fontSize:"clamp(16px,3vw,22px)",transition:"all 0.14s"}}>{e}</button>)}
+                  </div>
+                </div>
+              </div>
+            )}
+            <button onClick={finishCreate} style={{width:"100%",background:"linear-gradient(135deg,rgba(76,175,80,0.35),rgba(79,195,247,0.25))",border:"2px solid rgba(76,175,80,0.6)",borderRadius:12,padding:"clamp(12px,2.5vw,16px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(11px,2.2vw,14px)",marginTop:4}}>
+              ✅ START JOURNEY!
+            </button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // ── MAIN LOGIN / REGISTER ──────────────────────────────────────────
   return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"20px"}}>
-      <div style={{width:"100%",maxWidth:520,textAlign:"center"}}>
-        <div style={{fontSize:"28px",marginBottom:4,fontFamily:"'Press Start 2P',monospace",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent"}}>⚡ POKÉMON</div>
-        <div style={{fontSize:"10px",color:"#333",fontFamily:"'Press Start 2P',monospace",letterSpacing:4,marginBottom:28}}>BATTLE ARENA</div>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"linear-gradient(160deg,#05050d 0%,#0a0520 50%,#05050d 100%)",padding:"clamp(16px,4vw,24px)"}}>
+      {/* Floating particles background */}
+      <div style={{position:"fixed",inset:0,overflow:"hidden",pointerEvents:"none",zIndex:0}}>
+        {[...Array(6)].map((_,i)=>(
+          <div key={i} style={{position:"absolute",borderRadius:"50%",opacity:0.04,background:"radial-gradient(circle,#7C4DFF,transparent)",
+            width:`${150+i*80}px`,height:`${150+i*80}px`,
+            left:`${10+i*15}%`,top:`${5+i*12}%`,
+            animation:`float${i} ${8+i*2}s ease-in-out infinite alternate`}}/>
+        ))}
+      </div>
+      <div style={{width:"100%",maxWidth:480,position:"relative",zIndex:1}}>
+        {/* Logo */}
+        <div style={{textAlign:"center",marginBottom:"clamp(20px,5vw,36px)"}}>
+          <div style={{fontSize:"clamp(36px,10vw,64px)",marginBottom:8,filter:"drop-shadow(0 0 30px #FFD54F)"}}>⚡</div>
+          <div style={{fontSize:"clamp(18px,5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontFamily:"'Press Start 2P',monospace",marginBottom:6,letterSpacing:2}}>POKÉMON</div>
+          <div style={{fontSize:"clamp(8px,2vw,12px)",color:"#2a2a4a",letterSpacing:6,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
+        </div>
 
-        <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:18,padding:"28px 24px",boxShadow:"0 0 60px rgba(124,77,255,0.12)"}}>
-          {step===1 ? (
-            <>
-              <div style={{fontSize:"13px",fontFamily:"'Press Start 2P',monospace",color:"#FFD54F",marginBottom:20}}>CREATE YOUR TRAINER</div>
-              <div style={{fontSize:"10px",fontFamily:"'Press Start 2P',monospace",color:"#555",marginBottom:12}}>Enter your trainer name:</div>
-              <input value={name} onChange={e=>{setName(e.target.value);setError("");setSuggestions([]);}}
-                onKeyDown={e=>{if(e.key==="Enter")validateName();}}
-                placeholder="Trainer name..." maxLength={16}
-                style={{width:"100%",boxSizing:"border-box",background:"rgba(255,255,255,0.05)",border:`1.5px solid ${error?"#f44336":"rgba(124,77,255,0.4)"}`,borderRadius:10,padding:"12px 16px",color:"#fff",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,outline:"none"}}/>
-              {error&&<div style={{color:"#f44336",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>{error}</div>}
-              {suggestions.length>0&&(
-                <div style={{marginBottom:12}}>
-                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Try instead:</div>
-                  <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center"}}>
-                    {suggestions.map(s=>(
-                      <button key={s} onClick={()=>{setName(s);setError("");setSuggestions([]);}}
-                        style={{background:"rgba(124,77,255,0.15)",border:"1px solid rgba(124,77,255,0.35)",borderRadius:7,padding:"5px 10px",color:"#9C7DFF",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>{s}</button>
-                    ))}
-                  </div>
-                </div>
-              )}
-              <button onClick={validateName} style={{width:"100%",background:"linear-gradient(135deg,rgba(124,77,255,0.25),rgba(79,195,247,0.15))",border:"1.5px solid rgba(124,77,255,0.5)",borderRadius:11,padding:"13px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"12px",marginTop:4}}>
-                NEXT →
+        {/* Card */}
+        <div style={{background:"rgba(8,8,24,0.95)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:24,padding:"clamp(20px,5vw,36px)",boxShadow:"0 0 80px rgba(124,77,255,0.08),0 20px 60px rgba(0,0,0,0.5)"}}>
+
+          {/* Tabs */}
+          <div style={{display:"flex",gap:4,marginBottom:"clamp(16px,3.5vw,24px)",background:"rgba(0,0,0,0.35)",borderRadius:12,padding:4}}>
+            {[["login","SIGN IN"],["register","REGISTER"]].map(([m,lbl])=>(
+              <button key={m} onClick={()=>{setMode(m);setError("");}} style={{flex:1,padding:"clamp(10px,2vw,14px)",background:mode===m?"rgba(124,77,255,0.4)":"transparent",border:`1px solid ${mode===m?"rgba(124,77,255,0.6)":"transparent"}`,borderRadius:10,color:mode===m?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",transition:"all 0.18s"}}>
+                {lbl}
               </button>
-            </>
-          ):(
-            <>
-              <div style={{fontSize:"12px",fontFamily:"'Press Start 2P',monospace",color:"#FFD54F",marginBottom:6}}>CUSTOMIZE AVATAR</div>
-              <div style={{fontSize:"9px",fontFamily:"'Press Start 2P',monospace",color:"#777",marginBottom:14}}>Trainer: <span style={{color:"#fff"}}>{name}</span></div>
+            ))}
+          </div>
 
-              {/* Tab toggle */}
-              <div style={{display:"flex",gap:6,marginBottom:16,justifyContent:"center"}}>
-                <button onClick={()=>setBuilderMode(false)} style={{padding:"7px 14px",background:!builderMode?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.03)",border:`1px solid ${!builderMode?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:8,color:!builderMode?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>🎭 EMOJIS</button>
-                <button onClick={()=>setBuilderMode(true)} style={{padding:"7px 14px",background:builderMode?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.03)",border:`1px solid ${builderMode?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:8,color:builderMode?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>✏️ BUILD</button>
+          {/* Google Sign-In — real implementation */}
+          <div style={{marginBottom:"clamp(14px,3vw,20px)"}}>
+            <div ref={googleBtnRef} style={{width:"100%",minHeight:44}}/>
+            {/* Fallback if Google GSI hasn't loaded yet */}
+            <noscript>
+              <div style={{color:"#f44336",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",textAlign:"center",padding:8}}>
+                JavaScript required for Google Sign-In
               </div>
+            </noscript>
+          </div>
 
-              {!builderMode ? (
-                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6,marginBottom:18}}>
-                  {EMOJI_AVATARS.map(a=>(
-                    <button key={a} onClick={()=>setEmojiAvatar(a)}
-                      style={{background:emojiAvatar===a?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`1.5px solid ${emojiAvatar===a?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.07)"}`,borderRadius:9,padding:"8px 0",cursor:"pointer",fontSize:"20px",transition:"all 0.14s",transform:emojiAvatar===a?"scale(1.15)":"scale(1)"}}>
-                      {a}
-                    </button>
-                  ))}
-                </div>
-              ):(
-                <div style={{marginBottom:18}}>
-                  {/* Preview */}
-                  <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
-                    <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={90}/>
-                  </div>
+          {/* Divider */}
+          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:"clamp(14px,3vw,20px)"}}>
+            <div style={{flex:1,height:1,background:"rgba(255,255,255,0.07)"}}/>
+            <span style={{color:"#2a2a4a",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace"}}>OR</span>
+            <div style={{flex:1,height:1,background:"rgba(255,255,255,0.07)"}}/>
+          </div>
 
-                  {[
-                    {label:"Face Shape",opts:FACE_OPTIONS,val:face,set:setFace},
-                  ].map(({label,opts,val,set})=>(
-                    <div key={label} style={{marginBottom:8}}>
-                      <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:5,textAlign:"left"}}>{label}</div>
-                      <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                        {opts.map(o=>(
-                          <button key={o} onClick={()=>set(o)} style={{padding:"5px 9px",background:val===o?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1px solid ${val===o?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.1)"}`,borderRadius:7,color:"#ccc",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"7px",textTransform:"capitalize"}}>{o}</button>
-                        ))}
-                      </div>
-                    </div>
-                  ))}
+          {/* Form fields */}
+          <div style={{display:"flex",flexDirection:"column",gap:"clamp(10px,2vw,14px)"}}>
+            {mode==="register"&&(
+              <input value={username} onChange={e=>{setUsername(e.target.value);setError("");}}
+                placeholder="Username (2-16 chars)" maxLength={16}
+                style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.3)"}`,borderRadius:11,padding:"clamp(12px,2.5vw,16px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace"}}/>
+            )}
+            <input value={email} onChange={e=>{setEmail(e.target.value);setError("");}}
+              placeholder={mode==="login"?"Email or Username":"Email address"} type="email"
+              style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.3)"}`,borderRadius:11,padding:"clamp(12px,2.5vw,16px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace"}}/>
+            <div style={{position:"relative"}}>
+              <input value={password} onChange={e=>{setPassword(e.target.value);setError("");}}
+                type={showPass?"text":"password"} placeholder="Password"
+                onKeyDown={e=>{ if(e.key==="Enter") mode==="login"?handleLogin():handleRegister(); }}
+                style={{width:"100%",background:"rgba(255,255,255,0.05)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.3)"}`,borderRadius:11,padding:`clamp(12px,2.5vw,16px) 50px clamp(12px,2.5vw,16px) clamp(12px,2.5vw,16px)`,color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace"}}/>
+              <button onClick={()=>setShowPass(!showPass)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:"clamp(16px,2.5vw,20px)",padding:4}}>
+                {showPass?"🙈":"👁️"}
+              </button>
+            </div>
+          </div>
 
-                  <div style={{marginBottom:8}}>
-                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:5,textAlign:"left"}}>Hair Style</div>
-                    <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                      {HAIR_OPTIONS.map(h=>(
-                        <button key={h} onClick={()=>setHair(h)} style={{padding:"4px 8px",background:hair===h?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1px solid ${hair===h?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.1)"}`,borderRadius:6,color:"#ccc",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"6px"}}>{h.replace(/-/g," ")}</button>
-                      ))}
-                    </div>
-                  </div>
+          {/* Error */}
+          {error&&(
+            <div style={{color:"#f44336",fontSize:"clamp(8px,1.5vw,11px)",fontFamily:"'Press Start 2P',monospace",marginTop:12,padding:"10px 14px",background:"rgba(244,67,54,0.08)",borderRadius:9,border:"1px solid rgba(244,67,54,0.2)",lineHeight:1.8}}>
+              ⚠️ {error}
+            </div>
+          )}
 
-                  <div style={{marginBottom:8}}>
-                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:5,textAlign:"left"}}>Hair Color</div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {HAIR_COLORS.map(c=>(
-                        <button key={c} onClick={()=>setHairColor(c)} style={{width:24,height:24,background:c,border:`2px solid ${hairColor===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===c?"scale(1.2)":"scale(1)",transition:"transform 0.15s"}}/>
-                      ))}
-                    </div>
-                  </div>
+          {/* Submit */}
+          <button onClick={mode==="login"?handleLogin:handleRegister} disabled={loading}
+            style={{width:"100%",marginTop:"clamp(14px,3vw,20px)",background:"linear-gradient(135deg,rgba(124,77,255,0.4),rgba(79,195,247,0.25))",border:"2px solid rgba(124,77,255,0.6)",borderRadius:12,padding:"clamp(12px,2.5vw,16px)",color:"#fff",cursor:loading?"wait":"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(11px,2.2vw,14px)",opacity:loading?0.7:1,transition:"all 0.18s",letterSpacing:1}}>
+            {loading?"LOADING…":mode==="login"?"SIGN IN →":"CREATE ACCOUNT →"}
+          </button>
 
-                  <div style={{marginBottom:8}}>
-                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:5,textAlign:"left"}}>Skin Tone</div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {SKIN_OPTIONS.map(c=>(
-                        <button key={c} onClick={()=>setSkin(c)} style={{width:24,height:24,background:c,border:`2px solid ${skin===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===c?"scale(1.2)":"scale(1)",transition:"transform 0.15s"}}/>
-                      ))}
-                    </div>
-                  </div>
-
-                  <div style={{marginBottom:4}}>
-                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:5,textAlign:"left"}}>Eyes</div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {EYE_OPTIONS.map(e=>(
-                        <button key={e} onClick={()=>setEyes(e)} style={{padding:"5px",background:eyes===e?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`1px solid ${eyes===e?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:7,cursor:"pointer",fontSize:"16px",transition:"all 0.14s"}}>{e}</button>
-                      ))}
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              <div style={{display:"flex",gap:10}}>
-                <button onClick={()=>setStep(1)} style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"11px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>← BACK</button>
-                <button onClick={finish} style={{flex:2,background:"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(79,195,247,0.2))",border:"1.5px solid rgba(76,175,80,0.6)",borderRadius:10,padding:"11px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>✅ START JOURNEY</button>
-              </div>
-            </>
+          {mode==="login"&&(
+            <div style={{textAlign:"center",marginTop:12}}>
+              <span style={{color:"#333",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>No account? </span>
+              <button onClick={()=>{setMode("register");setError("");}} style={{background:"none",border:"none",color:"#7C4DFF",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>Register here</button>
+            </div>
           )}
         </div>
 
-        {/* Existing profiles */}
-        {JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").length>0&&(
-          <div style={{marginTop:18}}>
-            <div style={{color:"#333",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>— OR CONTINUE AS —</div>
+        {/* Quick login - returning players */}
+        {existing.length>0&&(
+          <div style={{marginTop:"clamp(14px,3vw,20px)"}}>
+            <div style={{color:"#1a1a2a",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",textAlign:"center",marginBottom:10}}>— QUICK LOGIN —</div>
             <div style={{display:"flex",gap:8,flexWrap:"wrap",justifyContent:"center"}}>
-              {JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").slice(-6).map(p=>(
-                <button key={p.name} onClick={()=>onDone(p)}
-                  style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px 14px",cursor:"pointer",textAlign:"center"}}>
-                  {p.avatarData?.type==="built"
-                    ?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>
-                    :<div style={{fontSize:"24px"}}>{p.avatar}</div>}
-                  <div style={{color:"#ccc",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginTop:4}}>{p.name}</div>
-                  <div style={{color:"#444",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>{p.wins}W {p.losses}L</div>
+              {existing.slice(-5).map(p=>(
+                <button key={p.name} onClick={()=>onDone(p)} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:12,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",transition:"all 0.15s",minWidth:70}}>
+                  <div style={{fontSize:"clamp(20px,4vw,28px)",marginBottom:4}}>
+                    {p.avatarData?.type==="built"
+                      ?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>
+                      :p.avatar}
+                  </div>
+                  <div style={{color:"#aaa",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>{p.name}</div>
+                  <div style={{color:"#333",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{p.wins||0}W {p.losses||0}L</div>
                 </button>
               ))}
             </div>
           </div>
         )}
+
+        <div style={{textAlign:"center",marginTop:16,color:"#111",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace"}}>
+          ℹ️ Google Sign-In requires a configured Client ID in the code
+        </div>
       </div>
     </div>
   );
@@ -1382,40 +1859,67 @@ function StarterScreen({onDone, allPokemon}){
 // ══════════════════════════════════════════════════════════════════════
 //  POKÉMON SELECT CARD
 // ══════════════════════════════════════════════════════════════════════
-function PokemonCard({mon, onSelect, selected, unlocked, coins, onUnlock, cost}){
-  const c=TC[mon.types[0]]||"#888";
+function PokemonCard({mon, onSelect, selected, unlocked, coins, onUnlock, cost, shopMode=false}){
+  const col=TC[mon.types[0]]||"#888";
   const isLeg=LEGENDARY_IDS.has(mon.id);
   const isMega=!!MEGA_MAP[mon.id];
   const isGiga=GIGANTAMAX_IDS.has(mon.id);
   const gen=getGen(mon.id);
+  const canAfford=(coins||0)>=cost;
   const locked=!unlocked;
+
   return(
-    <div onClick={()=>{ if(!locked) onSelect(mon); }} style={{
-      background:locked?"rgba(4,4,12,0.8)":`linear-gradient(160deg,rgba(14,14,36,0.98),rgba(6,6,20,0.99))`,
-      border:selected?`1.5px solid #FFD54F`:locked?`1px solid rgba(255,255,255,0.04)`:`1px solid ${isLeg?"#FFD54F55":isMega?"#CE93D855":`${c}2a`}`,
-      borderRadius:12,padding:"10px 8px",cursor:locked?"default":"pointer",
-      transition:"all 0.15s",textAlign:"center",
-      boxShadow:selected?"0 0 24px rgba(255,213,79,0.35)":isLeg?"0 2px 16px rgba(255,213,79,0.12)":"none",
-      position:"relative",filter:locked?"grayscale(0.7) brightness(0.5)":"none",opacity:locked?0.6:1
-    }}>
-      {locked&&(
-        <div onClick={e=>{ e.stopPropagation(); onUnlock(mon); }} style={{position:"absolute",inset:0,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.7)",borderRadius:12,zIndex:2,cursor:"pointer"}}>
-          <div style={{fontSize:"20px",marginBottom:3}}>🔒</div>
-          <div style={{color:"#FFD54F",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>{cost}🪙</div>
-        </div>
-      )}
-      {selected&&<div style={{position:"absolute",top:4,right:4,fontSize:"12px"}}>✅</div>}
-      {isLeg&&<div style={{position:"absolute",top:4,left:4,fontSize:"10px"}}>⭐</div>}
-      {isMega&&<div style={{position:"absolute",top:isLeg?18:4,left:4,fontSize:"10px"}}>💎</div>}
-      {isGiga&&<div style={{position:"absolute",top:4,right:selected?20:4,fontSize:"10px"}}>⭕</div>}
-      <div style={{position:"absolute",top:4,right:selected?20:4,fontSize:"7px",color:gen.col,fontFamily:"'Press Start 2P',monospace"}}>G{gen.g}</div>
-      <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.id}.png`}
-        style={{width:56,imageRendering:"pixelated",filter:`drop-shadow(0 0 6px ${c}88)`}}/>
-      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:locked?"#444":"#fff",marginBottom:2,textTransform:"capitalize",lineHeight:1.3}}>{mon.name}</div>
-      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#1a1a3a",marginBottom:3}}>#{String(mon.id).padStart(3,"0")}</div>
-      <div style={{display:"flex",gap:2,justifyContent:"center",flexWrap:"wrap"}}>
+    <div onClick={()=>{ if(!locked&&!shopMode) onSelect(mon); }}
+      style={{
+        background:locked?shopMode?"rgba(6,6,18,0.9)":"rgba(4,4,12,0.8)":selected?"rgba(255,213,79,0.12)":`linear-gradient(160deg,rgba(14,14,36,0.98),rgba(6,6,20,0.99))`,
+        border:selected?`2px solid #FFD54F`:locked?`1px solid rgba(255,255,255,0.05)`:`1.5px solid ${isLeg?"#FFD54F55":isMega?"#CE93D855":`${col}33`}`,
+        borderRadius:14,padding:"clamp(10px,2vw,14px) clamp(8px,1.5vw,12px)",
+        cursor:locked&&!shopMode?"default":"pointer",
+        transition:"all 0.18s",textAlign:"center",
+        boxShadow:selected?"0 0 28px rgba(255,213,79,0.3)":isLeg?"0 2px 18px rgba(255,213,79,0.1)":"none",
+        position:"relative",
+        filter:locked&&!shopMode?"grayscale(0.8) brightness(0.4)":"none",
+      }}>
+
+      {/* Badges */}
+      {isLeg&&<div style={{position:"absolute",top:5,left:5,fontSize:"clamp(9px,1.8vw,12px)"}}>⭐</div>}
+      {isMega&&<div style={{position:"absolute",top:isLeg?20:5,left:5,fontSize:"clamp(9px,1.8vw,12px)"}}>💎</div>}
+      {isGiga&&<div style={{position:"absolute",top:5,right:selected?22:5,fontSize:"clamp(9px,1.8vw,12px)"}}>⭕</div>}
+      {selected&&<div style={{position:"absolute",top:5,right:5,fontSize:"clamp(12px,2vw,16px)"}}>✅</div>}
+      <div style={{position:"absolute",top:5,right:isGiga||selected?22:5,fontSize:"clamp(6px,1vw,8px)",color:gen.col,fontFamily:"'Press Start 2P',monospace",opacity:0.8}}>G{gen.g}</div>
+
+      {/* Sprite */}
+      <div style={{position:"relative",display:"inline-block"}}>
+        <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${mon.id}.png`}
+          style={{width:"clamp(56px,10vw,72px)",imageRendering:"pixelated",filter:`drop-shadow(0 0 8px ${col}88)`,display:"block"}}/>
+        {locked&&shopMode&&(
+          <div style={{position:"absolute",inset:0,display:"flex",alignItems:"center",justifyContent:"center",background:"rgba(0,0,0,0.6)",borderRadius:8}}>
+            <span style={{fontSize:"clamp(14px,2.5vw,20px)"}}>🔒</span>
+          </div>
+        )}
+      </div>
+
+      {/* Name — bigger and clearer */}
+      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,11px)",color:locked&&!shopMode?"#444":"#fff",marginBottom:3,textTransform:"capitalize",lineHeight:1.4,wordBreak:"break-word"}}>
+        {mon.name}
+      </div>
+      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(6px,1vw,8px)",color:"#2a2a4a",marginBottom:5}}>
+        #{String(mon.id).padStart(3,"0")}
+      </div>
+      <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap",marginBottom:shopMode&&locked?6:0}}>
         {mon.types.map(t=><Badge key={t} type={t} small/>)}
       </div>
+
+      {/* Shop mode: unlock button */}
+      {shopMode&&locked&&(
+        <button onClick={e=>{e.stopPropagation();onUnlock(mon);}} disabled={!canAfford}
+          style={{marginTop:8,width:"100%",background:canAfford?"rgba(255,213,79,0.15)":"rgba(255,255,255,0.02)",border:`1.5px solid ${canAfford?"rgba(255,213,79,0.5)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"clamp(6px,1.2vw,9px)",color:canAfford?"#FFD54F":"#333",cursor:canAfford?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.4vw,10px)",lineHeight:1.5}}>
+          🔓 {cost}🪙
+        </button>
+      )}
+      {shopMode&&!locked&&(
+        <div style={{marginTop:6,color:"#4CAF50",fontSize:"clamp(7px,1.2vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>✅ OWNED</div>
+      )}
     </div>
   );
 }
@@ -1795,6 +2299,24 @@ export default function App(){
   const [usedZThisBattle,setUsedZThisBattle]=useState(false);
   const [usedMegaThisBattle,setUsedMegaThisBattle]=useState(false);
 
+  // ── EXP & Evolution ──────────────────────────────────────
+  const [expMap,setExpMap]=useState(()=>{ try{return JSON.parse(localStorage.getItem(`pkmn_exp_${JSON.parse(localStorage.getItem('pkmn_profiles')||'[]').slice(-1)[0]?.name}`)||'{}')}catch{return {}} });
+  const [pendingEvo,setPendingEvo]=useState(null); // {oldMon, newId}
+  const [showEvoAnim,setShowEvoAnim]=useState(false);
+  const [battleTurns,setBattleTurns]=useState(0);
+
+  // ── Battle history ────────────────────────────────────────
+  const [battleHistory,setBattleHistory]=useState(()=>{ try{return JSON.parse(localStorage.getItem('pkmn_history')||'[]')}catch{return []} });
+
+  // ── Story mode ────────────────────────────────────────────
+  const [storyProgress,setStoryProgress]=useState(()=>{ try{return JSON.parse(localStorage.getItem(storyKey(JSON.parse(localStorage.getItem('pkmn_profiles')||'[]').slice(-1)[0]?.name||''))||'[]')}catch{return []} });
+  const [storyBattle,setStoryBattle]=useState(null); // current gym leader being fought
+
+  // ── Trade ─────────────────────────────────────────────────
+  const [showTrade,setShowTrade]=useState(false);
+  const [tradeOffer,setTradeOffer]=useState(null);
+  const [tradeReceive,setTradeReceive]=useState(null);
+
   // ── Daily challenges ──────────────────────────────────────
   const [challenges,setChallenges]=useState(()=>{
     const saved=localStorage.getItem(`pkmn_challenges_${todayKey()}`);
@@ -1840,7 +2362,8 @@ export default function App(){
     else if(screen===MODES.SHOP) AUDIO.play("shop");
     else if(screen===MODES.TEAM) AUDIO.play("team");
     else if(screen===MODES.HEAL) AUDIO.play("heal");
-    else if(screen===MODES.SELECT||screen===MODES.STARTER) AUDIO.play("select");
+    else if(screen===MODES.SELECT||screen===MODES.UNLOCK||screen===MODES.STARTER||screen===MODES.STORY) AUDIO.play("select");
+    else if(screen===MODES.HISTORY) AUDIO.play("home");
     else if(screen===MODES.BATTLE||screen===MODES.MP||screen===MODES.WAIT) AUDIO.play("battle");
     else if(screen===MODES.OVER) AUDIO.play(winner==="player"?"victory":"defeat");
   },[screen,winner,musicOn]);
@@ -1904,10 +2427,19 @@ export default function App(){
     if(savedLevels) setTeamLevels(JSON.parse(savedLevels));
     const savedStarter=localStorage.getItem(`pkmn_starter_${profile.name}`);
     if(savedStarter) setStarterPokemon(JSON.parse(savedStarter));
+    const savedExp=localStorage.getItem(`pkmn_exp_${profile.name}`);
+    if(savedExp) try{setExpMap(JSON.parse(savedExp))}catch{}
+    const savedHistory=localStorage.getItem('pkmn_history');
+    if(savedHistory) try{setBattleHistory(JSON.parse(savedHistory))}catch{}
+    const savedStory=localStorage.getItem(storyKey(profile.name));
+    if(savedStory) try{setStoryProgress(JSON.parse(savedStory))}catch{}
   },[profile]);
 
   useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_fainted_${profile.name}`,JSON.stringify(faintedTeam)); },[faintedTeam,profile]);
   useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_team_${profile.name}`,JSON.stringify(team)); },[team,profile]);
+  useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_exp_${profile.name}`,JSON.stringify(expMap)); },[expMap,profile]);
+  // Trigger evolution animation when pendingEvo arrives
+  useEffect(()=>{ if(pendingEvo) setTimeout(()=>setShowEvoAnim(true),1500); },[pendingEvo]);
 
   // ── Filter ────────────────────────────────────────────────
   const filteredPokemon = useMemo(()=>{
@@ -1987,7 +2519,7 @@ export default function App(){
     setLog([`⚔️ A wild ${enemy.name.toUpperCase()} appeared!`,`Go, ${mon.name.toUpperCase()}! (Lv${lvl})`]);
     setFaintP(false); setFaintE(false); setHitP(false); setHitE(false);
     setWinner(null); setBusy(false); setAnim(null); setShowItems(false);
-    setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false); setIsMpBattle(false);
+    setBattleTurns(0); setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false); setIsMpBattle(false);
     // Pick random weather
     const wRoll=Math.random();
     const wx=wRoll<0.14?WEATHERS[1]:wRoll<0.28?WEATHERS[4]:wRoll<0.38?WEATHERS[2]:wRoll<0.48?WEATHERS[3]:wRoll<0.56?WEATHERS[5]:wRoll<0.64?WEATHERS[6]:WEATHERS[0];
@@ -2188,7 +2720,7 @@ export default function App(){
     if(eStatus?.type==="paralysis"&&Math.random()<0.25){
       pushLog(`⚡ ${eMon.name.toUpperCase()} is paralyzed and can't move!`); return;
     }
-    const eMove=eMon.moves[Math.floor(Math.random()*eMon.moves.length)];
+    const eMove=aiPickMove(eMon,pMon,eStatus,weather);
     const wxMult=WEATHER_MULT(weather,eMove.type);
     const eBurnMult=(eStatus?.type==="burn")?STATUSES.burn.atkMult:1;
     const{dmg:rawEDmg,eff:eEff}=calcDmg(eMon,eMove,pMon,50);
@@ -2214,6 +2746,7 @@ export default function App(){
 
   async function useMove(move){
     if(busy) return;
+    setBattleTurns(t=>t+1);
     // Status: sleep/freeze skip
     if(pStatus?.type==="sleep"||pStatus?.type==="freeze"){
       const thaw=pStatus.type==="freeze"&&Math.random()<0.2;
@@ -2268,6 +2801,8 @@ export default function App(){
       setProfile(p=>{const np={...p,losses:(p.losses||0)+1};updateProfile(np);return np;});
       markNeedsHeal(pMon, true);
       setWinStreak(0); localStorage.setItem("pkmn_streak","0");
+      const rec=makeBattleRecord(pMon,eMon,"enemy",battleTurns,pLevel);
+      setBattleHistory(h=>{ const n=[rec,...h].slice(0,50); localStorage.setItem('pkmn_history',JSON.stringify(n)); return n; });
       setWinner("enemy"); setScreen(MODES.OVER); setBusy(false);
     },700);
   }
@@ -2315,6 +2850,46 @@ export default function App(){
         updated.forEach((ch,i)=>{ if(ch.done&&!prev[i].done){ addCoins(ch.reward); pushLog(`🌟 Challenge: "${ch.desc}" done! +${ch.reward}🪙`); } });
         return updated;
       });
+      // ── EXP gain + evolution check ──────────────────────────
+      const expGain = Math.floor((eMon.legendary?300:eMon.hp*2+eMon.attack) * (1+(pLevel-50)*0.01));
+      setExpMap(prev=>{
+        const cur=prev[pMon.id]||0;
+        const newExp=cur+expGain;
+        const oldLvl=LEVEL_FROM_EXP(cur);
+        const newLvl=LEVEL_FROM_EXP(newExp);
+        const updated={...prev,[pMon.id]:newExp};
+        localStorage.setItem(`pkmn_exp_${profile?.name}`,JSON.stringify(updated));
+        if(newLvl>oldLvl){
+          pushLog(`⬆️ ${pMon.name.toUpperCase()} grew to Lv${newLvl}!`);
+          setTeamLevels(tl=>{
+            const n={...tl,[pMon.id]:newLvl};
+            localStorage.setItem(`pkmn_levels_${profile?.name}`,JSON.stringify(n));
+            return n;
+          });
+          // Check evolution
+          const evo=EVOLVE_MAP[pMon.id];
+          if(evo&&!evo.item&&newLvl>=evo.minLevel){
+            setPendingEvo({oldMon:pMon,newId:evo.evolvesTo,newLevel:newLvl});
+          }
+        }
+        return updated;
+      });
+      pushLog(`+${expGain} EXP gained!`);
+      // ── Trigger evolution if pending (after battle over screen)
+      // Evolution fires when navigating away from OVER screen — handled via useEffect
+      // ── Save battle to history ──────────────────────────────
+      const record=makeBattleRecord(pMon,eMon,"player",battleTurns,pLevel);
+      supaBattle("player",pMon.name,eMon.name,battleTurns);
+      setBattleHistory(h=>{ const n=[record,...h].slice(0,50); localStorage.setItem('pkmn_history',JSON.stringify(n)); return n; });
+      // ── Story mode progress ─────────────────────────────────
+      if(storyBattle!=null){
+        setStoryProgress(prev=>{
+          const n=[...new Set([...prev,storyBattle])];
+          localStorage.setItem(storyKey(profile?.name),JSON.stringify(n));
+          return n;
+        });
+        setStoryBattle(null);
+      }
       setWinner("player"); setScreen(MODES.OVER); setBusy(false);
     },700);
   }
@@ -2343,6 +2918,43 @@ export default function App(){
   }
 
   // ── Shop ──────────────────────────────────────────────────
+  // ── Trade handler ────────────────────────────────────────
+  function handleTrade(giving, receiving, cost){
+    const np={...profile,coins:(profile.coins||0)-cost};
+    setProfile(np); updateProfile(np);
+    // Remove giving from unlocked, add receiving
+    const nu=new Set([...unlockedIds]);
+    nu.delete(giving.id);
+    nu.add(receiving.id);
+    setUnlockedIds(nu);
+    localStorage.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
+    // Update team: remove traded away
+    setTeam(t=>t.filter(m=>m.id!==giving.id));
+    pushHomeLog(`Traded ${giving.name} for ${receiving.name}!`);
+    setShowTrade(false);
+  }
+
+  // ── Story battle start ────────────────────────────────────
+  function startStoryBattle(gym, allPokemon){
+    const enemyMon = allPokemon.find(p=>p.id===gym.team[gym.team.length-1]) || allPokemon.find(p=>p.types.includes(gym.type)) || allPokemon[Math.floor(Math.random()*allPokemon.length)];
+    if(!enemyMon||!pMon){ alert("Select your Pokémon from Team first!"); return; }
+    const lvl=teamLevels[pMon.id]||50;
+    const pMax=(pMon.hp+lvl)*2, eMax=(enemyMon.hp+gym.level)*2;
+    setPMon(pMon); setEMon({...enemyMon,attack:Math.floor(enemyMon.attack*(1+(gym.level-50)*0.02)),defense:Math.floor(enemyMon.defense*(1+(gym.level-50)*0.02))});
+    setPHP(pMax); setEHP(eMax); setPMaxHP(pMax); setEMaxHP(eMax); setPLevel(lvl);
+    setLog([`🏟️ GYM LEADER ${gym.name.toUpperCase()} wants to battle!`,`${gym.hint}`,`Go, ${pMon.name.toUpperCase()}! (Lv${lvl})`]);
+    setFaintP(false); setFaintE(false); setHitP(false); setHitE(false);
+    setWinner(null); setBusy(false); setAnim(null); setShowItems(false); setBattleTurns(0);
+    setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false);
+    setWeather(WEATHERS[Math.floor(Math.random()*WEATHERS.length)]);
+    setPStatus(null); setEStatus(null);
+    setStoryBattle(gym.id);
+    const bag={};
+    SHOP_ITEMS.forEach(it=>{ bag[it.id]=(inventory[it.id]||0); });
+    setBagItems(bag);
+    setScreen(MODES.BATTLE);
+  }
+
   function buyItem(item){
     if((profile?.coins||0)<item.cost){ alert(`Need ${item.cost} coins!`); return; }
     const np={...profile,coins:(profile.coins||0)-item.cost};
@@ -2447,9 +3059,16 @@ export default function App(){
   const canGiga=!usedGiga&&pMon?.canGiga&&(bagItems.dynamax_band||0)>0;
 
   return(
-    <div onClick={firstClick} style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"20px 16px",position:"relative",overflowX:"hidden"}}>
+    <div onClick={firstClick} style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"clamp(12px,3vw,24px) clamp(10px,3vw,20px)",position:"relative",overflowX:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
+
+        /* ── Responsive font base ── */
+        html{ font-size:16px; }
+        @media(max-width:768px){ html{ font-size:14px; } }
+        @media(max-width:480px){ html{ font-size:12px; } }
+
+        /* ── Keyframes ── */
         @keyframes shake{0%,100%{transform:translateX(0)scale(1.42)}25%{transform:translateX(-14px)scale(1.42)}75%{transform:translateX(14px)scale(1.42)}}
         @keyframes shakeBack{0%,100%{transform:scaleX(-1)scale(1.65)}25%{transform:scaleX(-1)translateX(14px)scale(1.65)}75%{transform:scaleX(-1)translateX(-14px)scale(1.65)}}
         @keyframes faintAnim{0%{opacity:1;transform:scale(1.42)translateY(0)}100%{opacity:0;transform:scale(0.55)translateY(60px)}}
@@ -2462,13 +3081,61 @@ export default function App(){
         @keyframes megaGlow{0%,100%{box-shadow:0 0 20px #7C4DFF}50%{box-shadow:0 0 50px #7C4DFF,0 0 90px #F06292}}
         @keyframes gigaGlow{0%,100%{box-shadow:0 0 20px #FFD54F}50%{box-shadow:0 0 50px #FFD54F,0 0 90px #FF6B35}}
         @keyframes zPulse{0%,100%{box-shadow:0 0 20px #FF6B35}50%{box-shadow:0 0 50px #FF6B35,0 0 90px #FFD54F}}
+
+        /* ── Interactive ── */
         .pcard:hover:not([disabled]){transform:translateY(-4px) scale(1.06)!important;z-index:2}
         .btn:hover:not(:disabled){filter:brightness(1.35);transform:scale(1.04);}
         .btn:active:not(:disabled){transform:scale(0.95);}
-        ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:#080816}::-webkit-scrollbar-thumb{background:#1e1e32;border-radius:4px}
+
+        /* ── Scrollbar ── */
+        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#080816}::-webkit-scrollbar-thumb{background:#1e1e32;border-radius:4px}
+
+        /* ── Base ── */
         input,select{outline:none!important}
         *{box-sizing:border-box}
-        @media(max-width:480px){.battle-arena{flex-direction:column!important;gap:8px!important}.move-grid{grid-template-columns:1fr 1fr!important}}
+
+        /* ── Touch targets ── */
+        button{min-height:36px; touch-action:manipulation;}
+        @media(max-width:480px){ button{min-height:44px;} }
+
+        /* ── Battle responsive ── */
+        @media(max-width:600px){
+          .battle-arena{flex-direction:column!important;gap:8px!important}
+          .move-grid{grid-template-columns:1fr 1fr!important}
+          .battle-sprite{width:80px!important}
+        }
+
+        /* ── Home grid responsive ── */
+        @media(max-width:400px){
+          .home-grid{grid-template-columns:1fr 1fr!important}
+        }
+
+        /* ── Text scaling ── */
+        .ps2{font-family:'Press Start 2P',monospace!important}
+        .t-xs{font-size:clamp(7px,1.5vw,10px)}
+        .t-sm{font-size:clamp(9px,1.8vw,12px)}
+        .t-md{font-size:clamp(11px,2.2vw,15px)}
+        .t-lg{font-size:clamp(14px,2.8vw,20px)}
+        .t-xl{font-size:clamp(18px,4vw,28px)}
+
+        /* ── Card spacing ── */
+        .game-card{
+          background:rgba(10,10,28,0.98);
+          border-radius:clamp(10px,2vw,16px);
+          padding:clamp(12px,3vw,20px);
+        }
+
+        /* ── Input style ── */
+        .game-input{
+          width:100%;
+          background:rgba(255,255,255,0.05);
+          border:1.5px solid rgba(124,77,255,0.3);
+          border-radius:10px;
+          padding:clamp(10px,2vw,13px);
+          color:#fff;
+          font-size:clamp(11px,2vw,14px);
+          font-family:'Press Start 2P',monospace;
+        }
       `}</style>
 
       {/* Background grid */}
@@ -2483,13 +3150,16 @@ export default function App(){
               setBusy(false); setAnim(null); setWinner(null);
               setScreen(MODES.SELECT);
               if(musicOn&&musicStarted.current) AUDIO.play("select");
+            } else if(screen===MODES.UNLOCK){
+              setScreen(MODES.HOME);
+              if(musicOn&&musicStarted.current) setTimeout(()=>AUDIO.play("home"),80);
             } else {
               AUDIO.stop(); AUDIO.theme=null;
               setScreen(MODES.HOME);
               if(musicOn&&musicStarted.current) setTimeout(()=>AUDIO.play("home"),80);
             }
-          }} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:9,padding:"7px 14px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"11px",display:"flex",alignItems:"center",gap:5}}>
-            ← {screen===MODES.BATTLE||screen===MODES.OVER?"SELECT":screen===MODES.SELECT||screen===MODES.TEAM||screen===MODES.SHOP||screen===MODES.HEAL?"HOME":"BACK"}
+          }} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:9,padding:"7px 14px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",display:"flex",alignItems:"center",gap:5}}>
+            ← {screen===MODES.BATTLE||screen===MODES.OVER?"SELECT":screen===MODES.UNLOCK?"HOME":screen===MODES.SELECT||screen===MODES.UNLOCK||screen===MODES.TEAM||screen===MODES.SHOP||screen===MODES.HEAL||screen===MODES.STORY||screen===MODES.HISTORY?"HOME":"BACK"}
           </button>
         </div>
       )}
@@ -2497,7 +3167,7 @@ export default function App(){
       <div style={{position:"fixed",top:12,right:12,display:"flex",gap:6,zIndex:300,flexWrap:"wrap",justifyContent:"flex-end"}}>
         {screen!==MODES.HOME&&(
           <button onClick={e=>{e.stopPropagation();AUDIO.stop();AUDIO.theme=null;setScreen(MODES.HOME);setBusy(false);setAnim(null);setWinner(null);if(musicOn&&musicStarted.current)setTimeout(()=>AUDIO.play("home"),80);}}
-            className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"7px 11px",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"12px"}}>
+            className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"7px 11px",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,2vw,14px)"}}>
             🏠
           </button>
         )}
@@ -2519,9 +3189,9 @@ export default function App(){
       {showStreakBanner&&<StreakBanner streak={winStreak+1}/>}
 
       {/* ── HEADER ──────────────────────────────────────── */}
-      <div style={{textAlign:"center",marginBottom:24,paddingTop:8}}>
-        <div style={{fontSize:"28px",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:2,fontFamily:"'Press Start 2P',monospace"}}>⚡ POKÉMON</div>
-        <div style={{fontSize:"10px",color:"#252535",letterSpacing:5,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
+      <div style={{textAlign:"center",marginBottom:"clamp(14px,3vw,24px)",paddingTop:"clamp(6px,1.5vw,10px)"}}>
+        <div style={{fontSize:"clamp(18px,4.5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:4,fontFamily:"'Press Start 2P',monospace"}}>⚡ POKÉMON</div>
+        <div style={{fontSize:"clamp(7px,1.5vw,11px)",color:"#252535",letterSpacing:5,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
       </div>
 
       {/* ══════════════════════════════════════════════════
@@ -2534,7 +3204,7 @@ export default function App(){
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <ProfileAvatar profile={profile} size={40}/>
               <div>
-                <div style={{color:"#fff",fontSize:"14px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+                <div style={{color:"#fff",fontSize:"clamp(11px,2.2vw,16px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
                 <div style={{color:"#444",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>{profile?.wins||0}W / {profile?.losses||0}L</div>
               </div>
             </div>
@@ -2549,7 +3219,7 @@ export default function App(){
             )}
             <div style={{display:"flex",alignItems:"center",gap:6}}>
               <span style={{fontSize:"20px"}}>🪙</span>
-              <span style={{color:"#FFD54F",fontSize:"15px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.coins||0}</span>
+              <span style={{color:"#FFD54F",fontSize:"clamp(12px,2.5vw,17px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.coins||0}</span>
             </div>
           </div>
 
@@ -2567,7 +3237,7 @@ export default function App(){
           )}
 
           {/* Main actions */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fit,minmax(130px,1fr))",gap:10}}>
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(clamp(120px,20vw,160px),1fr))",gap:10}}>
             {[
               {icon:"⚔️", label:"BATTLE",        sub:"VS CPU",            col:"#FF6B35", action:()=>setScreen(MODES.SELECT)},
               {icon:"👥", label:"TEAM",           sub:"Manage roster",     col:"#4FC3F7", action:()=>setScreen(MODES.TEAM)},
@@ -2578,11 +3248,14 @@ export default function App(){
               {icon:"📅", label:"CHALLENGES",     sub:`${challenges.filter(c=>!c.done).length} remaining`, col:"#66BB6A", action:()=>setShowChallenges(true),
                 badge: challenges.filter(c=>!c.done).length>0 ? challenges.filter(c=>!c.done).length : null},
               {icon:"🎴", label:"TRAINER CARD",   sub:"View your record",  col:"#CE93D8", action:()=>setScreen(MODES.CARD)},
+              {icon:"🗺️", label:"STORY MODE",      sub:`${storyProgress.length}/13 gyms`, col:"#FF6B35", action:()=>setScreen(MODES.STORY)},
+              {icon:"📜", label:"BATTLE LOG",      sub:`${battleHistory.length} battles`,  col:"#9E9E9E", action:()=>setScreen(MODES.HISTORY)},
+              {icon:"🔄", label:"TRADE",           sub:"Swap Pokémon",       col:"#66BB6A", action:()=>setShowTrade(true)},
             ].map((b,i)=>(
               <div key={i} onClick={b.action} className="btn pcard" style={{background:`linear-gradient(160deg,rgba(14,14,36,0.98),rgba(6,6,22,0.99))`,border:`1.5px solid ${b.col}33`,borderRadius:14,padding:"18px 14px",cursor:"pointer",textAlign:"center",transition:"all 0.16s",boxShadow:`0 4px 20px ${b.col}18`,position:"relative"}}>
                 {b.badge&&<div style={{position:"absolute",top:8,right:8,background:"#f44336",color:"#fff",fontSize:"7px",borderRadius:"50%",width:16,height:16,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Press Start 2P',monospace"}}>{b.badge}</div>}
                 <div style={{fontSize:"26px",marginBottom:5}}>{b.icon}</div>
-                <div style={{color:"#fff",fontSize:"11px",fontFamily:"'Press Start 2P',monospace",marginBottom:3,whiteSpace:"pre-line",lineHeight:1.5}}>{b.label}</div>
+                <div style={{color:"#fff",fontSize:"clamp(9px,1.8vw,13px)",fontFamily:"'Press Start 2P',monospace",marginBottom:3,whiteSpace:"pre-line",lineHeight:1.6}}>{b.label}</div>
                 <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>{b.sub}</div>
               </div>
             ))}
@@ -2618,60 +3291,125 @@ export default function App(){
       )}
 
       {/* ══════════════════════════════════════════════════
-          SELECT SCREEN
+          BATTLE SELECT — owned Pokémon only
       ══════════════════════════════════════════════════ */}
       {screen===MODES.SELECT&&(
-        <div style={{width:"100%",maxWidth:900}}>
-          <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:14,textAlign:"center"}}>CHOOSE YOUR FIGHTER</div>
+        <div style={{width:"100%",maxWidth:960}}>
+          <div style={{textAlign:"center",marginBottom:"clamp(12px,2.5vw,18px)"}}>
+            <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>⚔️ CHOOSE YOUR FIGHTER</div>
+            <div style={{fontSize:"clamp(8px,1.5vw,11px)",color:"#333",fontFamily:"'Press Start 2P',monospace"}}>
+              {allPokemon.filter(isUnlocked).length} Pokémon owned
+              {" · "}
+              <button onClick={()=>setScreen(MODES.UNLOCK)} style={{background:"none",border:"none",color:"#4FC3F7",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,11px)",textDecoration:"underline"}}>
+                + Unlock more →
+              </button>
+            </div>
+          </div>
 
-          <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
-            <input value={searchQ} onChange={e=>{setSearchQ(e.target.value);setPage(0);}} placeholder="Search Pokémon..."
-              style={{flex:"1 1 140px",minWidth:120,background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"9px 12px",color:"#fff",fontSize:"11px",fontFamily:"'Press Start 2P',monospace"}}/>
+          {/* Search */}
+          <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap"}}>
+            <input value={searchQ} onChange={e=>{setSearchQ(e.target.value);setPage(0);}}
+              placeholder="Search your Pokémon…"
+              style={{flex:"1 1 160px",minWidth:140,background:"rgba(255,255,255,0.05)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"clamp(9px,1.8vw,12px) clamp(10px,2vw,14px)",color:"#fff",fontSize:"clamp(10px,1.8vw,13px)",fontFamily:"'Press Start 2P',monospace"}}/>
             <select value={typeFilt} onChange={e=>{setTypeFilt(e.target.value);setPage(0);}}
-              style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"9px",color:"#888",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}>
+              style={{background:"rgba(10,10,28,0.98)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"clamp(9px,1.8vw,12px)",color:"#888",fontSize:"clamp(9px,1.6vw,12px)",fontFamily:"'Press Start 2P',monospace"}}>
+              <option value="all">All Types</option>
+              {Object.keys(TC).map(t=><option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+
+          {/* Owned Pokémon grid */}
+          {(()=>{
+            const owned=allPokemon.filter(p=>isUnlocked(p)&&(searchQ?p.name.toLowerCase().includes(searchQ.toLowerCase())||String(p.id).includes(searchQ):true)&&(typeFilt!=="all"?p.types.includes(typeFilt):true));
+            if(owned.length===0) return(
+              <div style={{textAlign:"center",padding:"clamp(20px,4vw,40px)",background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:16}}>
+                <div style={{fontSize:"clamp(24px,5vw,40px)",marginBottom:12}}>📭</div>
+                <div style={{color:"#555",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace",marginBottom:12}}>No Pokémon found!</div>
+                <button onClick={()=>setScreen(MODES.UNLOCK)} className="btn"
+                  style={{background:"rgba(79,195,247,0.15)",border:"1.5px solid rgba(79,195,247,0.4)",borderRadius:10,padding:"clamp(10px,2vw,13px) clamp(16px,3vw,24px)",color:"#4FC3F7",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>
+                  🔓 UNLOCK POKÉMON
+                </button>
+              </div>
+            );
+            return(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(clamp(100px,15vw,140px),1fr))",gap:"clamp(8px,1.5vw,12px)",marginBottom:16}}>
+                {owned.map(p=>(
+                  <div key={p.id} className="pcard">
+                    <PokemonCard mon={p} onSelect={m=>startBattle(m)} selected={false}
+                      unlocked={true} coins={profile?.coins||0} onUnlock={()=>{}} cost={0}/>
+                  </div>
+                ))}
+              </div>
+            );
+          })()}
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          UNLOCK SHOP — browse all Pokémon, buy what you want
+      ══════════════════════════════════════════════════ */}
+      {screen===MODES.UNLOCK&&(
+        <div style={{width:"100%",maxWidth:960}}>
+          <div style={{textAlign:"center",marginBottom:"clamp(12px,2.5vw,18px)"}}>
+            <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#4FC3F7",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>🔓 UNLOCK POKÉMON</div>
+            <div style={{fontSize:"clamp(8px,1.5vw,11px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace"}}>
+              Balance: {profile?.coins||0}🪙
+            </div>
+          </div>
+
+          <div style={{display:"flex",gap:8,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
+            <input value={searchQ} onChange={e=>{setSearchQ(e.target.value);setPage(0);}}
+              placeholder="Search Pokémon…"
+              style={{flex:"1 1 160px",minWidth:140,background:"rgba(255,255,255,0.05)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"clamp(9px,1.8vw,12px) clamp(10px,2vw,14px)",color:"#fff",fontSize:"clamp(10px,1.8vw,13px)",fontFamily:"'Press Start 2P',monospace"}}/>
+            <select value={typeFilt} onChange={e=>{setTypeFilt(e.target.value);setPage(0);}}
+              style={{background:"rgba(10,10,28,0.98)",border:"1.5px solid rgba(255,255,255,0.12)",borderRadius:10,padding:"clamp(9px,1.8vw,12px)",color:"#888",fontSize:"clamp(9px,1.6vw,12px)",fontFamily:"'Press Start 2P',monospace"}}>
               <option value="all">All Types</option>
               {Object.keys(TC).map(t=><option key={t} value={t}>{t}</option>)}
             </select>
             <button onClick={()=>setShowLeg(l=>!l)} className="btn"
-              style={{background:showLeg?"rgba(255,213,79,0.15)":"transparent",border:`1px solid ${showLeg?"#FFD54F55":"rgba(255,255,255,0.08)"}`,borderRadius:9,padding:"9px 12px",color:showLeg?"#FFD54F":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>
+              style={{background:showLeg?"rgba(255,213,79,0.15)":"transparent",border:`1.5px solid ${showLeg?"#FFD54F55":"rgba(255,255,255,0.1)"}`,borderRadius:10,padding:"clamp(9px,1.8vw,12px)",color:showLeg?"#FFD54F":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.6vw,12px)"}}>
               ⭐ LEGENDS
             </button>
           </div>
 
-          <div style={{display:"flex",gap:4,marginBottom:10,flexWrap:"wrap"}}>
+          <div style={{display:"flex",gap:5,marginBottom:10,flexWrap:"wrap"}}>
             <button onClick={()=>{setGenFilt("all");setPage(0);}} className="btn"
-              style={{background:genFilt==="all"?"rgba(255,255,255,0.07)":"transparent",border:`1px solid ${genFilt==="all"?"rgba(255,255,255,0.18)":"rgba(255,255,255,0.05)"}`,borderRadius:7,padding:"5px 9px",color:genFilt==="all"?"#ccc":"#333",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>ALL</button>
+              style={{background:genFilt==="all"?"rgba(255,255,255,0.08)":"transparent",border:`1px solid ${genFilt==="all"?"rgba(255,255,255,0.2)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"clamp(5px,1vw,7px) clamp(8px,1.5vw,11px)",color:genFilt==="all"?"#ccc":"#333",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>ALL</button>
             {Object.entries(GENS).map(([g,d])=>(
               <button key={g} onClick={()=>{setGenFilt(genFilt===g?"all":g);setPage(0);}} className="btn"
-                style={{background:genFilt===g?`${d.col}22`:"transparent",border:`1px solid ${genFilt===g?d.col+"55":"rgba(255,255,255,0.05)"}`,borderRadius:7,padding:"5px 8px",color:genFilt===g?d.col:"#2a2a3a",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>
-                G{g} {d.sub}
+                style={{background:genFilt===g?`${d.col}22`:"transparent",border:`1px solid ${genFilt===g?d.col+"55":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"clamp(5px,1vw,7px) clamp(7px,1.3vw,10px)",color:genFilt===g?d.col:"#2a2a3a",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>
+                G{g}
               </button>
             ))}
           </div>
 
           {loading&&(
-            <div style={{marginBottom:10}}>
-              <div style={{color:"#333",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",animation:"pulse 1.5s infinite",marginBottom:4}}>Loading {loadPct}%…</div>
-              <div style={{background:"rgba(255,255,255,0.04)",borderRadius:3,height:3,overflow:"hidden"}}>
+            <div style={{marginBottom:10,textAlign:"center"}}>
+              <div style={{color:"#333",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",animation:"pulse 1.5s infinite",marginBottom:6}}>Loading Pokédex {loadPct}%…</div>
+              <div style={{background:"rgba(255,255,255,0.04)",borderRadius:4,height:4,overflow:"hidden",maxWidth:300,margin:"0 auto"}}>
                 <div style={{width:`${loadPct}%`,background:"linear-gradient(90deg,#7C4DFF,#4FC3F7)",height:"100%",transition:"width 0.3s"}}/>
               </div>
             </div>
           )}
-          <div style={{color:"#1a1a2e",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>{filteredPokemon.length} found • page {page+1}/{Math.max(1,Math.ceil(filteredPokemon.length/PAGE))}</div>
 
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:8,marginBottom:14}}>
+          <div style={{color:"#1a1a2e",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>
+            {filteredPokemon.length} Pokémon • page {page+1}/{Math.max(1,Math.ceil(filteredPokemon.length/PAGE))}
+          </div>
+
+          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(clamp(100px,14vw,140px),1fr))",gap:"clamp(8px,1.5vw,12px)",marginBottom:16}}>
             {pagedPokemon.map(p=>(
               <div key={p.id} className="pcard">
-                <PokemonCard mon={p} onSelect={m=>{ startBattle(m); }}
+                <PokemonCard mon={p} onSelect={m=>startBattle(m)}
                   selected={false} unlocked={isUnlocked(p)}
                   coins={profile?.coins||0} onUnlock={unlockPokemon}
-                  cost={p.legendary?UNLOCK_COST*3:p.canMega?UNLOCK_COST*2:UNLOCK_COST}/>
+                  cost={p.legendary?UNLOCK_COST*3:p.canMega?UNLOCK_COST*2:UNLOCK_COST}
+                  shopMode={true}/>
               </div>
             ))}
           </div>
-          <div style={{display:"flex",gap:8,justifyContent:"center"}}>
-            {page>0&&<button onClick={()=>setPage(p=>p-1)} className="btn" style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"9px 16px",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>← PREV</button>}
-            {(page+1)*PAGE<filteredPokemon.length&&<button onClick={()=>setPage(p=>p+1)} className="btn" style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"9px 16px",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>NEXT →</button>}
+          <div style={{display:"flex",gap:10,justifyContent:"center"}}>
+            {page>0&&<button onClick={()=>setPage(p=>p-1)} className="btn" style={{background:"rgba(255,255,255,0.03)",border:"1.5px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"clamp(9px,1.8vw,12px) clamp(14px,2.5vw,20px)",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>← PREV</button>}
+            {(page+1)*PAGE<filteredPokemon.length&&<button onClick={()=>setPage(p=>p+1)} className="btn" style={{background:"rgba(255,255,255,0.03)",border:"1.5px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"clamp(9px,1.8vw,12px) clamp(14px,2.5vw,20px)",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>NEXT →</button>}
           </div>
         </div>
       )}
@@ -2681,7 +3419,7 @@ export default function App(){
       ══════════════════════════════════════════════════ */}
       {screen===MODES.TEAM&&(
         <div style={{width:"100%",maxWidth:900}}>
-          <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>YOUR TEAM ({team.length}/6)</div>
+          <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,16px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>YOUR TEAM ({team.length}/6)</div>
           {team.length>0&&(
             <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px",marginBottom:16}}>
               <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>ACTIVE TEAM</div>
@@ -2720,7 +3458,7 @@ export default function App(){
       ══════════════════════════════════════════════════ */}
       {screen===MODES.SHOP&&(
         <div style={{width:"100%",maxWidth:680}}>
-          <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>🛒 SHOP</div>
+          <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,16px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>🛒 SHOP</div>
           <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:16,textAlign:"center"}}>Balance: <span style={{color:"#FFD54F"}}>{profile?.coins||0}🪙</span></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
             {SHOP_ITEMS.map(item=>{
@@ -2888,7 +3626,7 @@ export default function App(){
               </div>
             </div>
             <div className="battle-arena" style={{display:"flex",justifyContent:"space-between",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-              <BattleStatCard mon={pMon} hp={pHP} maxHP={pMaxHP} level={pLevel} isMega={pMega} isGiga={pGiga}/>
+              <BattleStatCard mon={pMon} hp={pHP} maxHP={pMaxHP} level={pLevel} isMega={pMega} isGiga={pGiga} exp={expMap[pMon?.id]}/>
               <BattleStatCard mon={eMon} hp={eHP} maxHP={eMaxHP} level={50}/>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 20px",minHeight:140,position:"relative"}}>
@@ -2904,7 +3642,7 @@ export default function App(){
           {/* Weather desc strip */}
           {weather&&weather.id!=="clear"&&<WeatherBanner weather={weather}/>}
 
-          <div ref={logRef} style={{background:"rgba(3,3,10,0.97)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:"10px 14px",height:75,overflowY:"auto",marginBottom:12,fontSize:"10px",lineHeight:2.2,fontFamily:"'Press Start 2P',monospace"}}>
+          <div ref={logRef} style={{background:"rgba(3,3,10,0.97)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:10,padding:"10px 14px",height:"clamp(70px,12vw,90px)",overflowY:"auto",marginBottom:12,fontSize:"clamp(9px,1.8vw,12px)",lineHeight:2.2,fontFamily:"'Press Start 2P',monospace"}}>
             {log.map((l,i)=><div key={i} style={{color:i===log.length-1?"#eee":i===log.length-2?"#555":"#1a1a2e",animation:i===log.length-1?"slideIn 0.25s ease":"none"}}>{l}</div>)}
           </div>
 
@@ -2950,7 +3688,7 @@ export default function App(){
                       onMouseEnter={()=>setHoverMove(m.name)} onMouseLeave={()=>setHoverMove(null)}
                       style={{background:`linear-gradient(135deg,${mc}22,${mc}0a)`,border:`1px solid ${isHovered?mc+"88":mc+"44"}`,borderRadius:11,padding:"13px 14px",cursor:busy?"not-allowed":"pointer",transition:"all 0.14s",textAlign:"left",opacity:busy?0.45:1,position:"relative"}}>
                       {isHovered&&eMon&&<MatchupPreview move={m} enemyTypes={eMon.types}/>}
-                      <div style={{color:"#fff",fontSize:"11px",marginBottom:6,fontFamily:"'Press Start 2P',monospace",lineHeight:1.4}}>{m.name}</div>
+                      <div style={{color:"#fff",fontSize:"clamp(9px,1.8vw,13px)",marginBottom:6,fontFamily:"'Press Start 2P',monospace",lineHeight:1.4}}>{m.name}</div>
                       <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                         <Badge type={m.type} small/><span style={{color:"#333",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>PWR {actualPower}</span>
                       </div>
@@ -3029,7 +3767,7 @@ export default function App(){
         <div style={{textAlign:"center",animation:"slideIn 0.5s ease",maxWidth:500,width:"100%",padding:"0 8px"}}>
           {winner==="player"?(
             <>
-              <div style={{fontSize:"24px",color:"#FFD54F",marginBottom:6,animation:"glow 1.5s ease-in-out infinite",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>🏆 VICTORY!</div>
+              <div style={{fontSize:"clamp(18px,4vw,28px)",color:"#FFD54F",marginBottom:6,animation:"glow 1.5s ease-in-out infinite",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>🏆 VICTORY!</div>
               <div style={{fontSize:"12px",color:"#555",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>★ ★ ★ ★ ★</div>
             </>
           ):(
@@ -3051,44 +3789,120 @@ export default function App(){
       {/* ══════════════════════════════════════════════════
           MULTIPLAYER PANEL (on SELECT screen)
       ══════════════════════════════════════════════════ */}
-      {screen===MODES.SELECT&&(
-        <div style={{position:"fixed",bottom:16,right:16,background:"rgba(3,3,12,0.98)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:14,padding:"14px 16px",minWidth:220,boxShadow:"0 0 28px rgba(124,77,255,0.1)",zIndex:100}}>
-          <div style={{color:"#7C4DFF",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,letterSpacing:1}}>🌐 MULTIPLAYER</div>
-          <div style={{color:"#1e1e2e",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>Status: <span style={{color:wsStatus==="connected"?"#4CAF50":wsStatus==="connecting"?"#FFD54F":"#f44336"}}>{wsStatus.toUpperCase()}</span></div>
+      {(screen===MODES.SELECT||screen===MODES.UNLOCK)&&(
+        <div style={{position:"fixed",bottom:16,right:16,background:"rgba(3,3,12,0.98)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:14,padding:"14px 16px",minWidth:240,maxWidth:280,boxShadow:"0 0 28px rgba(124,77,255,0.1)",zIndex:100}}>
+          <div style={{color:"#7C4DFF",fontSize:"clamp(9px,1.8vw,11px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8,letterSpacing:1}}>🌐 MULTIPLAYER</div>
+          <div style={{color:"#333",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",marginBottom:10,lineHeight:1.8}}>
+            Requires a second player.<br/>Both must be connected.
+          </div>
+          <div style={{color:"#1e1e2e",fontSize:"clamp(7px,1.2vw,9px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>
+            Status: <span style={{color:wsStatus==="connected"?"#4CAF50":wsStatus==="connecting"?"#FFD54F":"#f44336"}}>{wsStatus.toUpperCase()}</span>
+          </div>
 
           {wsStatus==="disconnected"&&(
-            <button onClick={connectWS} className="btn" style={{width:"100%",background:"rgba(124,77,255,0.12)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:7,padding:"8px",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px",marginBottom:4}}>CONNECT</button>
+            <button onClick={connectWS} className="btn" style={{width:"100%",background:"rgba(124,77,255,0.12)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:7,padding:"clamp(7px,1.5vw,10px)",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",marginBottom:4}}>CONNECT</button>
           )}
 
           {wsStatus==="connected"&&(
             <>
-              {/* Tab: Create or Join */}
-              <div style={{display:"flex",gap:4,marginBottom:8}}>
-                <button onClick={()=>setMpMode("create")} style={{flex:1,background:mpMode==="create"?"rgba(124,77,255,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="create"?"rgba(124,77,255,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"5px",color:mpMode==="create"?"#9C7DFF":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"7px"}}>CREATE</button>
-                <button onClick={()=>setMpMode("join")} style={{flex:1,background:mpMode==="join"?"rgba(79,195,247,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="join"?"rgba(79,195,247,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"5px",color:mpMode==="join"?"#4FC3F7":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"7px"}}>JOIN</button>
+              <div style={{background:"rgba(76,175,80,0.08)",border:"1px solid rgba(76,175,80,0.2)",borderRadius:8,padding:"8px 10px",marginBottom:10}}>
+                <div style={{color:"#4CAF50",fontSize:"clamp(7px,1.2vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>✅ Connected!</div>
+                <div style={{color:"#1a3a1a",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>Share room code with friend</div>
               </div>
-
+              <div style={{display:"flex",gap:4,marginBottom:8}}>
+                <button onClick={()=>setMpMode("create")} style={{flex:1,background:mpMode==="create"?"rgba(124,77,255,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="create"?"rgba(124,77,255,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"clamp(5px,1vw,7px)",color:mpMode==="create"?"#9C7DFF":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>CREATE</button>
+                <button onClick={()=>setMpMode("join")} style={{flex:1,background:mpMode==="join"?"rgba(79,195,247,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="join"?"rgba(79,195,247,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"clamp(5px,1vw,7px)",color:mpMode==="join"?"#4FC3F7":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>JOIN</button>
+              </div>
               {mpMode==="create"?(
-                <button onClick={createRoom} disabled={!pMon} className="btn"
-                  style={{width:"100%",background:"rgba(124,77,255,0.15)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:8,padding:"9px",color:pMon?"#9C7DFF":"#333",cursor:pMon?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"8px",marginBottom:4}}>
+                <button onClick={()=>{ if(!pMon){alert("Select a Pokémon first!");return;} createRoom(); }} className="btn"
+                  style={{width:"100%",background:pMon?"rgba(124,77,255,0.15)":"rgba(255,255,255,0.02)",border:`1px solid ${pMon?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"clamp(8px,1.5vw,10px)",color:pMon?"#9C7DFF":"#333",cursor:pMon?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.4vw,10px)",marginBottom:4}}>
                   {pMon?"🎲 CREATE ROOM":"Pick Pokémon first"}
                 </button>
               ):(
                 <>
-                  <input value={roomInput} onChange={e=>setRoomInput(e.target.value.toUpperCase())} placeholder="Enter room code…" maxLength={6}
-                    style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"7px 9px",color:"#fff",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:6,letterSpacing:4,textAlign:"center"}}/>
-                  <button onClick={joinRoom} disabled={!pMon||roomInput.length<4} className="btn"
-                    style={{width:"100%",background:"rgba(79,195,247,0.12)",border:"1px solid rgba(79,195,247,0.25)",borderRadius:7,padding:"8px",color:pMon?"#4FC3F7":"#333",cursor:(pMon&&roomInput.length>=4)?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>
+                  <input value={roomInput} onChange={e=>setRoomInput(e.target.value.toUpperCase())} placeholder="ROOM CODE" maxLength={6}
+                    style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"clamp(7px,1.4vw,9px)",color:"#fff",fontSize:"clamp(10px,1.8vw,13px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6,letterSpacing:6,textAlign:"center"}}/>
+                  <button onClick={()=>{ if(!pMon){alert("Select a Pokémon first!");return;} joinRoom(); }} disabled={!roomInput||roomInput.length<4} className="btn"
+                    style={{width:"100%",background:"rgba(79,195,247,0.12)",border:"1px solid rgba(79,195,247,0.25)",borderRadius:7,padding:"clamp(7px,1.4vw,9px)",color:roomInput.length>=4?"#4FC3F7":"#333",cursor:roomInput.length>=4?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.4vw,10px)"}}>
                     JOIN BATTLE
                   </button>
                 </>
               )}
-
-              <div style={{color:"#0e0e1e",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:6}}>Needs node server.js</div>
+              <div style={{color:"#111",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:8,textAlign:"center"}}>⚠️ Requires server.js running</div>
             </>
           )}
         </div>
       )}
+
+      {/* ══════════════════════════════════════════════════
+          STORY MODE
+      ══════════════════════════════════════════════════ */}
+      {screen===MODES.STORY&&(
+        <StoryScreen
+          profile={profile}
+          storyProgress={storyProgress}
+          allPokemon={allPokemon}
+          onStartGym={gym=>{
+            if(!pMon){ alert("Go to TEAM and pick a Pokémon first!"); return; }
+            startStoryBattle(gym,allPokemon);
+          }}
+          onBack={()=>setScreen(MODES.HOME)}
+        />
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          BATTLE HISTORY
+      ══════════════════════════════════════════════════ */}
+      {screen===MODES.HISTORY&&(
+        <HistoryScreen history={battleHistory} onBack={()=>setScreen(MODES.HOME)}/>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          TRADE CENTER (modal overlay)
+      ══════════════════════════════════════════════════ */}
+      {showTrade&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.92)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:400,padding:16}} onClick={()=>setShowTrade(false)}>
+          <div style={{background:"#07070f",border:"1px solid rgba(102,187,106,0.3)",borderRadius:18,padding:"24px 20px",maxWidth:740,width:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+            <TradeScreen
+              allPokemon={allPokemon}
+              unlockedIds={unlockedIds}
+              starterPokemon={starterPokemon}
+              profile={profile}
+              onTrade={handleTrade}
+            />
+            <button onClick={()=>setShowTrade(false)} style={{width:"100%",marginTop:14,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"10px",color:"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>✕ CLOSE</button>
+          </div>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          EVOLUTION ANIMATION
+      ══════════════════════════════════════════════════ */}
+      {pendingEvo&&showEvoAnim&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.85)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:500}}>
+          <div style={{position:"relative",width:320,height:220,textAlign:"center"}}>
+            <EvolutionAnim oldMon={pendingEvo.oldMon} newId={pendingEvo.newId} onDone={()=>{
+              setShowEvoAnim(false);
+              // Swap pokemon in allPokemon lookup
+              const newMon=allPokemon.find(p=>p.id===pendingEvo.newId);
+              if(newMon){
+                // Unlock the evolved form
+                const nu=new Set([...unlockedIds,pendingEvo.newId]);
+                setUnlockedIds(nu);
+                localStorage.setItem(`pkmn_unlocked_${profile?.name}`,JSON.stringify([...nu]));
+                pushLog(`🎉 ${pendingEvo.oldMon.name.toUpperCase()} evolved into ${newMon.name.toUpperCase()}!`);
+              }
+              setPendingEvo(null);
+            }}/>
+            <div style={{position:"absolute",bottom:10,left:0,right:0}}>
+              <div style={{color:"#FFD54F",fontSize:"11px",fontFamily:"'Press Start 2P',monospace",animation:"pulse 0.8s infinite"}}>
+                {pendingEvo.oldMon.name.toUpperCase()} → ?
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
+
     </div>
   );
 }
