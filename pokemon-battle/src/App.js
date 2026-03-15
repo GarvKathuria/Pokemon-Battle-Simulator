@@ -1,9 +1,6 @@
 /* eslint-disable */
 import { useState, useEffect, useRef, useCallback, useMemo } from "react";
-
-// Google OAuth Client ID: 661351244640-gnpaf4cejj9uoeg4q4h86uk0ghq2ena8.apps.googleusercontent.com
-// To update: search for GOOGLE_CLIENT_ID in this file
-
+// Google Client ID: 661351244640-gnpaf4cejj9uoeg4q4h86uk0ghq2ena8.apps.googleusercontent.com
 
 // ══════════════════════════════════════════════════════════════════════
 //  CONSTANTS & DATA
@@ -185,34 +182,124 @@ const SHOP_ITEMS = [
 
 // Starter Pokémon choices — Gen 1 starters
 const STARTER_CHOICES = [
+  // Gen 1 — Kanto
   {id:1,name:"Bulbasaur"},{id:4,name:"Charmander"},{id:7,name:"Squirtle"},
-  {id:25,name:"Pikachu"},{id:133,name:"Eevee"},{id:152,name:"Chikorita"},
-  {id:155,name:"Cyndaquil"},{id:158,name:"Totodile"},{id:252,name:"Treecko"},
-  {id:255,name:"Torchic"},{id:258,name:"Mudkip"},{id:387,name:"Turtwig"},
+  // Gen 1 extras
+  {id:25,name:"Pikachu"},{id:133,name:"Eevee"},
+  // Gen 2 — Johto
+  {id:152,name:"Chikorita"},{id:155,name:"Cyndaquil"},{id:158,name:"Totodile"},
+  // Gen 3 — Hoenn
+  {id:252,name:"Treecko"},{id:255,name:"Torchic"},{id:258,name:"Mudkip"},
+  // Gen 4 — Sinnoh
+  {id:387,name:"Turtwig"},{id:390,name:"Chimchar"},{id:393,name:"Piplup"},
+  // Gen 5 — Unova
+  {id:495,name:"Snivy"},{id:498,name:"Tepig"},{id:501,name:"Oshawott"},
+  // Gen 6 — Kalos
+  {id:650,name:"Chespin"},{id:653,name:"Fennekin"},{id:656,name:"Froakie"},
+  // Gen 7 — Alola
+  {id:722,name:"Rowlet"},{id:725,name:"Litten"},{id:728,name:"Popplio"},
+  // Gen 8 — Galar
+  {id:810,name:"Grookey"},{id:813,name:"Scorbunny"},{id:816,name:"Sobble"},
+  // Gen 9 — Paldea
+  {id:906,name:"Sprigatito"},{id:909,name:"Fuecoco"},{id:912,name:"Quaxly"},
 ];
 
 const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history"};
 
-// ── Supabase database (set your keys below) ─────────────────────────
-// 1. Go to supabase.com → New project
-// 2. Settings → API → copy "Project URL" and "anon public" key
-// 3. Run this SQL in Supabase SQL editor:
-//    CREATE TABLE players (id bigserial primary key, username text, email text, action text, ts timestamptz default now());
-//    CREATE TABLE battles (id bigserial primary key, winner text, player_pokemon text, enemy_pokemon text, turns int, ts timestamptz default now());
-const SUPA_URL = "https://YOUR_PROJECT.supabase.co"; // ← paste your URL
-const SUPA_KEY = "YOUR_ANON_KEY";                     // ← paste your anon key
+// ══════════════════════════════════════════════════════════════════════
+// SUPABASE DATABASE SETUP
+// ══════════════════════════════════════════════════════════════════════
+// 1. Go to supabase.com → New project (free tier, Southeast Asia region)
+// 2. Left sidebar → SQL Editor → New query → paste and run ALL of this:
+//
+//  -- Players table: tracks every registration and login
+//  CREATE TABLE players (
+//    id          bigserial PRIMARY KEY,
+//    username    text NOT NULL,
+//    email       text,
+//    action      text,          -- 'register' | 'login' | 'guest'
+//    pass_hash   text,          -- hashed password (never plain text)
+//    avatar      text,          -- emoji or '[built]'
+//    wins        int DEFAULT 0,
+//    losses      int DEFAULT 0,
+//    coins       int DEFAULT 500,
+//    score       int DEFAULT 0,
+//    ts          timestamptz DEFAULT now()
+//  );
+//  -- Battles table: tracks every battle result
+//  CREATE TABLE battles (
+//    id             bigserial PRIMARY KEY,
+//    username       text,
+//    winner         text,        -- username of winner
+//    player_pokemon text,
+//    enemy_pokemon  text,
+//    turns          int,
+//    ts             timestamptz DEFAULT now()
+//  );
+//  -- Sessions table: tracks logins for DAU stats
+//  CREATE TABLE sessions (
+//    id         bigserial PRIMARY KEY,
+//    username   text,
+//    action     text,            -- 'login' | 'register' | 'guest_start'
+//    ts         timestamptz DEFAULT now()
+//  );
+//  -- Enable Row Level Security
+//  ALTER TABLE players  ENABLE ROW LEVEL SECURITY;
+//  ALTER TABLE battles  ENABLE ROW LEVEL SECURITY;
+//  ALTER TABLE sessions ENABLE ROW LEVEL SECURITY;
+//  -- Allow anonymous inserts (the game writes, only you read via dashboard)
+//  CREATE POLICY "insert_players"  ON players  FOR INSERT WITH CHECK (true);
+//  CREATE POLICY "insert_battles"  ON battles  FOR INSERT WITH CHECK (true);
+//  CREATE POLICY "insert_sessions" ON sessions FOR INSERT WITH CHECK (true);
+//  -- Useful views for your dashboard:
+//  CREATE VIEW daily_active_users AS
+//    SELECT DATE(ts) as day, COUNT(DISTINCT username) as users FROM sessions GROUP BY day ORDER BY day DESC;
+//  CREATE VIEW top_players AS
+//    SELECT username, MAX(wins) as wins, MAX(losses) as losses,
+//           ROUND(MAX(wins)::numeric/NULLIF(MAX(wins)+MAX(losses),0)*100,1) as win_rate
+//    FROM players WHERE action IN ('register','login') GROUP BY username ORDER BY wins DESC LIMIT 50;
+//  CREATE VIEW registrations_per_day AS
+//    SELECT DATE(ts) as day, COUNT(*) as new_users FROM players WHERE action='register' GROUP BY day ORDER BY day DESC;
+//
+// 3. Settings → API → copy "Project URL" and "anon public" key → paste below:
+const SUPA_URL = "https://hoqsdlpsqdtpvskbfafh.supabase.co";
+const SUPA_KEY = "sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
 const SUPA_READY = SUPA_URL.includes("supabase.co") && !SUPA_URL.includes("YOUR_PROJECT");
 function supaTrack(table, data){
   if(!SUPA_READY) return;
   fetch(`${SUPA_URL}/rest/v1/${table}`,{
     method:"POST",
-    headers:{"Content-Type":"application/json","apikey":SUPA_KEY,"Authorization":`Bearer ${SUPA_KEY}`,"Prefer":"return=minimal"},
+    headers:{
+      "Content-Type":"application/json",
+      "apikey": SUPA_KEY,
+      "Authorization": `Bearer ${SUPA_KEY}`,
+      "Prefer": "return=minimal"
+    },
     body:JSON.stringify({...data, ts: new Date().toISOString()})
   }).catch(()=>{}); // silent fail — never blocks the game
 }
-function supaLogin(username, email){ supaTrack("players",{username,email,action:"login"}); }
-function supaRegister(username, email){ supaTrack("players",{username,email,action:"register"}); }
-function supaBattle(winner, pName, eName, turns){ supaTrack("battles",{winner,player_pokemon:pName,enemy_pokemon:eName,turns}); }
+// Track registration (username + email + hashed password)
+function supaRegister(username, email, passHash, avatar){
+  supaTrack("players",{username,email,action:"register",pass_hash:passHash||"",avatar:avatar||"",wins:0,losses:0,coins:500,score:0});
+  supaTrack("sessions",{username,action:"register"});
+}
+// Track login
+function supaLogin(username, email){
+  supaTrack("players",{username,email:email||"",action:"login"});
+  supaTrack("sessions",{username,action:"login"});
+}
+// Track guest start
+function supaGuest(guestName){
+  supaTrack("sessions",{username:guestName,action:"guest_start"});
+}
+// Track battle result
+function supaBattle(username, winner, pName, eName, turns){
+  supaTrack("battles",{username,winner,player_pokemon:pName,enemy_pokemon:eName,turns});
+}
+// Update player stats after battle
+function supaUpdateStats(username, wins, losses, coins){
+  supaTrack("players",{username,action:"stats_update",wins,losses,coins,score:wins*100-losses*10});
+}
 
 // ── EXP & Evolution ─────────────────────────────────────────────────
 const EXP_TO_LEVEL = lvl => Math.floor(100 * Math.pow(lvl, 2.2));
@@ -1510,7 +1597,7 @@ function AvatarPreview({hair,face,skin,hairColor,eyes,size=80}){
 //  AUTH / LOGIN SCREEN — email+password, no external OAuth needed
 // ══════════════════════════════════════════════════════════════════════
 function CharacterScreen({onDone}){
-  const [mode,setMode]=useState("login"); // "login" | "register" | "avatar"
+  const [mode,setMode]=useState("login");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
   const [username,setUsername]=useState("");
@@ -1518,7 +1605,6 @@ function CharacterScreen({onDone}){
   const [loading,setLoading]=useState(false);
   const [showPass,setShowPass]=useState(false);
   const [pendingProfile,setPendingProfile]=useState(null);
-  // Avatar
   const [builderMode,setBuilderMode]=useState(false);
   const [emojiAvatar,setEmojiAvatar]=useState("🔴");
   const [hair,setHair]=useState("short-dark");
@@ -1534,181 +1620,218 @@ function CharacterScreen({onDone}){
   const SKIN_OPTS=["#FDDBB4","#EDB98A","#D08B5B","#AE5D29","#694C3B","#F2DCC9","#FDEDCA","#C68642"];
   const EYE_OPTS=["👀","🔵","🟤","🟢","⚫","🔴","💜","🌟"];
 
-  function getDB(){ try{return JSON.parse(localStorage.getItem("pkmn_auth_db")||"{}")}catch{return {}} }
-  function saveDB(db){ localStorage.setItem("pkmn_auth_db",JSON.stringify(db)); }
-  function hash(p){ let h=0; for(let i=0;i<p.length;i++){h=(h<<5)-h+p.charCodeAt(i);h|=0;} return String(h); }
+  function getDB(){try{return JSON.parse(localStorage.getItem("pkmn_auth_db")||"{}")}catch{return{}}}
+  function saveDB(db){localStorage.setItem("pkmn_auth_db",JSON.stringify(db));}
+  function hash(p){let h=0;for(let i=0;i<p.length;i++){h=(h<<5)-h+p.charCodeAt(i);h|=0;}return String(h);}
 
-  // ── Google Sign-In ────────────────────────────────────
-  const GOOGLE_CLIENT_ID = "661351244640-gnpaf4cejj9uoeg4q4h86uk0ghq2ena8.apps.googleusercontent.com";
+  const GOOGLE_CLIENT_ID="661351244640-gnpaf4cejj9uoeg4q4h86uk0ghq2ena8.apps.googleusercontent.com";
 
+  // Login screen music
   useEffect(()=>{
-    if(mode==="avatar") return;
+    let ctx,master,tid;
+    function start(){
+      try{
+        ctx=new(window.AudioContext||window.webkitAudioContext)();
+        master=ctx.createGain();master.gain.value=0.3;master.connect(ctx.destination);
+        function note(f,t,dur,wave="triangle",v=0.15){
+          const o=ctx.createOscillator(),g=ctx.createGain();
+          o.type=wave;o.frequency.value=f;
+          g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(v,t+0.02);
+          g.gain.exponentialRampToValueAtTime(0.001,t+dur);
+          o.connect(g);g.connect(master);
+          try{o.start(t);o.stop(t+dur+0.05);}catch{}
+        }
+        function loop(){
+          const now=ctx.currentTime,b=60/95;
+          const mel=[523,2,440,1,494,1,523,2,587,2,523,2,440,4,392,2,440,1,494,1,440,2,392,2,349,4];
+          let t=now;
+          for(let i=0;i<mel.length;i+=2){if(mel[i])note(mel[i],t,b*mel[i+1]*0.85,"triangle",0.14);t+=b*mel[i+1];}
+          [130,110,123,110].forEach((f,i)=>note(f,now+i*b*4,b*3.5,"sine",0.09));
+          const dur=mel.reduce((s,v,i)=>i%2===1?s+v:s,0)*b*1000;
+          tid=setTimeout(loop,dur-200);
+        }
+        loop();
+      }catch{}
+    }
+    function onInteract(){start();document.removeEventListener("click",onInteract);document.removeEventListener("keydown",onInteract);}
+    document.addEventListener("click",onInteract);
+    document.addEventListener("keydown",onInteract);
+    return()=>{
+      document.removeEventListener("click",onInteract);
+      document.removeEventListener("keydown",onInteract);
+      if(tid)clearTimeout(tid);
+      if(ctx)try{ctx.close();}catch{}
+    };
+  },[]);
+
+  // Google Sign-In
+  useEffect(()=>{
+    if(mode==="avatar")return;
     function initGoogle(){
-      if(!window.google?.accounts?.id) return;
-      window.google.accounts.id.initialize({
-        client_id: GOOGLE_CLIENT_ID,
-        callback: handleGoogleCredential,
-        auto_select: false,
-        cancel_on_tap_outside: true,
-      });
+      if(!window.google?.accounts?.id)return;
+      window.google.accounts.id.initialize({client_id:GOOGLE_CLIENT_ID,callback:handleGoogleCredential,auto_select:false});
       const btn=document.getElementById("google-signin-btn");
-      if(btn){
-        btn.innerHTML="";
-        window.google.accounts.id.renderButton(btn,{
-          theme:"filled_black", size:"large",
-          width: Math.min(btn.offsetWidth||400, 400),
-          text: mode==="register"?"signup_with":"signin_with",
-          shape:"rectangular", logo_alignment:"left",
-        });
-      }
+      if(btn){btn.innerHTML="";window.google.accounts.id.renderButton(btn,{theme:"filled_black",size:"large",width:Math.min(btn.offsetWidth||400,400),text:mode==="register"?"signup_with":"signin_with",shape:"rectangular"});}
     }
-    if(window.google?.accounts?.id) initGoogle();
-    else {
-      const t=setInterval(()=>{ if(window.google?.accounts?.id){ initGoogle(); clearInterval(t); } },200);
-      return ()=>clearInterval(t);
-    }
+    if(window.google?.accounts?.id){initGoogle();return;}
+    const t=setInterval(()=>{if(window.google?.accounts?.id){initGoogle();clearInterval(t);}},300);
+    return()=>clearInterval(t);
   },[mode]);
 
-  function handleGoogleCredential(response){
-    if(!response?.credential){ setError("Google sign-in failed. Try again."); return; }
+  function handleGoogleCredential(resp){
+    if(!resp?.credential){setError("Google sign-in failed. Try again.");return;}
     try{
-      const parts=response.credential.split(".");
-      const payload=JSON.parse(atob(parts[1].replace(/-/g,"+").replace(/_/g,"/")));
-      const { email:gEmail, name:gName, sub:googleSub }=payload;
+      const payload=JSON.parse(atob(resp.credential.split(".")[1].replace(/-/g,"+").replace(/_/g,"/")));
+      const{email:gEmail,name:gName,sub:googleSub}=payload;
       const db=getDB();
-      // Check if already registered
       const existing=db[gEmail]||Object.values(db).find(u=>u.googleId===googleSub);
       if(existing){
         const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
         const prof=profiles.find(p=>p.name===existing.username);
-        supaLogin(existing.username, gEmail);
-        if(prof){ onDone(prof); return; }
+        if(prof){onDone(prof);return;}
         const np={name:existing.username,avatar:existing.avatar||"🌟",avatarData:existing.avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
         localStorage.setItem("pkmn_profiles",JSON.stringify([...profiles,np]));
-        onDone(np); return;
+        onDone(np);return;
       }
-      // New Google user — set up username
       const suggested=(gName||gEmail.split("@")[0]).replace(/[^a-zA-Z0-9]/g,"").slice(0,12)||"Trainer";
-      setUsername(suggested);
-      setPendingProfile({email:gEmail, googleId:googleSub, isGoogle:true});
-      setMode("avatar");
-    }catch(e){ setError("Google sign-in failed. Please try email/password."); }
+      setUsername(suggested);setPendingProfile({email:gEmail,googleId:googleSub,isGoogle:true});setMode("avatar");
+    }catch(e){setError("Google sign-in failed. Please use email/password.");}
   }
 
   function handleLogin(){
     const key=email.trim().toLowerCase();
-    if(!key||!password){ setError("Fill in all fields"); return; }
-    setLoading(true); setError("");
+    if(!key||!password){setError("Fill in all fields");return;}
+    setLoading(true);setError("");
     setTimeout(()=>{
       const db=getDB();
       const user=db[key]||Object.values(db).find(u=>u.username.toLowerCase()===key);
-      if(!user){ setError("No account found. Please register!"); setLoading(false); return; }
-      if(user.password!==hash(password)){ setError("Wrong password. Try again!"); setLoading(false); return; }
+      if(!user){setError("No account found. Please register!");setLoading(false);return;}
+      if(user.password!==hash(password)){setError("Wrong password. Try again!");setLoading(false);return;}
       const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
       const prof=profiles.find(p=>p.name===user.username);
-      supaLogin(user.username, user.email||"");
-      if(prof){ setLoading(false); onDone(prof); return; }
+      if(prof){setLoading(false);supaLogin(user.username,user.email||"");onDone(prof);return;}
       const np={name:user.username,avatar:user.avatar||"🔴",avatarData:user.avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
       localStorage.setItem("pkmn_profiles",JSON.stringify([...profiles,np]));
-      setLoading(false); onDone(np);
+      supaLogin(user.username,user.email||"");
+      setLoading(false);onDone(np);
     },500);
   }
 
   function handleRegister(){
-    const e=email.trim().toLowerCase(), u=username.trim(), p=password;
-    if(!e||!u||!p){ setError("Fill in all fields"); return; }
-    if(u.length<2||u.length>16){ setError("Username: 2-16 characters"); return; }
-    if(!/^[a-zA-Z0-9_-]+$/.test(u)){ setError("Username: letters, numbers, _, - only"); return; }
-    if(p.length<6){ setError("Password needs 6+ characters"); return; }
-    if(!e.includes("@")||!e.includes(".")){ setError("Enter a valid email"); return; }
-    if(RESERVED.includes(u.toLowerCase())){ setError(`"${u}" is a reserved name`); return; }
+    const e=email.trim().toLowerCase(),u=username.trim(),p=password;
+    if(!e||!u||!p){setError("Fill in all fields");return;}
+    if(u.length<2||u.length>16){setError("Username: 2-16 characters");return;}
+    if(!/^[a-zA-Z0-9_-]+$/.test(u)){setError("Username: letters, numbers, _ - only");return;}
+    if(p.length<6){setError("Password needs 6+ characters");return;}
+    if(!e.includes("@")||!e.includes(".")){setError("Enter a valid email");return;}
+    if(RESERVED.includes(u.toLowerCase())){setError(`"${u}" is reserved`);return;}
     const db=getDB();
-    if(db[e]){ setError("Email already registered!"); return; }
-    if(Object.values(db).find(x=>x.username.toLowerCase()===u.toLowerCase())){ setError(`Username "${u}" is taken`); return; }
-    setError("");
-    setPendingProfile({email:e,username:u,password:hash(p)});
-    setMode("avatar");
+    if(db[e]){setError("Email already registered!");return;}
+    if(Object.values(db).find(x=>x.username.toLowerCase()===u.toLowerCase())){setError(`Username "${u}" is taken`);return;}
+    setError("");setPendingProfile({email:e,username:u,password:hash(p),isGoogle:false});setMode("avatar");
   }
 
   function finishCreate(){
     const avatarData=builderMode?{type:"built",hair,face,skin,hairColor,eyes}:{type:"emoji",emoji:emojiAvatar};
     const av=builderMode?"[built]":emojiAvatar;
     const db=getDB();
-    const uname=pendingProfile.username;
-    db[pendingProfile.email]={username:uname,email:pendingProfile.email,password:pendingProfile.password,avatar:av,avatarData};
+    const uname=pendingProfile?.username||username.trim()||"Trainer";
+    db[pendingProfile.email]={username:uname,email:pendingProfile.email,password:pendingProfile.password||null,googleId:pendingProfile.googleId||null,avatar:av,avatarData};
     saveDB(db);
     const profile={name:uname,avatar:av,avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
     const all=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
     localStorage.setItem("pkmn_profiles",JSON.stringify([...all,profile]));
-    supaRegister(uname,pendingProfile.email);
+    // Track to Supabase — register for new accounts, login for Google returning users
+    if(pendingProfile.isGoogle){
+      supaLogin(uname, pendingProfile.email||"");
+    } else {
+      supaRegister(uname, pendingProfile.email||"", pendingProfile.password||"", av);
+    }
     onDone(profile);
   }
 
   const existing=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-  const hairDisplay={"short-dark":{borderRadius:"50% 50% 0 0",height:"35%"},"long-dark":{borderRadius:"50% 50% 10% 10%",height:"75%"},"short-blonde":{borderRadius:"50% 50% 0 0",height:"32%"},"long-blonde":{borderRadius:"50% 50% 10% 10%",height:"80%"},"short-red":{borderRadius:"60% 60% 10% 10%",height:"30%"},"curly-brown":{borderRadius:"50%",height:"45%"},"afro-black":{borderRadius:"50%",height:"65%",width:"110%",left:"-5%"},"braids-brown":{borderRadius:"30% 30% 0 0",height:"90%"},"spiky-blue":{clipPath:"polygon(20% 100%,0 0,40% 60%,50% 0,60% 60%,100% 0,80% 100%)",height:"50%"}};
 
-  // ── AVATAR PICKER ─────────────────────────────────────
+  // ── AVATAR SCREEN ───────────────────────────────────────
   if(mode==="avatar"){
     return(
-      <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"clamp(16px,4vw,28px)"}}>
-        <div style={{width:"100%",maxWidth:540}}>
-          <div style={{textAlign:"center",marginBottom:20}}>
-            <div style={{fontSize:"clamp(16px,4vw,26px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>PICK YOUR LOOK</div>
-            <div style={{color:"#444",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace",marginTop:6}}>Trainer: {pendingProfile?.username}</div>
+      <div style={{minHeight:"100vh",background:"linear-gradient(160deg,#05050d,#0a0520,#05050d)",display:"flex",alignItems:"center",justifyContent:"center",padding:"clamp(16px,4vw,28px)"}}>
+        <div style={{width:"100%",maxWidth:560}}>
+          <div style={{textAlign:"center",marginBottom:"clamp(20px,4vw,32px)"}}>
+            <div style={{fontSize:"clamp(28px,7vw,48px)",marginBottom:8}}>⚡</div>
+            <div style={{fontSize:"clamp(14px,3.5vw,22px)",fontFamily:"'Press Start 2P',monospace",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>PICK YOUR LOOK</div>
+            <div style={{fontSize:"clamp(9px,1.8vw,12px)",color:"#555",fontFamily:"'Press Start 2P',monospace"}}>Welcome, {pendingProfile?.username||username}!</div>
           </div>
-          <div style={{background:"rgba(10,10,28,0.99)",border:"1.5px solid rgba(124,77,255,0.3)",borderRadius:20,padding:"clamp(18px,4vw,28px)"}}>
-            <div style={{display:"flex",gap:6,marginBottom:16}}>
+          <div style={{background:"rgba(8,8,24,0.97)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:24,padding:"clamp(20px,5vw,36px)",boxShadow:"0 0 80px rgba(124,77,255,0.1)"}}>
+            <div style={{display:"flex",gap:8,marginBottom:"clamp(16px,3.5vw,24px)",background:"rgba(0,0,0,0.3)",borderRadius:12,padding:4}}>
               {[["🎭 EMOJI",false],["✏️ BUILD",true]].map(([lbl,bm])=>(
-                <button key={lbl} onClick={()=>setBuilderMode(bm)} style={{flex:1,padding:"clamp(10px,2vw,13px)",background:builderMode===bm?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.03)",border:`1.5px solid ${builderMode===bm?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:10,color:builderMode===bm?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>{lbl}</button>
+                <button key={lbl} onClick={()=>setBuilderMode(bm)} style={{flex:1,padding:"clamp(10px,2vw,13px)",background:builderMode===bm?"rgba(124,77,255,0.4)":"transparent",border:`1.5px solid ${builderMode===bm?"rgba(124,77,255,0.7)":"transparent"}`,borderRadius:10,color:builderMode===bm?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.6vw,11px)",transition:"all 0.18s"}}>
+                  {lbl}
+                </button>
               ))}
             </div>
-            {!builderMode?(
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:8,marginBottom:20}}>
-                {EMOJIS.map(a=>(
-                  <button key={a} onClick={()=>setEmojiAvatar(a)} style={{background:emojiAvatar===a?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.06)"}`,borderRadius:10,padding:"clamp(8px,1.5vw,12px) 0",cursor:"pointer",fontSize:"clamp(18px,3.5vw,24px)",transform:emojiAvatar===a?"scale(1.15)":"scale(1)",transition:"all 0.14s"}}>{a}</button>
-                ))}
-              </div>
-            ):(
-              <div style={{marginBottom:20}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:14}}>
-                  <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={90}/>
+            {!builderMode&&(
+              <div>
+                <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:12,textAlign:"center"}}>SELECT YOUR AVATAR</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:"clamp(6px,1.5vw,10px)",marginBottom:20}}>
+                  {EMOJIS.map(a=>(
+                    <button key={a} onClick={()=>setEmojiAvatar(a)} style={{aspectRatio:"1",background:emojiAvatar===a?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.08)"}`,borderRadius:12,cursor:"pointer",fontSize:"clamp(20px,4vw,28px)",transform:emojiAvatar===a?"scale(1.15)":"scale(1)",transition:"all 0.15s",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:emojiAvatar===a?"0 0 16px rgba(124,77,255,0.4)":"none"}}>
+                      {a}
+                    </button>
+                  ))}
                 </div>
-                {[{lbl:"Face Shape",opts:["round","oval","square","heart"],val:face,set:setFace}].map(({lbl,opts,val,set})=>(
-                  <div key={lbl} style={{marginBottom:10}}>
-                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>{lbl}</div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
-                      {opts.map(o=><button key={o} onClick={()=>set(o)} style={{padding:"7px 12px",background:val===o?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${val===o?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:val===o?"#fff":"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",textTransform:"capitalize"}}>{o}</button>)}
-                    </div>
-                  </div>
-                ))}
-                <div style={{marginBottom:10}}>
-                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Hair Style</div>
-                  <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
-                    {HAIR_OPTS.map(h=><button key={h} onClick={()=>setHair(h)} style={{padding:"6px 10px",background:hair===h?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1px solid ${hair===h?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:7,color:hair===h?"#fff":"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>{h.replace(/-/g," ")}</button>)}
-                  </div>
-                </div>
-                <div style={{marginBottom:10}}>
-                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Hair Color</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-                    {HAIR_COLS.map(col=><button key={col} onClick={()=>setHairColor(col)} style={{width:30,height:30,background:col,border:`2.5px solid ${hairColor===col?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===col?"scale(1.25)":"scale(1)",transition:"transform 0.15s"}}/>)}
-                  </div>
-                </div>
-                <div style={{marginBottom:10}}>
-                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Skin Tone</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-                    {SKIN_OPTS.map(col=><button key={col} onClick={()=>setSkin(col)} style={{width:30,height:30,background:col,border:`2.5px solid ${skin===col?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===col?"scale(1.25)":"scale(1)",transition:"transform 0.15s"}}/>)}
-                  </div>
-                </div>
-                <div>
-                  <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>Eyes</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
-                    {EYE_OPTS.map(e=><button key={e} onClick={()=>setEyes(e)} style={{padding:"6px",background:eyes===e?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`1.5px solid ${eyes===e?"rgba(124,77,255,0.6)":"rgba(255,255,255,0.08)"}`,borderRadius:8,cursor:"pointer",fontSize:"clamp(16px,3vw,22px)",transition:"all 0.14s"}}>{e}</button>)}
+                <div style={{textAlign:"center",marginBottom:20}}>
+                  <div style={{display:"inline-flex",flexDirection:"column",alignItems:"center",gap:8,background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.2)",borderRadius:16,padding:"16px 28px"}}>
+                    <div style={{fontSize:"clamp(40px,8vw,60px)"}}>{emojiAvatar}</div>
+                    <div style={{color:"#ccc",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace"}}>{pendingProfile?.username||username||"Trainer"}</div>
                   </div>
                 </div>
               </div>
             )}
-            <button onClick={finishCreate} style={{width:"100%",marginTop:8,background:"linear-gradient(135deg,rgba(76,175,80,0.3),rgba(79,195,247,0.2))",border:"1.5px solid rgba(76,175,80,0.6)",borderRadius:12,padding:"clamp(12px,2.5vw,16px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(11px,2.2vw,14px)"}}>
-              ✅ START JOURNEY!
+            {builderMode&&(
+              <div>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:"clamp(16px,3vw,24px)"}}>
+                  <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.2)",borderRadius:20,padding:"clamp(16px,3vw,24px)",display:"inline-flex",flexDirection:"column",alignItems:"center",gap:10}}>
+                    <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={100}/>
+                    <div style={{color:"#ccc",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace"}}>{pendingProfile?.username||username||"Trainer"}</div>
+                  </div>
+                </div>
+                <div style={{display:"flex",flexDirection:"column",gap:"clamp(12px,2.5vw,18px)"}}>
+                  <div>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>FACE SHAPE</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {["round","oval","square","heart"].map(o=><button key={o} onClick={()=>setFace(o)} style={{padding:"clamp(7px,1.5vw,10px) clamp(10px,2vw,14px)",background:face===o?"rgba(124,77,255,0.35)":"rgba(255,255,255,0.04)",border:`1.5px solid ${face===o?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:9,color:face===o?"#fff":"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",textTransform:"capitalize"}}>{o}</button>)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>HAIR STYLE</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {HAIR_OPTS.map(h=><button key={h} onClick={()=>setHair(h)} style={{padding:"clamp(6px,1.2vw,8px) clamp(8px,1.5vw,12px)",background:hair===h?"rgba(124,77,255,0.35)":"rgba(255,255,255,0.04)",border:`1.5px solid ${hair===h?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:hair===h?"#fff":"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>{h.replace(/-/g," ")}</button>)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>HAIR COLOR</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {HAIR_COLS.map(col=><button key={col} onClick={()=>setHairColor(col)} style={{width:"clamp(28px,4vw,36px)",height:"clamp(28px,4vw,36px)",background:col,border:`2.5px solid ${hairColor===col?"#fff":"rgba(255,255,255,0.12)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===col?"scale(1.3)":"scale(1)",transition:"transform 0.15s"}}/>)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>SKIN TONE</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {SKIN_OPTS.map(col=><button key={col} onClick={()=>setSkin(col)} style={{width:"clamp(28px,4vw,36px)",height:"clamp(28px,4vw,36px)",background:col,border:`2.5px solid ${skin===col?"#fff":"rgba(255,255,255,0.12)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===col?"scale(1.3)":"scale(1)",transition:"transform 0.15s"}}/>)}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{color:"#666",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>EYES</div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {EYE_OPTS.map(e=><button key={e} onClick={()=>setEyes(e)} style={{padding:"clamp(7px,1.5vw,10px)",background:eyes===e?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${eyes===e?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.08)"}`,borderRadius:10,cursor:"pointer",fontSize:"clamp(18px,3.5vw,24px)",transition:"all 0.15s",transform:eyes===e?"scale(1.15)":"scale(1)"}}>{e}</button>)}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+            <button onClick={finishCreate} style={{width:"100%",marginTop:"clamp(20px,4vw,28px)",background:"linear-gradient(135deg,rgba(76,175,80,0.4),rgba(79,195,247,0.25))",border:"2px solid rgba(76,175,80,0.65)",borderRadius:14,padding:"clamp(14px,3vw,18px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(12px,2.5vw,16px)",letterSpacing:1,boxShadow:"0 0 30px rgba(76,175,80,0.15)"}}>
+              ✅ START MY JOURNEY!
             </button>
           </div>
         </div>
@@ -1716,129 +1839,148 @@ function CharacterScreen({onDone}){
     );
   }
 
-  // ── MAIN LOGIN / REGISTER ──────────────────────────────
+  // ── LOGIN / REGISTER ────────────────────────────────────
   return(
-    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"clamp(16px,4vw,28px)",fontFamily:"'Press Start 2P',monospace"}}>
-      <div style={{width:"100%",maxWidth:480}}>
+    <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",padding:"clamp(16px,4vw,24px)",position:"relative",overflow:"hidden"}}>
+      {/* Background — animated aurora gradient */}
+      <div style={{position:"fixed",inset:0,zIndex:0,overflow:"hidden"}}>
+        <div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,#05050d 0%,#0d0520 30%,#070318 60%,#05050d 100%)"}}/>
+        {/* Animated aurora blobs */}
+        <div style={{position:"absolute",top:"-20%",left:"-10%",width:"60%",height:"60%",borderRadius:"50%",background:"radial-gradient(circle,rgba(124,77,255,0.18),transparent 70%)",animation:"loginBlob1 8s ease-in-out infinite alternate"}}/>
+        <div style={{position:"absolute",top:"10%",right:"-15%",width:"55%",height:"55%",borderRadius:"50%",background:"radial-gradient(circle,rgba(79,195,247,0.12),transparent 70%)",animation:"loginBlob2 10s ease-in-out infinite alternate"}}/>
+        <div style={{position:"absolute",bottom:"-10%",left:"20%",width:"50%",height:"50%",borderRadius:"50%",background:"radial-gradient(circle,rgba(240,98,146,0.10),transparent 70%)",animation:"loginBlob3 12s ease-in-out infinite alternate"}}/>
+        {/* Grid overlay */}
+        <div style={{position:"absolute",inset:0,backgroundImage:"linear-gradient(rgba(124,77,255,0.03)1px,transparent 1px),linear-gradient(90deg,rgba(124,77,255,0.03)1px,transparent 1px)",backgroundSize:"40px 40px"}}/>
+        {/* Floating particles */}
+        {[...Array(18)].map((_,i)=>(
+          <div key={i} style={{
+            position:"absolute",
+            width:i%3===0?"3px":"2px",
+            height:i%3===0?"3px":"2px",
+            borderRadius:"50%",
+            background:["rgba(124,77,255,0.6)","rgba(79,195,247,0.5)","rgba(255,213,79,0.4)","rgba(240,98,146,0.5)"][i%4],
+            left:`${5+i*5.2}%`,
+            top:`${10+((i*37)%75)}%`,
+            animation:`floatParticle${i%4} ${4+i%5}s ease-in-out ${i*0.4}s infinite alternate`,
+            boxShadow:`0 0 6px ${["rgba(124,77,255,0.8)","rgba(79,195,247,0.7)","rgba(255,213,79,0.6)","rgba(240,98,146,0.7)"][i%4]}`
+          }}/>
+        ))}
+      </div>
 
-        {/* Logo */}
-        <div style={{textAlign:"center",marginBottom:"clamp(20px,4vw,32px)"}}>
-          <div style={{fontSize:"clamp(32px,8vw,52px)",marginBottom:8}}>⚡</div>
-          <div style={{fontSize:"clamp(18px,4.5vw,30px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:6}}>POKÉMON</div>
-          <div style={{fontSize:"clamp(8px,1.8vw,12px)",color:"#333",letterSpacing:5}}>BATTLE ARENA</div>
+      {/* Content */}
+      <div style={{width:"100%",maxWidth:460,position:"relative",zIndex:1}}>
+        {/* Pokéball logo */}
+        <div style={{textAlign:"center",marginBottom:"clamp(16px,4vw,28px)"}}>
+          <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style={{width:"clamp(80px,18vw,120px)",height:"clamp(80px,18vw,120px)",filter:"drop-shadow(0 0 18px rgba(229,57,53,0.7)) drop-shadow(0 0 40px rgba(229,57,53,0.3))"}}>
+            <circle cx="100" cy="104" r="90" fill="rgba(0,0,0,0.3)"/>
+            <circle cx="100" cy="100" r="90" fill="#e53935"/>
+            <path d="M10 100 A90 90 0 0 0 190 100 Z" fill="#f5f5f5"/>
+            <rect x="10" y="92" width="180" height="16" fill="#212121" rx="3"/>
+            <ellipse cx="68" cy="55" rx="22" ry="13" fill="rgba(255,255,255,0.22)" transform="rotate(-30,68,55)"/>
+            <circle cx="100" cy="100" r="22" fill="#212121"/>
+            <circle cx="100" cy="100" r="15" fill="#f5f5f5"/>
+            <circle cx="100" cy="100" r="7" fill="#e0e0e0"/>
+          </svg>
+          <div style={{fontSize:"clamp(18px,5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",fontFamily:"'Press Start 2P',monospace",marginBottom:6,letterSpacing:2,marginTop:10}}>POKÉMON</div>
+          <div style={{fontSize:"clamp(8px,2vw,12px)",color:"#2a2a4a",letterSpacing:6,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
         </div>
-
         {/* Card */}
-        <div style={{background:"rgba(10,10,28,0.99)",border:"1.5px solid rgba(124,77,255,0.3)",borderRadius:20,padding:"clamp(20px,5vw,36px)",boxShadow:"0 0 80px rgba(124,77,255,0.15)"}}>
-
+        <div style={{background:"rgba(8,8,28,0.55)",backdropFilter:"blur(20px)",WebkitBackdropFilter:"blur(20px)",border:"1px solid rgba(124,77,255,0.35)",borderRadius:24,padding:"clamp(18px,4.5vw,32px)",boxShadow:"0 8px 40px rgba(0,0,0,0.6),inset 0 1px 0 rgba(255,255,255,0.06)"}}>
           {/* Tabs */}
-          <div style={{display:"flex",gap:4,marginBottom:"clamp(18px,3.5vw,26px)",background:"rgba(0,0,0,0.35)",borderRadius:12,padding:4}}>
+          <div style={{display:"flex",gap:4,marginBottom:20,background:"rgba(0,0,0,0.3)",backdropFilter:"blur(10px)",borderRadius:12,padding:4}}>
             {[["login","SIGN IN"],["register","REGISTER"]].map(([m,lbl])=>(
-              <button key={m} onClick={()=>{setMode(m);setError("");}} style={{flex:1,padding:"clamp(11px,2.2vw,15px)",background:mode===m?"rgba(124,77,255,0.4)":"transparent",border:`1px solid ${mode===m?"rgba(124,77,255,0.6)":"transparent"}`,borderRadius:10,color:mode===m?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,2vw,13px)",transition:"all 0.18s"}}>
+              <button key={m} onClick={()=>{setMode(m);setError("");}} style={{flex:1,padding:"clamp(10px,2vw,14px)",background:mode===m?"rgba(124,77,255,0.4)":"transparent",border:`1px solid ${mode===m?"rgba(124,77,255,0.6)":"transparent"}`,borderRadius:10,color:mode===m?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,2vw,13px)",transition:"all 0.18s"}}>
                 {lbl}
               </button>
             ))}
           </div>
-
-          {/* Google Sign-In button */}
-          <div id="google-signin-btn" style={{width:"100%",marginBottom:"clamp(12px,2.5vw,16px)",minHeight:50}}/>
-
-          {/* OR divider */}
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:"clamp(12px,2.5vw,16px)"}}>
-            <div style={{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}}/>
-            <span style={{color:"#333",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>OR</span>
-            <div style={{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}}/>
-          </div>
-
-          {/* Google Sign-In Button */}
-          <div style={{marginBottom:"clamp(14px,3vw,20px)"}}>
-            <div id="google-signin-btn" style={{width:"100%",minHeight:50,display:"flex",alignItems:"center",justifyContent:"center"}}/>
-            {!window.google&&(
-              <div style={{textAlign:"center",color:"#444",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",marginTop:6}}>Loading Google…</div>
-            )}
-          </div>
-
-          {/* Divider */}
-          <div style={{display:"flex",alignItems:"center",gap:12,marginBottom:"clamp(14px,3vw,18px)"}}>
+          {/* Google */}
+          <div id="google-signin-btn" style={{width:"100%",minHeight:44,marginBottom:14}}/>
+          {/* OR */}
+          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:14}}>
             <div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/>
-            <span style={{color:"#2a2a3a",fontSize:"clamp(8px,1.4vw,10px)",fontFamily:"'Press Start 2P',monospace",whiteSpace:"nowrap"}}>OR USE EMAIL</span>
+            <span style={{color:"#333",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>OR</span>
             <div style={{flex:1,height:1,background:"rgba(255,255,255,0.08)"}}/>
           </div>
-
-          {/* Google Sign-In */}
-          <div id="google-signin-btn" style={{width:"100%",minHeight:48,marginBottom:"clamp(10px,2vw,14px)"}}/>
-
-          {/* OR divider */}
-          <div style={{display:"flex",alignItems:"center",gap:10,marginBottom:"clamp(10px,2vw,14px)"}}>
-            <div style={{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}}/>
-            <span style={{color:"#333",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",letterSpacing:2}}>OR</span>
-            <div style={{flex:1,height:"1px",background:"rgba(255,255,255,0.08)"}}/>
-          </div>
-
           {/* Fields */}
-          <div style={{display:"flex",flexDirection:"column",gap:"clamp(12px,2.5vw,16px)"}}>
+          <div style={{display:"flex",flexDirection:"column",gap:10}}>
             {mode==="register"&&(
               <div>
-                <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",marginBottom:6}}>USERNAME</div>
-                <input value={username} onChange={e=>{setUsername(e.target.value);setError("");}}
-                  placeholder="e.g. AshKetchum99" maxLength={16} autoComplete="username"
-                  style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${error&&!username.trim()?"#f44336":"rgba(124,77,255,0.35)"}`,borderRadius:11,padding:"clamp(13px,2.5vw,17px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace",display:"block"}}/>
+                <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>USERNAME</div>
+                <input value={username} onChange={e=>{setUsername(e.target.value);setError("");}} placeholder="e.g. AshKetchum99" maxLength={16}
+                  style={{width:"100%",background:"rgba(255,255,255,0.08)",backdropFilter:"blur(4px)",border:`1.5px solid ${error&&!username.trim()?"#f44336":"rgba(124,77,255,0.4)"}`,borderRadius:11,padding:"clamp(12px,2.5vw,15px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace",display:"block"}}/>
               </div>
             )}
             <div>
-              <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",marginBottom:6}}>{mode==="login"?"EMAIL OR USERNAME":"EMAIL"}</div>
-              <input value={email} onChange={e=>{setEmail(e.target.value);setError("");}}
-                placeholder={mode==="login"?"trainer@email.com or Username":"trainer@email.com"}
-                autoComplete="email"
-                style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.35)"}`,borderRadius:11,padding:"clamp(13px,2.5vw,17px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace",display:"block"}}/>
+              <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>{mode==="login"?"EMAIL OR USERNAME":"EMAIL"}</div>
+              <input value={email} onChange={e=>{setEmail(e.target.value);setError("");}} placeholder={mode==="login"?"trainer@email.com or Username":"trainer@email.com"}
+                style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.35)"}`,borderRadius:11,padding:"clamp(12px,2.5vw,15px)",color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace",display:"block"}}/>
             </div>
             <div>
-              <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",marginBottom:6}}>PASSWORD</div>
+              <div style={{color:"#555",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>PASSWORD</div>
               <div style={{position:"relative"}}>
-                <input value={password} onChange={e=>{setPassword(e.target.value);setError("");}}
-                  type={showPass?"text":"password"} placeholder="••••••••"
-                  autoComplete={mode==="login"?"current-password":"new-password"}
-                  onKeyDown={e=>{ if(e.key==="Enter") mode==="login"?handleLogin():handleRegister(); }}
-                  style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.35)"}`,borderRadius:11,padding:`clamp(13px,2.5vw,17px) 52px clamp(13px,2.5vw,17px) clamp(13px,2.5vw,17px)`,color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace"}}/>
-                <button onClick={()=>setShowPass(!showPass)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:"clamp(16px,3vw,22px)",padding:"4px",lineHeight:1}}>
+                <input value={password} onChange={e=>{setPassword(e.target.value);setError("");}} type={showPass?"text":"password"} placeholder="••••••••"
+                  onKeyDown={e=>{if(e.key==="Enter")mode==="login"?handleLogin():handleRegister();}}
+                  style={{width:"100%",background:"rgba(255,255,255,0.06)",border:`1.5px solid ${error?"rgba(244,67,54,0.5)":"rgba(124,77,255,0.35)"}`,borderRadius:11,padding:`clamp(12px,2.5vw,15px) 52px clamp(12px,2.5vw,15px) clamp(12px,2.5vw,15px)`,color:"#fff",fontSize:"clamp(12px,2.2vw,15px)",fontFamily:"'Press Start 2P',monospace"}}/>
+                <button onClick={()=>setShowPass(!showPass)} style={{position:"absolute",right:14,top:"50%",transform:"translateY(-50%)",background:"none",border:"none",color:"#555",cursor:"pointer",fontSize:"clamp(16px,3vw,20px)",padding:"4px",lineHeight:1}}>
                   {showPass?"🙈":"👁️"}
                 </button>
               </div>
             </div>
           </div>
-
-          {/* Error box */}
           {error&&(
-            <div style={{color:"#f44336",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace",marginTop:"clamp(12px,2.5vw,16px)",padding:"clamp(10px,2vw,14px)",background:"rgba(244,67,54,0.08)",borderRadius:10,border:"1px solid rgba(244,67,54,0.25)",lineHeight:1.8}}>
+            <div style={{color:"#f44336",fontSize:"clamp(9px,1.8vw,11px)",fontFamily:"'Press Start 2P',monospace",marginTop:12,padding:"10px 14px",background:"rgba(244,67,54,0.08)",borderRadius:9,border:"1px solid rgba(244,67,54,0.2)",lineHeight:1.8}}>
               ⚠️ {error}
             </div>
           )}
-
-          {/* Submit */}
           <button onClick={mode==="login"?handleLogin:handleRegister} disabled={loading}
-            style={{width:"100%",marginTop:"clamp(16px,3.5vw,24px)",background:"linear-gradient(135deg,rgba(124,77,255,0.4),rgba(79,195,247,0.25))",border:"1.5px solid rgba(124,77,255,0.7)",borderRadius:12,padding:"clamp(14px,3vw,18px)",color:"#fff",cursor:loading?"wait":"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(11px,2.2vw,15px)",opacity:loading?0.7:1,transition:"all 0.18s",letterSpacing:1}}>
+            style={{width:"100%",marginTop:18,background:"linear-gradient(135deg,rgba(124,77,255,0.45),rgba(79,195,247,0.28))",border:"2px solid rgba(124,77,255,0.7)",borderRadius:12,padding:"clamp(13px,2.8vw,17px)",color:"#fff",cursor:loading?"wait":"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(11px,2.2vw,14px)",opacity:loading?0.7:1,letterSpacing:1,boxShadow:"0 0 24px rgba(124,77,255,0.2)"}}>
             {loading?"⏳ LOADING…":(mode==="login"?"SIGN IN →":"CREATE ACCOUNT →")}
           </button>
+          <div style={{textAlign:"center",marginTop:12,color:"#2a2a3a",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>
+            {mode==="login"?"No account? Click REGISTER above":"Already registered? Click SIGN IN above"}
+          </div>
 
-          {/* Helper text */}
-          <div style={{textAlign:"center",marginTop:"clamp(10px,2vw,14px)",color:"#2a2a3a",fontSize:"clamp(7px,1.3vw,9px)"}}>
-            {mode==="login"?"Don't have an account? Click REGISTER above":"Already registered? Click SIGN IN above"}
+          {/* Guest mode */}
+          <div style={{borderTop:"1px solid rgba(255,255,255,0.08)",marginTop:18,paddingTop:16,textAlign:"center"}}>
+            <button onClick={()=>{
+              const guestProfile={name:`Guest_${Date.now().toString(36).slice(-4).toUpperCase()}`,avatar:"👤",avatarData:null,coins:200,wins:0,losses:0,isGuest:true,createdAt:Date.now()};
+              supaGuest(guestProfile.name);
+              onDone(guestProfile);
+            }} style={{
+              background:"rgba(255,255,255,0.05)",
+              border:"1.5px solid rgba(255,255,255,0.15)",
+              borderRadius:10,
+              color:"#aaa",
+              cursor:"pointer",
+              fontFamily:"'Press Start 2P',monospace",
+              fontSize:"clamp(10px,2vw,13px)",
+              padding:"clamp(11px,2.2vw,14px) clamp(20px,4vw,32px)",
+              width:"100%",
+              transition:"all 0.2s",
+              letterSpacing:1,
+            }}
+            onMouseEnter={e=>{e.currentTarget.style.background="rgba(255,255,255,0.09)";e.currentTarget.style.color="#fff";e.currentTarget.style.borderColor="rgba(255,255,255,0.3)";}}
+            onMouseLeave={e=>{e.currentTarget.style.background="rgba(255,255,255,0.05)";e.currentTarget.style.color="#aaa";e.currentTarget.style.borderColor="rgba(255,255,255,0.15)";}}>
+              👤 PLAY AS GUEST
+            </button>
+            <div style={{color:"#333",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",marginTop:8,lineHeight:1.8}}>
+              Choose avatar &amp; starter · Sign in later to save
+            </div>
           </div>
         </div>
-
-        {/* Quick login for returning players */}
+        {/* Quick login */}
         {existing.length>0&&(
-          <div style={{marginTop:"clamp(16px,3vw,24px)"}}>
-            <div style={{color:"#1a1a2a",fontSize:"clamp(8px,1.5vw,10px)",textAlign:"center",marginBottom:"clamp(10px,2vw,14px)"}}>— QUICK LOGIN —</div>
+          <div style={{marginTop:20}}>
+            <div style={{color:"#1a1a2a",fontSize:"clamp(8px,1.5vw,10px)",textAlign:"center",marginBottom:12,fontFamily:"'Press Start 2P',monospace"}}>— QUICK LOGIN —</div>
             <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
               {existing.slice(-5).map(p=>(
-                <button key={p.name} onClick={()=>onDone(p)}
-                  style={{background:"rgba(255,255,255,0.03)",border:"1.5px solid rgba(255,255,255,0.1)",borderRadius:12,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",transition:"all 0.15s",minWidth:"clamp(70px,12vw,90px)"}}>
-                  {p.avatarData?.type==="built"
-                    ?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>
-                    :<div style={{fontSize:"clamp(22px,4.5vw,30px)"}}>{p.avatar}</div>}
-                  <div style={{color:"#ccc",fontSize:"clamp(7px,1.3vw,10px)",marginTop:6,whiteSpace:"nowrap",overflow:"hidden",textOverflow:"ellipsis",maxWidth:"80px"}}>{p.name}</div>
-                  <div style={{color:"#333",fontSize:"clamp(6px,1vw,8px)",marginTop:2}}>{p.wins||0}W {p.losses||0}L</div>
+                <button key={p.name} onClick={()=>onDone(p)} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",minWidth:72}}>
+                  <div style={{fontSize:"clamp(22px,4.5vw,30px)",marginBottom:6}}>
+                    {p.avatarData?.type==="built"?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>:p.avatar}
+                  </div>
+                  <div style={{color:"#aaa",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>{p.name}</div>
+                  <div style={{color:"#333",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{p.wins||0}W {p.losses||0}L</div>
                 </button>
               ))}
             </div>
@@ -1848,7 +1990,6 @@ function CharacterScreen({onDone}){
     </div>
   );
 }
-
 
 function StarterScreen({onDone, allPokemon}){
   const [chosen, setChosen] = useState(null);
@@ -2082,7 +2223,7 @@ function ProfileAvatar({profile, size=32}){
 // ══════════════════════════════════════════════════════════════════════
 //  POKÉDEX SCREEN
 // ══════════════════════════════════════════════════════════════════════
-function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose}){
+function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose, isGuest}){
   const [search,setSearch]=useState("");
   const [genFilt,setGenFilt]=useState("all");
   const owned=useMemo(()=>{
@@ -2090,28 +2231,37 @@ function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose}){
     if(starterPokemon) s.add(starterPokemon.id);
     return s;
   },[unlockedIds,starterPokemon]);
+
+  // Guests only see their owned Pokémon — no silhouettes of everything else
+  const baseList = isGuest ? allPokemon.filter(p=>owned.has(p.id)) : allPokemon;
+
   const filtered=useMemo(()=>{
-    let f=allPokemon;
+    let f=baseList;
     if(search) f=f.filter(p=>p.name.toLowerCase().includes(search.toLowerCase())||String(p.id).includes(search));
     if(genFilt!=="all"){ const g=GENS[+genFilt]; if(g) f=f.filter(p=>p.id>=g.range[0]&&p.id<=g.range[1]); }
     return f;
-  },[allPokemon,search,genFilt]);
-  const total=allPokemon.length, ownedCount=[...owned].filter(id=>allPokemon.some(p=>p.id===id)).length;
+  },[baseList,search,genFilt]);
+
+  const total=isGuest?owned.size:allPokemon.length;
+  const ownedCount=[...owned].filter(id=>allPokemon.some(p=>p.id===id)).length;
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:400,display:"flex",flexDirection:"column",alignItems:"center",padding:"16px",overflowY:"auto"}}>
       <div style={{width:"100%",maxWidth:860}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
           <div>
             <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"14px",color:"#4FC3F7",marginBottom:4}}>📖 POKÉDEX</div>
-            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333"}}>Caught: <span style={{color:"#FFD54F"}}>{ownedCount}</span> / {total}</div>
+            {isGuest
+              ? <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#555"}}>Your Pokémon: <span style={{color:"#FFD54F"}}>{ownedCount}</span> caught · <span style={{color:"#4FC3F7"}}>Register to track all 1,010!</span></div>
+              : <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333"}}>Caught: <span style={{color:"#FFD54F"}}>{ownedCount}</span> / {total}</div>
+            }
           </div>
-          {/* Progress bar */}
-          <div style={{flex:1,maxWidth:200}}>
+          {/* Progress bar — only for registered users */}
+          {!isGuest&&<div style={{flex:1,maxWidth:200}}>
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:4,height:8,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{width:`${(ownedCount/Math.max(1,total))*100}%`,background:"linear-gradient(90deg,#4FC3F7,#7C4DFF)",height:"100%",borderRadius:4,transition:"width 0.5s"}}/>
             </div>
             <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#333",marginTop:3,textAlign:"right"}}>{Math.round((ownedCount/Math.max(1,total))*100)}% complete</div>
-          </div>
+          </div>}
           <button onClick={onClose} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 14px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>✕</button>
         </div>
         <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
@@ -2121,6 +2271,17 @@ function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose}){
             {Object.entries(GENS).map(([g,d])=><option key={g} value={g}>Gen {g} {d.sub}</option>)}
           </select>
         </div>
+
+        {/* Guest empty state */}
+        {isGuest&&filtered.length===0&&(
+          <div style={{textAlign:"center",padding:"48px 0"}}>
+            <div style={{fontSize:"48px",marginBottom:12}}>📖</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"11px",color:"#333",marginBottom:8}}>No Pokémon yet!</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#222",marginBottom:4}}>Choose a starter to get your first one.</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#4FC3F7",marginTop:8}}>Register an account to unlock more!</div>
+          </div>
+        )}
+
         <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:6}}>
           {filtered.map(p=>{
             const isOwned=owned.has(p.id);
@@ -2145,6 +2306,8 @@ function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose}){
 //  TRAINER CARD
 // ══════════════════════════════════════════════════════════════════════
 function TrainerCard({profile, starterPokemon, winStreak, unlockedIds, onClose}){
+  const [copied,setCopied]=useState(false);
+  const [shared,setShared]=useState(false);
   const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
   const scored=profiles.map(p=>{ const t=(p.wins||0)+(p.losses||0); const wr=t>0?(p.wins||0)/t:0; return {...p,score:(p.wins||0)*100+Math.round(wr*500)-(p.losses||0)*10}; });
   const ranked=[...scored].sort((a,b)=>b.score-a.score);
@@ -2154,58 +2317,90 @@ function TrainerCard({profile, starterPokemon, winStreak, unlockedIds, onClose})
   const ownedCount=unlockedIds.size+(starterPokemon?1:0);
   const tier=myRank===1?"CHAMPION":myRank<=3?"ELITE 4":myRank<=8?"GYM LEADER":myRank<=15?"ACE TRAINER":"TRAINER";
   const tierColor=myRank===1?"#FFD700":myRank<=3?"#C0C0C0":myRank<=8?"#9C7DFF":myRank<=15?"#4FC3F7":"#66BB6A";
+
+  const shareText=`⚡ Pokémon Battle Arena — Trainer Card
+👤 ${profile?.name} · ${tier}
+🏆 Rank #${myRank||"—"} · ${profile?.wins||0}W ${profile?.losses||0}L · ${wr}% WR
+🔥 ${winStreak} win streak · ${ownedCount} Pokémon caught
+🎮 Play at: pokemon-battle-simulator-xnmd.vercel.app`;
+
+  async function handleShare(){
+    // Try Web Share API first (works on mobile + some desktop)
+    if(navigator.share){
+      try{
+        await navigator.share({title:"My Pokémon Trainer Card",text:shareText});
+        setShared(true); setTimeout(()=>setShared(false),2500);
+        return;
+      }catch(e){}
+    }
+    // Fallback: copy to clipboard
+    try{
+      await navigator.clipboard.writeText(shareText);
+      setCopied(true); setTimeout(()=>setCopied(false),2500);
+    }catch(e){
+      // Last resort: prompt
+      window.prompt("Copy your trainer card:",shareText);
+    }
+  }
+
   return(
     <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.93)",zIndex:400,display:"flex",alignItems:"center",justifyContent:"center",padding:"16px"}} onClick={onClose}>
-      <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#0a0a22,#04040e)",border:`2px solid ${tierColor}55`,borderRadius:20,padding:"28px 24px",maxWidth:380,width:"100%",boxShadow:`0 0 80px ${tierColor}22`,position:"relative",overflow:"hidden"}}>
-        {/* Card shimmer */}
+      <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#0a0a22,#04040e)",border:`2px solid ${tierColor}55`,borderRadius:20,padding:"clamp(20px,4vw,28px) clamp(18px,3.5vw,24px)",maxWidth:400,width:"100%",boxShadow:`0 0 80px ${tierColor}22,0 0 40px rgba(0,0,0,0.8)`,position:"relative",overflow:"hidden"}}>
         <div style={{position:"absolute",inset:0,background:`linear-gradient(135deg,${tierColor}08,transparent,${tierColor}05)`,pointerEvents:"none"}}/>
         <div style={{position:"absolute",top:0,left:0,right:0,height:3,background:`linear-gradient(90deg,transparent,${tierColor},transparent)`}}/>
 
         {/* Header */}
-        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:20}}>
+        <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start",marginBottom:"clamp(14px,3vw,20px)"}}>
           <div>
-            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:tierColor,marginBottom:4,letterSpacing:2}}>{tier}</div>
-            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"16px",color:"#fff"}}>{profile?.name}</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.6vw,11px)",color:tierColor,marginBottom:5,letterSpacing:2}}>{tier}</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(14px,3vw,20px)",color:"#fff"}}>{profile?.name}</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",color:"#333",marginTop:4}}>Rank #{myRank||"—"}</div>
           </div>
-          <div style={{textAlign:"right"}}>
-            <div style={{fontSize:"32px",marginBottom:2}}><ProfileAvatar profile={profile} size={44}/></div>
-          </div>
+          <ProfileAvatar profile={profile} size={52}/>
         </div>
 
         {/* Starter */}
         {starterPokemon&&(
-          <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"8px 12px",marginBottom:14}}>
-            <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${starterPokemon.id}.png`} style={{width:40,imageRendering:"pixelated"}}/>
+          <div style={{display:"flex",alignItems:"center",gap:10,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:12,padding:"clamp(8px,1.5vw,12px)",marginBottom:"clamp(12px,2.5vw,16px)"}}>
+            <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${starterPokemon.id}.png`} style={{width:"clamp(36px,7vw,48px)",imageRendering:"pixelated"}}/>
             <div>
-              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#555",marginBottom:2}}>STARTER PARTNER</div>
-              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"10px",color:"#FFD54F",textTransform:"capitalize"}}>{starterPokemon.name}</div>
+              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(6px,1.2vw,8px)",color:"#444",marginBottom:3}}>STARTER PARTNER</div>
+              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",color:"#FFD54F",textTransform:"capitalize"}}>{starterPokemon.name}</div>
             </div>
           </div>
         )}
 
         {/* Stats grid */}
-        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:16}}>
+        <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:"clamp(6px,1.2vw,9px)",marginBottom:"clamp(14px,3vw,18px)"}}>
           {[
-            {label:"RANK",val:`#${myRank||"—"}`,col:tierColor},
             {label:"WIN STREAK",val:`${winStreak}🔥`,col:"#FF6B35"},
+            {label:"WIN RATE",val:`${wr}%`,col:"#FFD54F"},
             {label:"WINS",val:profile?.wins||0,col:"#4CAF50"},
             {label:"LOSSES",val:profile?.losses||0,col:"#f44336"},
-            {label:"WIN RATE",val:`${wr}%`,col:"#FFD54F"},
             {label:"POKÉDEX",val:`${ownedCount} caught`,col:"#4FC3F7"},
-            {label:"COINS",val:`${profile?.coins||0}🪙`,col:"#FFD54F"},
             {label:"BATTLES",val:total,col:"#888"},
           ].map(({label,val,col})=>(
-            <div key={label} style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.05)",borderRadius:8,padding:"8px 10px"}}>
-              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"6px",color:"#333",marginBottom:3}}>{label}</div>
-              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"10px",color:col}}>{val}</div>
+            <div key={label} style={{background:"rgba(255,255,255,0.025)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"clamp(8px,1.5vw,11px)"}}>
+              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(6px,1vw,7px)",color:"#333",marginBottom:4}}>{label}</div>
+              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,2vw,13px)",color:col}}>{val}</div>
             </div>
           ))}
         </div>
 
+        {/* Buttons */}
         <div style={{display:"flex",gap:8}}>
-          <button onClick={()=>{ const txt=`Trainer ${profile?.name} | Rank #${myRank} ${tier} | ${profile?.wins||0}W ${profile?.losses||0}L | ${wr}% WR | ${winStreak}🔥 streak`; navigator.clipboard?.writeText(txt); }} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"9px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>📋 SHARE</button>
-          <button onClick={onClose} style={{flex:1,background:`${tierColor}18`,border:`1px solid ${tierColor}44`,borderRadius:8,padding:"9px",color:tierColor,cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>CLOSE</button>
+          <button onClick={handleShare} className="btn" style={{flex:2,background:copied||shared?`${tierColor}25`:"rgba(255,255,255,0.05)",border:`1.5px solid ${copied||shared?tierColor:"rgba(255,255,255,0.15)"}`,borderRadius:10,padding:"clamp(10px,2vw,13px)",color:copied||shared?tierColor:"#ccc",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",transition:"all 0.2s",display:"flex",alignItems:"center",justifyContent:"center",gap:6}}>
+            {shared?"✅ SHARED!":copied?"✅ COPIED!":"📤 SHARE CARD"}
+          </button>
+          <button onClick={onClose} className="btn" style={{flex:1,background:`${tierColor}18`,border:`1.5px solid ${tierColor}44`,borderRadius:10,padding:"clamp(10px,2vw,13px)",color:tierColor,cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>✕ CLOSE</button>
         </div>
+
+        {/* Share preview text */}
+        {(copied||shared)&&(
+          <div style={{marginTop:10,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"10px 12px"}}>
+            <div style={{color:"#555",fontSize:"clamp(6px,1vw,8px)",fontFamily:"monospace",lineHeight:1.8,whiteSpace:"pre-wrap",wordBreak:"break-word"}}>{shareText}</div>
+          </div>
+        )}
       </div>
     </div>
   );
@@ -2396,6 +2591,13 @@ function App(){
     else if(screen===MODES.OVER) AUDIO.play(winner==="player"?"victory":"defeat");
   },[screen,winner,musicOn]);
 
+  // Clean up any lingering guest data from previous sessions
+  useEffect(()=>{
+    // Clear any guest keys from localStorage (they shouldn't be there, but safety net)
+    Object.keys(localStorage).filter(k=>k.includes("_Guest")).forEach(k=>localStorage.removeItem(k));
+    // sessionStorage auto-clears on tab close — no action needed
+  },[]);
+
   const firstClick=()=>{
     if(musicStarted.current) return;
     musicStarted.current=true;
@@ -2443,7 +2645,8 @@ function App(){
   // ── Init after profile loads ──────────────────────────────
   useEffect(()=>{
     if(!profile) return;
-    const saved=localStorage.getItem(`pkmn_unlocked_${profile.name}`);
+    const store=profile?.isGuest?sessionStorage:localStorage;
+    const saved=store.getItem(`pkmn_unlocked_${profile.name}`);
     if(saved) setUnlockedIds(new Set(JSON.parse(saved)));
     const savedInv=localStorage.getItem(`pkmn_inv_${profile.name}`);
     if(savedInv) setInventory(JSON.parse(savedInv));
@@ -2453,7 +2656,7 @@ function App(){
     if(savedTeam) setTeam(JSON.parse(savedTeam));
     const savedLevels=localStorage.getItem(`pkmn_levels_${profile.name}`);
     if(savedLevels) setTeamLevels(JSON.parse(savedLevels));
-    const savedStarter=localStorage.getItem(`pkmn_starter_${profile.name}`);
+    const savedStarter=store.getItem(`pkmn_starter_${profile.name}`);
     if(savedStarter) setStarterPokemon(JSON.parse(savedStarter));
     const savedExp=localStorage.getItem(`pkmn_exp_${profile.name}`);
     if(savedExp) try{setExpMap(JSON.parse(savedExp))}catch{}
@@ -2490,7 +2693,7 @@ function App(){
     setProfile(np); updateProfile(np);
     const nu=new Set([...unlockedIds,mon.id]);
     setUnlockedIds(nu);
-    localStorage.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
+    (profile?.isGuest?sessionStorage:localStorage).setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
   }
 
   function isUnlocked(mon){
@@ -2706,7 +2909,7 @@ function App(){
       setChallenges(prev=>{ const u=prev.map(ch=>ch.isCatch?{...ch,progress:1,done:true}:ch); localStorage.setItem(`pkmn_challenges_${todayKey()}`,JSON.stringify(u)); return u; });
       const nu=new Set([...unlockedIds,eMon.id]);
       setUnlockedIds(nu);
-      localStorage.setItem(`pkmn_unlocked_${profile?.name}`,JSON.stringify([...nu]));
+      (profile?.isGuest?sessionStorage:localStorage).setItem(`pkmn_unlocked_${profile?.name}`,JSON.stringify([...nu]));
       await sleep(600);
       setWinner("player"); setScreen(MODES.OVER);
     } else {
@@ -2826,7 +3029,9 @@ function App(){
     setFaintP(true);
     setTimeout(async()=>{
       pushLog(`💀 ${pMon.name.toUpperCase()} fainted!`);
-      setProfile(p=>{const np={...p,losses:(p.losses||0)+1};updateProfile(np);return np;});
+      setProfile(p=>{const np={...p,losses:(p.losses||0)+1};updateProfile(np);
+        if(!np.isGuest) supaUpdateStats(np.name,np.wins||0,np.losses,np.coins||0);
+        return np;});
       markNeedsHeal(pMon, true);
       setWinStreak(0); localStorage.setItem("pkmn_streak","0");
       const rec=makeBattleRecord(pMon,eMon,"enemy",battleTurns,pLevel);
@@ -2852,7 +3057,9 @@ function App(){
       const reward=baseReward*streakMult;
       addCoins(reward);
       pushLog(`+${reward} 🪙 earned!${streakMult>1?` 🔥 STREAK ×${streakMult}!`:""}`);
-      setProfile(p=>{ const np={...p,wins:(p.wins||0)+1}; updateProfile(np); return np; });
+      setProfile(p=>{ const np={...p,wins:(p.wins||0)+1}; updateProfile(np);
+        if(!np.isGuest) supaUpdateStats(np.name,np.wins,np.losses||0,np.coins||0);
+        return np; });
       markNeedsHeal(pMon, false);
       // Daily wins
       setDailyWins(prev=>{
@@ -2907,7 +3114,7 @@ function App(){
       // Evolution fires when navigating away from OVER screen — handled via useEffect
       // ── Save battle to history ──────────────────────────────
       const record=makeBattleRecord(pMon,eMon,"player",battleTurns,pLevel);
-      supaBattle("player",pMon.name,eMon.name,battleTurns);
+      supaBattle(profile?.name||"unknown","player",pMon.name,eMon.name,battleTurns);
       setBattleHistory(h=>{ const n=[record,...h].slice(0,50); localStorage.setItem('pkmn_history',JSON.stringify(n)); return n; });
       // ── Story mode progress ─────────────────────────────────
       if(storyBattle!=null){
@@ -3048,8 +3255,14 @@ function App(){
   // ══════════════════════════════════════════════════════════
   if(screen===MODES.CHAR){
     return <CharacterScreen onDone={p=>{
+      if(p.isGuest){
+        // Guest gets avatar (already picked in CharacterScreen) then starter
+        setProfile(p);
+        setScreen(MODES.STARTER); // let guest pick starter too
+        setTimeout(()=>{ musicStarted.current=true; if(musicOn) AUDIO.play("select"); },200);
+        return;
+      }
       setProfile(p);
-      // Check if starter chosen
       const savedStarter=localStorage.getItem(`pkmn_starter_${p.name}`);
       if(savedStarter){ setStarterPokemon(JSON.parse(savedStarter)); setScreen(MODES.HOME); }
       else { setScreen(MODES.STARTER); }
@@ -3071,10 +3284,11 @@ function App(){
     );
     return <StarterScreen allPokemon={allPokemon} onDone={p=>{
       setStarterPokemon(p);
-      localStorage.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(p));
+      const store=profile?.isGuest?sessionStorage:localStorage;
+      store.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(p));
       const nu=new Set([...unlockedIds,p.id]);
       setUnlockedIds(nu);
-      localStorage.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
+      store.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
       setScreen(MODES.HOME);
     }}/>;
   }
@@ -3213,7 +3427,7 @@ function App(){
 
       {showBoard&&<HallOfFame onClose={()=>setShowBoard(false)} currentName={profile?.name}/>}
       {showChallenges&&<DailyChallengesScreen challenges={challenges} onClose={()=>setShowChallenges(false)}/>}
-      {screen===MODES.DEX&&<PokedexScreen allPokemon={allPokemon} unlockedIds={unlockedIds} starterPokemon={starterPokemon} onClose={()=>setScreen(MODES.HOME)}/>}
+      {screen===MODES.DEX&&<PokedexScreen allPokemon={allPokemon} unlockedIds={unlockedIds} starterPokemon={starterPokemon} isGuest={!!profile?.isGuest} onClose={()=>setScreen(MODES.HOME)}/>}
       {screen===MODES.CARD&&<TrainerCard profile={profile} starterPokemon={starterPokemon} winStreak={winStreak} unlockedIds={unlockedIds} onClose={()=>setScreen(MODES.HOME)}/>}
       {showStreakBanner&&<StreakBanner streak={winStreak+1}/>}
 
@@ -3228,12 +3442,25 @@ function App(){
       ══════════════════════════════════════════════════ */}
       {screen===MODES.HOME&&(
         <div style={{width:"100%",maxWidth:720,display:"flex",flexDirection:"column",gap:14}}>
+          {/* Guest sign-in banner */}
+          {profile?.isGuest&&(
+            <div style={{background:"linear-gradient(135deg,rgba(124,77,255,0.15),rgba(79,195,247,0.1))",border:"1.5px solid rgba(124,77,255,0.4)",borderRadius:14,padding:"clamp(12px,2.5vw,16px) clamp(14px,3vw,20px)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:4}}>
+              <div>
+                <div style={{color:"#FFD54F",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>👤 PLAYING AS GUEST</div>
+                <div style={{color:"#555",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>Sign in to save your progress!</div>
+              </div>
+              <button onClick={()=>setScreen(MODES.CHAR)} className="btn" style={{background:"linear-gradient(135deg,rgba(124,77,255,0.4),rgba(79,195,247,0.25))",border:"2px solid rgba(124,77,255,0.7)",borderRadius:10,padding:"clamp(9px,1.8vw,12px) clamp(14px,2.5vw,20px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",boxShadow:"0 0 20px rgba(124,77,255,0.3)",whiteSpace:"nowrap"}}>
+                🔐 SIGN IN
+              </button>
+            </div>
+          )}
+
           {/* Profile bar */}
           <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"16px 20px",display:"flex",flexWrap:"wrap",gap:14,alignItems:"center",justifyContent:"space-between"}}>
             <div style={{display:"flex",alignItems:"center",gap:12}}>
               <ProfileAvatar profile={profile} size={40}/>
               <div>
-                <div style={{color:"#fff",fontSize:"clamp(13px,2.5vw,18px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+                <div style={{color:"#fff",fontSize:"clamp(13px,2.5vw,18px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}{profile?.isGuest&&<span style={{color:"#555",fontSize:"clamp(7px,1.2vw,9px)",marginLeft:8}}>(Guest)</span>}</div>
                 <div style={{color:"#444",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>{profile?.wins||0}W / {profile?.losses||0}L · {profile?.coins||0}🪙</div>
               </div>
             </div>
@@ -3935,7 +4162,6 @@ function App(){
     </div>
   );
 }
-
 
 
 export default App;
