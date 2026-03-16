@@ -9,26 +9,16 @@
   <meta name="theme-color" content="#05050d"/>
   <meta name="description" content="Pokémon Battle Arena — Battle across all 9 generations, catch Pokémon, climb the Hall of Fame!"/>
   <title>Pokémon Battle Arena</title>
-
-  <!-- Favicon: Pokéball SVG -->
   <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><circle cx='50' cy='50' r='48' fill='%23e53935'/><path d='M2 50 A48 48 0 0 0 98 50 Z' fill='%23f5f5f5'/><rect x='2' y='46' width='96' height='8' fill='%23212121' rx='2'/><circle cx='50' cy='50' r='13' fill='%23212121'/><circle cx='50' cy='50' r='8' fill='%23f5f5f5'/><ellipse cx='34' cy='27' rx='9' ry='5' fill='rgba(255,255,255,0.22)' transform='rotate(-30,34,27)'/></svg>"/>
-
-  <!-- Google Fonts: Press Start 2P -->
   <link rel="preconnect" href="https://fonts.googleapis.com"/>
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin/>
   <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet"/>
-
-  <!-- Google Identity Services (for Sign in with Google) -->
   <script src="https://accounts.google.com/gsi/client" async defer></script>
-
   <style>
-    /* ── Reset ── */
     *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; -webkit-tap-highlight-color:transparent; }
     html, body { height:100%; overflow-x:hidden; }
     body { background:#05050d; color:#fff; font-family:'Press Start 2P', monospace; }
     #root { min-height:100vh; min-height:100dvh; }
-
-    /* ── Loading screen ── */
     #loading {
       position:fixed; inset:0; background:#05050d; z-index:9999;
       display:flex; flex-direction:column; align-items:center; justify-content:center;
@@ -36,21 +26,13 @@
       font-family:'Press Start 2P', monospace;
     }
     #loading-icon { font-size:clamp(36px,9vw,56px); animation:ldp 1.5s ease-in-out infinite; }
-    #lt {
-      font-size:clamp(13px,3.2vw,20px); letter-spacing:3px;
-      background:linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF);
-      -webkit-background-clip:text; -webkit-text-fill-color:transparent;
-    }
+    #lt { font-size:clamp(13px,3.2vw,20px); letter-spacing:3px; background:linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF); -webkit-background-clip:text; -webkit-text-fill-color:transparent; }
     #ls { font-size:clamp(8px,1.6vw,11px); color:#444; letter-spacing:3px; }
     #lb { width:clamp(200px,55vw,320px); height:7px; background:#111; border-radius:4px; overflow:hidden; border:1px solid #1a1a3a; }
     #lf { height:100%; width:0; background:linear-gradient(90deg,#7C4DFF,#4FC3F7,#FF6B35); animation:ldf 4.5s ease forwards; }
     #lsub { font-size:clamp(7px,1.2vw,9px); color:#1a1a2a; margin-top:4px; letter-spacing:2px; }
-
-    /* ── Loading animations ── */
     @keyframes ldf { 0%{width:0} 55%{width:72%} 85%{width:92%} 100%{width:100%} }
     @keyframes ldp  { 0%,100%{transform:scale(1);opacity:.65} 50%{transform:scale(1.18);opacity:1} }
-
-    /* ── Login background particle animations (used by CharacterScreen) ── */
     @keyframes loginBlob1  { from{transform:translate(0,0) scale(1)} to{transform:translate(5%,8%) scale(1.15)} }
     @keyframes loginBlob2  { from{transform:translate(0,0) scale(1)} to{transform:translate(-8%,5%) scale(1.1)} }
     @keyframes loginBlob3  { from{transform:translate(0,0) scale(1)} to{transform:translate(6%,-6%) scale(1.2)} }
@@ -58,20 +40,14 @@
     @keyframes floatParticle1 { from{transform:translateY(0)} to{transform:translateY(-14px)} }
     @keyframes floatParticle2 { from{transform:translateY(0)} to{transform:translateY(-18px)} }
     @keyframes floatParticle3 { from{transform:translateY(0)} to{transform:translateY(-12px)} }
-
-    /* ── Scrollbar ── */
     ::-webkit-scrollbar { width:4px; }
     ::-webkit-scrollbar-track { background:#080816; }
     ::-webkit-scrollbar-thumb { background:#1e1e32; border-radius:4px; }
-
-    /* ── Inputs/selects ── */
     input, select, textarea { outline:none !important; }
     select option { background:#0a0a1a; color:#ccc; }
   </style>
 </head>
 <body>
-
-  <!-- Loading splash (hidden once React mounts) -->
   <div id="loading">
     <div id="loading-icon">⚡</div>
     <div id="lt">POKÉMON BATTLE ARENA</div>
@@ -79,22 +55,11 @@
     <div id="lb"><div id="lf"></div></div>
     <div id="lsub">All 9 Generations · 1,010 Pokémon</div>
   </div>
-
-  <!-- React root -->
   <div id="root"></div>
-
-  <!-- React 18 from CDN -->
   <script src="https://unpkg.com/react@18.2.0/umd/react.production.min.js" crossorigin></script>
   <script src="https://unpkg.com/react-dom@18.2.0/umd/react-dom.production.min.js" crossorigin></script>
-
-  <!-- Babel standalone (transpiles JSX in-browser) -->
   <script src="https://unpkg.com/@babel/standalone@7.23.5/babel.min.js"></script>
-
-  <!-- ══════════════════════════════════════════════════════════
-       POKÉMON BATTLE ARENA — Full Game Code
-       ══════════════════════════════════════════════════════════ -->
   <script type="text/babel" data-presets="react,env">
-    /* Make React hooks available as globals (CDN build exposes them on window.React) */
     const { useState, useEffect, useRef, useCallback, useMemo } = React;
 
 // Google Client ID: 661351244640-gnpaf4cejj9uoeg4q4h86uk0ghq2ena8.apps.googleusercontent.com
@@ -301,7 +266,7 @@ const STARTER_CHOICES = [
   {id:906,name:"Sprigatito"},{id:909,name:"Fuecoco"},{id:912,name:"Quaxly"},
 ];
 
-const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history"};
+const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",MP_SOON:"mp_soon",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history"};
 
 // ══════════════════════════════════════════════════════════════════════
 // SUPABASE DATABASE SETUP
@@ -364,14 +329,21 @@ const SUPA_KEY = "sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
 const SUPA_READY = SUPA_URL.includes("supabase.co") && !SUPA_URL.includes("YOUR_PROJECT");
 function supaTrack(table, data){
   if(!SUPA_READY) return;
+  // Support both new sb_publishable_ keys and legacy eyJ... anon keys
+  const headers = {
+    "Content-Type": "application/json",
+    "Prefer": "return=minimal"
+  };
+  if(SUPA_KEY.startsWith("sb_publishable_")){
+    headers["Authorization"] = `Bearer ${SUPA_KEY}`;
+    headers["apikey"] = SUPA_KEY;
+  } else {
+    headers["apikey"] = SUPA_KEY;
+    headers["Authorization"] = `Bearer ${SUPA_KEY}`;
+  }
   fetch(`${SUPA_URL}/rest/v1/${table}`,{
     method:"POST",
-    headers:{
-      "Content-Type":"application/json",
-      "apikey": SUPA_KEY,
-      "Authorization": `Bearer ${SUPA_KEY}`,
-      "Prefer": "return=minimal"
-    },
+    headers,
     body:JSON.stringify({...data, ts: new Date().toISOString()})
   }).catch(()=>{}); // silent fail — never blocks the game
 }
@@ -553,6 +525,10 @@ function getDailyChallenges(){
   return out;
 }
 const todayKey=()=>new Date().toDateString();
+// Per-profile + per-day keys so different accounts never share challenge progress
+const challengeKey = (profileName) => `pkmn_challenges_${profileName}_${todayKey()}`;
+const dailyWinsKey = (profileName) => `pkmn_dailywins_${profileName}_${todayKey()}`;
+const caughtTodayKey = (profileName) => `pkmn_caught_${profileName}_${todayKey()}`;
 
 // ══════════════════════════════════════════════════════════════════════
 //  COMBAT UTILS
@@ -1541,14 +1517,22 @@ function HistoryScreen({history, onBack}){
 function TradeScreen({allPokemon, unlockedIds, starterPokemon, onTrade, profile}){
   const [offering,setOffering]=useState(null);
   const [wanting,setWanting]=useState(null);
+  const [confirm,setConfirm]=useState(false);
+
+  // owned = pokemon the user has (starter + unlocked)
   const owned=allPokemon.filter(p=>unlockedIds.has(p.id)||(starterPokemon?.id===p.id));
-  const available=allPokemon.filter(p=>!unlockedIds.has(p.id)&&starterPokemon?.id!==p.id).slice(0,60);
+  // available = pokemon NOT owned yet, limited to first 80 to keep the list manageable
+  const available=allPokemon.filter(p=>!unlockedIds.has(p.id)&&starterPokemon?.id!==p.id).slice(0,80);
+
+  const tradeCost = wanting ? (wanting.legendary?600:wanting.canMega?400:200) : 0;
+  const canAfford = (profile?.coins||0) >= tradeCost;
 
   function doTrade(){
     if(!offering||!wanting) return;
-    const cost=wanting.legendary?600:wanting.canMega?400:200;
-    if((profile?.coins||0)<cost){ alert(`Need ${cost}🪙 for this trade!`); return; }
-    onTrade(offering,wanting,cost);
+    if(!canAfford){ alert(`Need ${tradeCost}🪙! You have ${profile?.coins||0}🪙.`); return; }
+    setConfirm(false);
+    // Pass full pokemon objects — onTrade will re-fetch from allPokemon for safety
+    onTrade(offering, wanting, tradeCost);
   }
 
   return(
@@ -1556,33 +1540,70 @@ function TradeScreen({allPokemon, unlockedIds, starterPokemon, onTrade, profile}
       <div style={{textAlign:"center",marginBottom:20}}>
         <div style={{fontSize:"24px",marginBottom:6}}>🔄</div>
         <div style={{color:"#FFD54F",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>TRADE CENTER</div>
-        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Give one of yours, get one you don't have</div>
+        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Give one of yours · Get one you want</div>
+        <div style={{color:"#FFD54F",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginTop:4}}>Balance: {profile?.coins||0}🪙</div>
       </div>
+
+      {/* Confirm dialog */}
+      {confirm&&offering&&wanting&&(
+        <div style={{background:"rgba(0,0,0,0.9)",position:"fixed",inset:0,display:"flex",alignItems:"center",justifyContent:"center",zIndex:600}} onClick={()=>setConfirm(false)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"#07070f",border:"1.5px solid rgba(255,213,79,0.4)",borderRadius:16,padding:"24px 22px",maxWidth:360,width:"100%",textAlign:"center"}}>
+            <div style={{fontSize:"18px",marginBottom:10}}>⇄</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"10px",color:"#fff",marginBottom:6}}>Confirm Trade?</div>
+            <div style={{display:"flex",justifyContent:"center",gap:20,marginBottom:14,alignItems:"center"}}>
+              <div style={{textAlign:"center"}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${offering.id}.png`} style={{width:52,imageRendering:"pixelated"}}/>
+                <div style={{color:"#f44336",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{offering.name}</div>
+                <div style={{color:"#555",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>YOU GIVE</div>
+              </div>
+              <div style={{color:"#FFD54F",fontSize:"20px"}}>→</div>
+              <div style={{textAlign:"center"}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${wanting.id}.png`} style={{width:52,imageRendering:"pixelated"}}/>
+                <div style={{color:"#4CAF50",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{wanting.name}</div>
+                <div style={{color:"#555",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>YOU GET</div>
+              </div>
+            </div>
+            <div style={{color:"#FFD54F",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:16}}>Cost: {tradeCost}🪙</div>
+            {!canAfford&&<div style={{color:"#f44336",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>⚠️ Not enough coins!</div>}
+            <div style={{display:"flex",gap:8}}>
+              <button onClick={()=>setConfirm(false)} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>CANCEL</button>
+              <button onClick={doTrade} disabled={!canAfford} style={{flex:2,background:canAfford?"rgba(76,175,80,0.25)":"rgba(255,255,255,0.03)",border:`1.5px solid ${canAfford?"rgba(76,175,80,0.6)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"10px",color:canAfford?"#4CAF50":"#333",cursor:canAfford?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>
+                ✅ CONFIRM
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       <div style={{display:"grid",gridTemplateColumns:"1fr auto 1fr",gap:12,marginBottom:16,alignItems:"start"}}>
         {/* Offering */}
         <div>
           <div style={{color:"#f44336",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,textAlign:"center"}}>YOU GIVE</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
-            {owned.map(p=>(
-              <div key={p.id} onClick={()=>setOffering(offering?.id===p.id?null:p)}
-                style={{background:offering?.id===p.id?"rgba(244,67,54,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${offering?.id===p.id?"#f44336":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
-                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
-                <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
-              </div>
-            ))}
-          </div>
+          {owned.length===0?(
+            <div style={{color:"#333",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",textAlign:"center",padding:"16px 0"}}>No Pokémon owned yet!</div>
+          ):(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
+              {owned.map(p=>(
+                <div key={p.id} onClick={()=>setOffering(offering?.id===p.id?null:p)}
+                  style={{background:offering?.id===p.id?"rgba(244,67,54,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${offering?.id===p.id?"#f44336":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
+                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
+                  <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
+                  {starterPokemon?.id===p.id&&<div style={{color:"#FFD54F",fontSize:"5px",fontFamily:"'Press Start 2P',monospace"}}>STARTER</div>}
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
-        {/* Arrow */}
+        {/* Arrow + Trade button */}
         <div style={{textAlign:"center",paddingTop:40}}>
           <div style={{fontSize:"24px"}}>⇄</div>
           {offering&&wanting&&(
             <div style={{marginTop:12}}>
-              <div style={{color:"#FFD54F",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>
-                Cost: {wanting.legendary?600:wanting.canMega?400:200}🪙
+              <div style={{color:canAfford?"#FFD54F":"#f44336",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>
+                {tradeCost}🪙
               </div>
-              <button onClick={doTrade} className="btn" style={{background:"rgba(76,175,80,0.2)",border:"1.5px solid rgba(76,175,80,0.5)",borderRadius:8,padding:"8px 10px",color:"#4CAF50",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>
+              <button onClick={()=>setConfirm(true)} className="btn" style={{background:"rgba(76,175,80,0.2)",border:"1.5px solid rgba(76,175,80,0.5)",borderRadius:8,padding:"8px 10px",color:"#4CAF50",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"8px"}}>
                 TRADE!
               </button>
             </div>
@@ -1592,16 +1613,20 @@ function TradeScreen({allPokemon, unlockedIds, starterPokemon, onTrade, profile}
         {/* Wanting */}
         <div>
           <div style={{color:"#4CAF50",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,textAlign:"center"}}>YOU GET</div>
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
-            {available.map(p=>(
-              <div key={p.id} onClick={()=>setWanting(wanting?.id===p.id?null:p)}
-                style={{background:wanting?.id===p.id?"rgba(76,175,80,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${wanting?.id===p.id?"#4CAF50":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
-                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
-                <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
-                <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>{p.legendary?"⭐":p.canMega?"💎":""}</div>
-              </div>
-            ))}
-          </div>
+          {available.length===0?(
+            <div style={{color:"#333",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",textAlign:"center",padding:"16px 0"}}>All Pokémon already owned!</div>
+          ):(
+            <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(70px,1fr))",gap:6,maxHeight:280,overflowY:"auto"}}>
+              {available.map(p=>(
+                <div key={p.id} onClick={()=>setWanting(wanting?.id===p.id?null:p)}
+                  style={{background:wanting?.id===p.id?"rgba(76,175,80,0.2)":"rgba(10,10,28,0.98)",border:`1.5px solid ${wanting?.id===p.id?"#4CAF50":"rgba(255,255,255,0.06)"}`,borderRadius:9,padding:"6px 4px",cursor:"pointer",textAlign:"center",transition:"all 0.14s"}}>
+                  <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
+                  <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",lineHeight:1.4}}>{p.name}</div>
+                  <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>{p.legendary?"⭐":p.canMega?"💎":""}</div>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
     </div>
@@ -1785,6 +1810,8 @@ function CharacterScreen({onDone}){
       if(existing){
         const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
         const prof=profiles.find(p=>p.name===existing.username);
+        // Track returning Google login to Supabase
+        supaLogin(existing.username, gEmail);
         if(prof){onDone(prof);return;}
         const np={name:existing.username,avatar:existing.avatar||"🌟",avatarData:existing.avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
         localStorage.setItem("pkmn_profiles",JSON.stringify([...profiles,np]));
@@ -2066,12 +2093,12 @@ function CharacterScreen({onDone}){
             </div>
           </div>
         </div>
-        {/* Quick login */}
-        {existing.length>0&&(
+        {/* Quick login — registered users only, no guests */}
+        {existing.filter(p=>!p.isGuest).length>0&&(
           <div style={{marginTop:20}}>
             <div style={{color:"#1a1a2a",fontSize:"clamp(8px,1.5vw,10px)",textAlign:"center",marginBottom:12,fontFamily:"'Press Start 2P',monospace"}}>— QUICK LOGIN —</div>
             <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
-              {existing.slice(-5).map(p=>(
+              {existing.filter(p=>!p.isGuest).slice(-5).map(p=>(
                 <button key={p.name} onClick={()=>onDone(p)} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",minWidth:72}}>
                   <div style={{fontSize:"clamp(22px,4.5vw,30px)",marginBottom:6}}>
                     {p.avatarData?.type==="built"?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>:p.avatar}
@@ -2090,25 +2117,43 @@ function CharacterScreen({onDone}){
 
 function StarterScreen({onDone, allPokemon}){
   const [chosen, setChosen] = useState(null);
-  const starters = allPokemon.filter(p=>STARTER_CHOICES.some(s=>s.id===p.id)).slice(0,12);
+  const [genFilt, setGenFilt] = useState("all");
+  const allStarters = allPokemon.filter(p=>STARTER_CHOICES.some(s=>s.id===p.id));
+  const starters = genFilt==="all" ? allStarters : allStarters.filter(p=>{
+    const sc=STARTER_CHOICES.find(s=>s.id===p.id);
+    const gen=getGen(p.id);
+    return genFilt==="all" || String(gen.g)===genFilt;
+  });
+  const GEN_LABELS={1:"Kanto",2:"Johto",3:"Hoenn",4:"Sinnoh",5:"Unova",6:"Kalos",7:"Alola",8:"Galar",9:"Paldea"};
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"20px"}}>
-      <div style={{fontSize:"13px",fontFamily:"'Press Start 2P',monospace",color:"#FFD54F",marginBottom:6,textAlign:"center"}}>🌟 CHOOSE YOUR STARTER!</div>
-      <div style={{fontSize:"9px",fontFamily:"'Press Start 2P',monospace",color:"#555",marginBottom:24,textAlign:"center"}}>This Pokémon begins your journey — choose wisely!</div>
+      <div style={{fontSize:"clamp(11px,2.5vw,15px)",fontFamily:"'Press Start 2P',monospace",color:"#FFD54F",marginBottom:6,textAlign:"center"}}>🌟 CHOOSE YOUR STARTER!</div>
+      <div style={{fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",color:"#555",marginBottom:16,textAlign:"center"}}>Your partner Pokémon — choose wisely!</div>
 
-      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(120px,1fr))",gap:10,maxWidth:700,width:"100%",marginBottom:24}}>
+      {/* Gen filter tabs */}
+      <div style={{display:"flex",gap:4,marginBottom:16,flexWrap:"wrap",justifyContent:"center"}}>
+        <button onClick={()=>setGenFilt("all")} style={{padding:"6px 10px",background:genFilt==="all"?"rgba(255,213,79,0.2)":"rgba(255,255,255,0.04)",border:`1px solid ${genFilt==="all"?"rgba(255,213,79,0.5)":"rgba(255,255,255,0.08)"}`,borderRadius:7,color:genFilt==="all"?"#FFD54F":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>ALL</button>
+        {Object.entries(GEN_LABELS).map(([g,label])=>{
+          const col=GENS[+g]?.col||"#888";
+          return <button key={g} onClick={()=>setGenFilt(g)} style={{padding:"6px 10px",background:genFilt===g?`${col}28`:"rgba(255,255,255,0.04)",border:`1px solid ${genFilt===g?col+"66":"rgba(255,255,255,0.08)"}`,borderRadius:7,color:genFilt===g?col:"#333",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)"}}>G{g}</button>;
+        })}
+      </div>
+
+      <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(110px,1fr))",gap:10,maxWidth:820,width:"100%",marginBottom:24}}>
         {starters.map(p=>{
           const c=TC[p.types[0]]||"#888";
           const sel=chosen?.id===p.id;
+          const gen=getGen(p.id);
           return(
-            <div key={p.id} onClick={()=>setChosen(p)} style={{background:sel?`linear-gradient(160deg,rgba(255,213,79,0.15),rgba(255,107,53,0.1))`:"rgba(10,10,24,0.98)",border:`2px solid ${sel?"#FFD54F":`${c}33`}`,borderRadius:14,padding:"14px 10px",cursor:"pointer",textAlign:"center",transition:"all 0.18s",boxShadow:sel?"0 0 30px rgba(255,213,79,0.3)":"none",transform:sel?"scale(1.06)":"scale(1)"}}>
-              <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:68,imageRendering:"pixelated",filter:`drop-shadow(0 0 8px ${c}99)`}}/>
-              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:"#fff",marginBottom:4,textTransform:"capitalize"}}>{p.name}</div>
+            <div key={p.id} onClick={()=>setChosen(p)} style={{background:sel?`linear-gradient(160deg,rgba(255,213,79,0.15),rgba(255,107,53,0.1))`:"rgba(10,10,24,0.98)",border:`2px solid ${sel?"#FFD54F":`${c}33`}`,borderRadius:14,padding:"12px 8px",cursor:"pointer",textAlign:"center",transition:"all 0.18s",boxShadow:sel?"0 0 30px rgba(255,213,79,0.3)":"none",transform:sel?"scale(1.06)":"scale(1)",position:"relative"}}>
+              <div style={{position:"absolute",top:4,right:4,fontSize:"7px",color:gen.col,fontFamily:"'Press Start 2P',monospace"}}>G{gen.g}</div>
+              <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:64,imageRendering:"pixelated",filter:`drop-shadow(0 0 8px ${c}99)`}}/>
+              <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.6vw,10px)",color:"#fff",marginBottom:4,textTransform:"capitalize"}}>{p.name}</div>
               <div style={{display:"flex",gap:3,justifyContent:"center",flexWrap:"wrap"}}>
                 {p.types.map(t=><Badge key={t} type={t} small/>)}
               </div>
-              {sel&&<div style={{marginTop:6,fontSize:"12px"}}>✅</div>}
+              {sel&&<div style={{marginTop:5,fontSize:"14px"}}>✅</div>}
             </div>
           );
         })}
@@ -2411,7 +2456,9 @@ function TrainerCard({profile, starterPokemon, winStreak, unlockedIds, onClose})
   const myRank=ranked.findIndex(p=>p.name===profile?.name)+1;
   const total=(profile?.wins||0)+(profile?.losses||0);
   const wr=total>0?Math.round(((profile?.wins||0)/total)*100):0;
-  const ownedCount=unlockedIds.size+(starterPokemon?1:0);
+  // Count owned: unlockedIds always includes the starter (added on starter selection).
+  // Never add +1 for the starter again — that causes the double-count bug.
+  const ownedCount = unlockedIds.size;
   const tier=myRank===1?"CHAMPION":myRank<=3?"ELITE 4":myRank<=8?"GYM LEADER":myRank<=15?"ACE TRAINER":"TRAINER";
   const tierColor=myRank===1?"#FFD700":myRank<=3?"#C0C0C0":myRank<=8?"#9C7DFF":myRank<=15?"#4FC3F7":"#66BB6A";
 
@@ -2545,6 +2592,175 @@ function DailyChallengesScreen({challenges, onClose}){
 }
 
 
+// ══════════════════════════════════════════════════════════════════════
+//  MULTIPLAYER — FULL PAGE COMING SOON SCREEN
+// ══════════════════════════════════════════════════════════════════════
+function MultiplayerComingSoonPage({onBack}){
+  const [frame, setFrame] = useState(0);
+  useEffect(()=>{
+    const id = setInterval(()=>setFrame(f=>f+1), 100);
+    return ()=>clearInterval(id);
+  },[]);
+
+  const glowPulse = 0.5 + 0.5 * Math.abs(Math.sin(frame * 0.05));
+  const textPulse = 0.65 + 0.35 * Math.abs(Math.sin(frame * 0.035));
+  const dots = '.'.repeat(Math.floor(frame / 12) % 4);
+
+  const auras = [0,1,2,3,4,5].map(i=>({
+    x: 50 + Math.cos(frame * 0.012 + i * Math.PI/3) * (20 + i*5),
+    y: 50 + Math.sin(frame * 0.016 + i * Math.PI/3) * (14 + i*2),
+    color: ['rgba(124,77,255,','rgba(79,195,247,','rgba(240,98,146,',
+            'rgba(255,213,79,','rgba(102,187,106,','rgba(255,107,53,'][i],
+    size: 220 + i*55,
+    alpha: (0.10 + glowPulse * 0.07).toFixed(2),
+  }));
+
+  const features = [
+    {icon:'⚔️', title:'PvP Battles',  desc:'Fight real trainers online',   col:'#EF5350'},
+    {icon:'🏆', title:'Ranked Mode',   desc:'Climb the global leaderboard', col:'#FFD54F'},
+    {icon:'🎲', title:'Room Codes',    desc:'Private battles with friends', col:'#7C4DFF'},
+    {icon:'💬', title:'Battle Chat',   desc:'Talk smack mid-fight',         col:'#4FC3F7'},
+  ];
+
+  return(
+    <div style={{
+      width:'100%',
+      height:'100vh',        /* exactly one viewport height — no scroll */
+      maxHeight:'100vh',
+      overflow:'hidden',     /* this page only: lock scroll */
+      display:'flex',
+      flexDirection:'column',
+      alignItems:'center',
+      justifyContent:'center',
+      background:'#05050d',
+      position:'relative',
+      fontFamily:"'Press Start 2P',monospace",
+    }}>
+
+      {/* Aura blobs */}
+      {auras.map((a,i)=>(
+        <div key={i} style={{
+          position:'absolute',
+          left:a.x+'%', top:a.y+'%',
+          width:a.size+'px', height:a.size+'px',
+          transform:'translate(-50%,-50%)',
+          borderRadius:'50%',
+          background:'radial-gradient(circle, '+a.color+a.alpha+'), transparent 70%)',
+          pointerEvents:'none', zIndex:0,
+        }}/>
+      ))}
+
+      {/* Grid */}
+      <div style={{
+        position:'absolute', inset:0, zIndex:0, pointerEvents:'none',
+        backgroundImage:'linear-gradient(rgba(124,77,255,0.04)1px,transparent 1px),linear-gradient(90deg,rgba(124,77,255,0.04)1px,transparent 1px)',
+        backgroundSize:'40px 40px',
+      }}/>
+
+      {/* ← HOME button — top-left floating, matches app style */}
+      <div style={{position:'absolute', top:14, left:14, zIndex:10}}>
+        <button onClick={onBack} className='btn' style={{
+          background:'rgba(255,255,255,0.04)',
+          border:'1px solid rgba(255,255,255,0.12)',
+          borderRadius:9,
+          padding:'7px 14px',
+          color:'#888', cursor:'pointer',
+          fontSize:'clamp(9px,1.8vw,12px)',
+          fontFamily:"'Press Start 2P',monospace",
+          display:'flex', alignItems:'center', gap:5,
+          letterSpacing:1,
+        }}>← HOME</button>
+      </div>
+
+      {/* Content — compact, fits in one screen */}
+      <div style={{
+        position:'relative', zIndex:1,
+        display:'flex', flexDirection:'column',
+        alignItems:'center',
+        gap:'clamp(12px,1.8vh,24px)',
+        width:'100%', maxWidth:620,
+        padding:'0 clamp(20px,4vw,40px)',
+      }}>
+
+        {/* VS icons */}
+        <div style={{display:'flex', alignItems:'center', justifyContent:'center', gap:'clamp(32px,7vw,80px)'}}>
+          {[{emoji:'🔴',shadow:'rgba(240,98,146,0.9)'},{emoji:'🔵',shadow:'rgba(79,195,247,0.9)'}].map((t,i)=>(
+            <div key={i} style={{
+              fontSize:'clamp(42px,7vw,68px)',
+              filter:'drop-shadow(0 0 '+Math.round(10+glowPulse*22)+'px '+t.shadow+')',
+              transform:'translateY('+Math.sin(frame*0.04+i*Math.PI)*9+'px)',
+              transition:'transform 0.1s',
+              lineHeight:1,
+            }}>{t.emoji}</div>
+          ))}
+        </div>
+
+        {/* Heading */}
+        <div style={{textAlign:'center'}}>
+          <div style={{
+            fontSize:'clamp(24px,4.2vw,46px)',
+            background:'linear-gradient(135deg,#7C4DFF,#4FC3F7,#F06292)',
+            WebkitBackgroundClip:'text', WebkitTextFillColor:'transparent',
+            letterSpacing:'clamp(3px,0.5vw,7px)',
+            marginBottom:'clamp(7px,1vh,12px)',
+            lineHeight:1.2,
+          }}>MULTIPLAYER</div>
+          <div style={{
+            fontSize:'clamp(13px,2.4vw,24px)',
+            color:'rgba(255,213,79,'+textPulse.toFixed(2)+')',
+            textShadow:'0 0 '+Math.round(14+glowPulse*22)+'px rgba(255,213,79,0.85), 0 0 50px rgba(255,107,53,0.5)',
+            letterSpacing:'clamp(3px,0.6vw,6px)',
+          }}>{'COMING SOON'+dots}</div>
+        </div>
+
+        {/* Progress bar */}
+        <div style={{width:'100%', maxWidth:420}}>
+          <div style={{background:'rgba(255,255,255,0.06)',borderRadius:8,height:9,overflow:'hidden',border:'1px solid rgba(124,77,255,0.18)'}}>
+            <div style={{
+              width:(42+28*Math.abs(Math.sin(frame*0.018)))+'%',
+              height:'100%',
+              background:'linear-gradient(90deg,#7C4DFF,#4FC3F7,#F06292,#FFD54F)',
+              borderRadius:8, boxShadow:'0 0 12px rgba(124,77,255,0.8)',
+              transition:'width 0.15s ease',
+            }}/>
+          </div>
+          <div style={{display:'flex',justifyContent:'space-between',marginTop:5,fontSize:'clamp(6px,1vw,8px)',color:'#2a2a3a'}}>
+            <span>IN DEVELOPMENT</span>
+            <span>{'~'+Math.round(42+28*Math.abs(Math.sin(frame*0.018)))+'%'}</span>
+          </div>
+        </div>
+
+        {/* Feature cards */}
+        <div style={{display:'grid',gridTemplateColumns:'repeat(2,1fr)',gap:'clamp(8px,1.2vw,14px)',width:'100%'}}>
+          {features.map((f,i)=>(
+            <div key={i} style={{
+              background:'rgba(8,8,24,0.88)',
+              border:'1px solid '+f.col+'30',
+              borderRadius:12,
+              padding:'clamp(12px,1.6vh,18px) clamp(12px,1.8vw,18px)',
+              display:'flex', alignItems:'center',
+              gap:'clamp(10px,1.4vw,14px)',
+              backdropFilter:'blur(4px)',
+            }}>
+              <div style={{fontSize:'clamp(18px,2.8vw,26px)',minWidth:'clamp(24px,3.5vw,32px)',filter:'drop-shadow(0 0 7px '+f.col+'99)',flexShrink:0}}>{f.icon}</div>
+              <div>
+                <div style={{color:'#ccc',fontSize:'clamp(8px,1.3vw,11px)',marginBottom:4,lineHeight:1.5}}>{f.title}</div>
+                <div style={{color:'#444',fontSize:'clamp(6px,0.9vw,8px)',lineHeight:1.8}}>{f.desc}</div>
+              </div>
+            </div>
+          ))}
+        </div>
+
+        {/* Footer note */}
+        <div style={{textAlign:'center',color:'#252535',fontSize:'clamp(6px,1vw,9px)',lineHeight:2}}>
+          We're building something epic. Stay tuned for updates!
+        </div>
+
+      </div>
+    </div>
+  );
+}
+
 const WS_URL = "ws://localhost:3001";
 const STARTER_COUNT = 6;
 const UNLOCK_COST = 300;
@@ -2613,7 +2829,7 @@ function App(){
   const [eStatus,setEStatus]=useState(null);
 
   // ── Streak & combo ────────────────────────────────────────
-  const [winStreak,setWinStreak]=useState(()=>parseInt(localStorage.getItem("pkmn_streak")||"0"));
+  const [winStreak,setWinStreak]=useState(0); // loaded per-profile in init effect
   const [showStreakBanner,setShowStreakBanner]=useState(false);
   const [usedItemsThisBattle,setUsedItemsThisBattle]=useState(false);
   const [usedZThisBattle,setUsedZThisBattle]=useState(false);
@@ -2626,7 +2842,10 @@ function App(){
   const [battleTurns,setBattleTurns]=useState(0);
 
   // ── Battle history ────────────────────────────────────────
-  const [battleHistory,setBattleHistory]=useState(()=>{ try{return JSON.parse(localStorage.getItem('pkmn_history')||'[]')}catch{return []} });
+  // Per-profile key so different accounts never share history.
+  // Guests use sessionStorage (clears on tab close).
+  const historyKey = (name, isGuest) => isGuest ? null : `pkmn_history_${name}`;
+  const [battleHistory,setBattleHistory]=useState([]);
 
   // ── Story mode ────────────────────────────────────────────
   const [storyProgress,setStoryProgress]=useState(()=>{ try{return JSON.parse(localStorage.getItem(storyKey(JSON.parse(localStorage.getItem('pkmn_profiles')||'[]').slice(-1)[0]?.name||''))||'[]')}catch{return []} });
@@ -2638,13 +2857,10 @@ function App(){
   const [tradeReceive,setTradeReceive]=useState(null);
 
   // ── Daily challenges ──────────────────────────────────────
-  const [challenges,setChallenges]=useState(()=>{
-    const saved=localStorage.getItem(`pkmn_challenges_${todayKey()}`);
-    if(saved){ try{ return JSON.parse(saved); }catch{} }
-    return getDailyChallenges();
-  });
-  const [dailyWins,setDailyWins]=useState(()=>parseInt(localStorage.getItem(`pkmn_dailywins_${todayKey()}`)||"0"));
-  const [caughtToday,setCaughtToday]=useState(()=>localStorage.getItem(`pkmn_caught_${todayKey()}`)==="1");
+  // NOTE: initialized empty here — loaded per-profile in the init effect below
+  const [challenges,setChallenges]=useState([]);
+  const [dailyWins,setDailyWins]=useState(0);
+  const [caughtToday,setCaughtToday]=useState(false);
   const [showChallenges,setShowChallenges]=useState(false);
 
   // ── Move hover preview ────────────────────────────────────
@@ -2688,11 +2904,21 @@ function App(){
     else if(screen===MODES.OVER) AUDIO.play(winner==="player"?"victory":"defeat");
   },[screen,winner,musicOn]);
 
-  // Clean up any lingering guest data from previous sessions
+  // Clean up ALL guest data on app load
   useEffect(()=>{
-    // Clear any guest keys from localStorage (they shouldn't be there, but safety net)
-    Object.keys(localStorage).filter(k=>k.includes("_Guest")).forEach(k=>localStorage.removeItem(k));
-    // sessionStorage auto-clears on tab close — no action needed
+    // Remove all guest-prefixed keys from localStorage
+    Object.keys(localStorage)
+      .filter(k=>k.includes("_Guest_")||k.startsWith("pkmn_starter_Guest")||k.startsWith("pkmn_unlocked_Guest")||k.startsWith("pkmn_streak_Guest")||k.startsWith("pkmn_history_Guest")||k.startsWith("pkmn_inv_Guest")||k.startsWith("pkmn_fainted_Guest")||k.startsWith("pkmn_team_Guest")||k.startsWith("pkmn_exp_Guest")||k.startsWith("pkmn_levels_Guest"))
+      .forEach(k=>localStorage.removeItem(k));
+    // Remove old shared battle history key (legacy — everyone was reading from it)
+    localStorage.removeItem('pkmn_history');
+    // Remove guest entries from pkmn_profiles so they never show in quick login
+    try{
+      const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+      const cleaned=profiles.filter(p=>!p.isGuest);
+      if(cleaned.length!==profiles.length) localStorage.setItem("pkmn_profiles",JSON.stringify(cleaned));
+    }catch{}
+    // sessionStorage auto-clears on tab close
   },[]);
 
   const firstClick=()=>{
@@ -2744,7 +2970,14 @@ function App(){
     if(!profile) return;
     const store=profile?.isGuest?sessionStorage:localStorage;
     const saved=store.getItem(`pkmn_unlocked_${profile.name}`);
-    if(saved) setUnlockedIds(new Set(JSON.parse(saved)));
+    // For guests: always start with empty unlocked set (no overlap between sessions)
+    if(profile.isGuest){
+      setUnlockedIds(new Set());
+    } else if(saved){
+      setUnlockedIds(new Set(JSON.parse(saved)));
+    } else {
+      setUnlockedIds(new Set());
+    }
     const savedInv=localStorage.getItem(`pkmn_inv_${profile.name}`);
     if(savedInv) setInventory(JSON.parse(savedInv));
     const savedFainted=localStorage.getItem(`pkmn_fainted_${profile.name}`);
@@ -2757,10 +2990,39 @@ function App(){
     if(savedStarter) setStarterPokemon(JSON.parse(savedStarter));
     const savedExp=localStorage.getItem(`pkmn_exp_${profile.name}`);
     if(savedExp) try{setExpMap(JSON.parse(savedExp))}catch{}
-    const savedHistory=localStorage.getItem('pkmn_history');
+    const savedHistory=profile.isGuest ? null : localStorage.getItem(`pkmn_history_${profile.name}`);
     if(savedHistory) try{setBattleHistory(JSON.parse(savedHistory))}catch{}
+    else setBattleHistory([]);
     const savedStory=localStorage.getItem(storyKey(profile.name));
     if(savedStory) try{setStoryProgress(JSON.parse(savedStory))}catch{}
+    // Load per-profile streak (guests always start at 0)
+    if(profile.isGuest){
+      setWinStreak(0);
+    } else {
+      setWinStreak(parseInt(localStorage.getItem(`pkmn_streak_${profile.name}`)||"0"));
+    }
+    // ── Load challenges per-profile + per-day ──────────────
+    // Key includes both profile name AND today's date, so:
+    // • Different accounts never share progress
+    // • Each new day gets fresh challenges automatically
+    if(profile.isGuest){
+      // Guests always get fresh challenges (sessionStorage clears on tab close)
+      setChallenges(getDailyChallenges());
+      setDailyWins(0);
+      setCaughtToday(false);
+    } else {
+      const savedCh=localStorage.getItem(challengeKey(profile.name));
+      if(savedCh){
+        try{ setChallenges(JSON.parse(savedCh)); }catch{ setChallenges(getDailyChallenges()); }
+      } else {
+        // New day or new account — generate fresh challenges
+        const fresh=getDailyChallenges();
+        setChallenges(fresh);
+        localStorage.setItem(challengeKey(profile.name),JSON.stringify(fresh));
+      }
+      setDailyWins(parseInt(localStorage.getItem(dailyWinsKey(profile.name))||"0"));
+      setCaughtToday(localStorage.getItem(caughtTodayKey(profile.name))==="1");
+    }
   },[profile]);
 
   useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_fainted_${profile.name}`,JSON.stringify(faintedTeam)); },[faintedTeam,profile]);
@@ -2848,6 +3110,7 @@ function App(){
     setFaintP(false); setFaintE(false); setHitP(false); setHitE(false);
     setWinner(null); setBusy(false); setAnim(null); setShowItems(false);
     setBattleTurns(0); setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false); setIsMpBattle(false);
+    battleEndedRef.current = false; // reset guard for new battle
     // Pick random weather
     const wRoll=Math.random();
     const wx=wRoll<0.14?WEATHERS[1]:wRoll<0.28?WEATHERS[4]:wRoll<0.38?WEATHERS[2]:wRoll<0.48?WEATHERS[3]:wRoll<0.56?WEATHERS[5]:wRoll<0.64?WEATHERS[6]:WEATHERS[0];
@@ -2860,6 +3123,10 @@ function App(){
     setBagItems(bag);
     setScreen(MODES.BATTLE);
   }
+
+  // Guard flag — prevents handleEnemyFaint / handlePlayerFaint firing twice in one battle
+  // (can happen when weather chip + move damage both reach 0 on the same turn)
+  const battleEndedRef = useRef(false);
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const pushLog=msg=>setLog(l=>[...l.slice(-12),msg]);
@@ -3002,8 +3269,8 @@ function App(){
     if(roll<catchChance){
       pushLog(`Gotcha! ${eMon.name.toUpperCase()} was caught! 🎉`);
       addCoins(150);
-      setCaughtToday(true); localStorage.setItem(`pkmn_caught_${todayKey()}`,"1");
-      setChallenges(prev=>{ const u=prev.map(ch=>ch.isCatch?{...ch,progress:1,done:true}:ch); localStorage.setItem(`pkmn_challenges_${todayKey()}`,JSON.stringify(u)); return u; });
+      setCaughtToday(true); if(!profile?.isGuest) localStorage.setItem(caughtTodayKey(profile?.name),"1");
+      setChallenges(prev=>{ const u=prev.map(ch=>ch.isCatch?{...ch,progress:1,done:true}:ch); if(!profile?.isGuest) localStorage.setItem(challengeKey(profile?.name),JSON.stringify(u)); return u; });
       const nu=new Set([...unlockedIds,eMon.id]);
       setUnlockedIds(nu);
       (profile?.isGuest?sessionStorage:localStorage).setItem(`pkmn_unlocked_${profile?.name}`,JSON.stringify([...nu]));
@@ -3123,6 +3390,8 @@ function App(){
   }
 
   function handlePlayerFaint(){
+    if(battleEndedRef.current) return; // guard: only fire once per battle
+    battleEndedRef.current = true;
     setFaintP(true);
     setTimeout(async()=>{
       pushLog(`💀 ${pMon.name.toUpperCase()} fainted!`);
@@ -3130,21 +3399,24 @@ function App(){
         if(!np.isGuest) supaUpdateStats(np.name,np.wins||0,np.losses,np.coins||0);
         return np;});
       markNeedsHeal(pMon, true);
-      setWinStreak(0); localStorage.setItem("pkmn_streak","0");
+      setWinStreak(0); if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile?.name}`,"0");
       const rec=makeBattleRecord(pMon,eMon,"enemy",battleTurns,pLevel);
-      setBattleHistory(h=>{ const n=[rec,...h].slice(0,50); localStorage.setItem('pkmn_history',JSON.stringify(n)); return n; });
+      supaBattle(profile?.name||"unknown","enemy",pMon.name,eMon.name,battleTurns);
+      setBattleHistory(h=>{ const n=[rec,...h].slice(0,50); if(!profile?.isGuest) localStorage.setItem(`pkmn_history_${profile?.name}`,JSON.stringify(n)); return n; });
       setWinner("enemy"); setScreen(MODES.OVER); setBusy(false);
     },700);
   }
 
   function handleEnemyFaint(){
+    if(battleEndedRef.current) return; // guard: only fire once per battle
+    battleEndedRef.current = true;
     setFaintE(true);
     setTimeout(async()=>{
       pushLog(`🏆 ${eMon.name.toUpperCase()} fainted! YOU WIN!`);
       // Streak
       setWinStreak(prev=>{
         const ns=prev+1;
-        localStorage.setItem("pkmn_streak",String(ns));
+        localStorage.setItem(`pkmn_streak_${profile?.name}`,String(ns));
         if(ns>=3){ setShowStreakBanner(true); setTimeout(()=>setShowStreakBanner(false),3500); }
         return ns;
       });
@@ -3161,7 +3433,7 @@ function App(){
       // Daily wins
       setDailyWins(prev=>{
         const nd=prev+1;
-        localStorage.setItem(`pkmn_dailywins_${todayKey()}`,String(nd));
+        if(!profile?.isGuest) localStorage.setItem(dailyWinsKey(profile?.name),String(nd));
         return nd;
       });
       // Update challenges
@@ -3178,7 +3450,7 @@ function App(){
           const done=ch.countGoal?prog>=ch.countGoal:prog>=1;
           return {...ch,progress:prog,done};
         });
-        localStorage.setItem(`pkmn_challenges_${todayKey()}`,JSON.stringify(updated));
+        if(!profile?.isGuest) localStorage.setItem(challengeKey(profile?.name),JSON.stringify(updated));
         updated.forEach((ch,i)=>{ if(ch.done&&!prev[i].done){ addCoins(ch.reward); pushLog(`🌟 Challenge: "${ch.desc}" done! +${ch.reward}🪙`); } });
         return updated;
       });
@@ -3212,7 +3484,7 @@ function App(){
       // ── Save battle to history ──────────────────────────────
       const record=makeBattleRecord(pMon,eMon,"player",battleTurns,pLevel);
       supaBattle(profile?.name||"unknown","player",pMon.name,eMon.name,battleTurns);
-      setBattleHistory(h=>{ const n=[record,...h].slice(0,50); localStorage.setItem('pkmn_history',JSON.stringify(n)); return n; });
+      setBattleHistory(h=>{ const n=[record,...h].slice(0,50); if(!profile?.isGuest) localStorage.setItem(`pkmn_history_${profile?.name}`,JSON.stringify(n)); return n; });
       // ── Story mode progress ─────────────────────────────────
       if(storyBattle!=null){
         setStoryProgress(prev=>{
@@ -3252,17 +3524,37 @@ function App(){
   // ── Shop ──────────────────────────────────────────────────
   // ── Trade handler ────────────────────────────────────────
   function handleTrade(giving, receiving, cost){
+    // Validate both sides are proper pokemon objects with ids
+    if(!giving?.id || !receiving?.id){
+      pushHomeLog("Trade failed: invalid Pokémon selection!"); return;
+    }
+    // Get full pokemon data from allPokemon to ensure we have moves/stats
+    const fullReceiving = allPokemon.find(p=>p.id===receiving.id);
+    if(!fullReceiving){
+      pushHomeLog("Trade failed: Pokémon data not loaded yet. Try again!"); return;
+    }
+    // Check coins again at time of trade (double safety)
+    if((profile.coins||0)<cost){
+      pushHomeLog(`Trade failed: Need ${cost}🪙! You have ${profile.coins||0}🪙.`); return;
+    }
+    // Deduct coins
     const np={...profile,coins:(profile.coins||0)-cost};
     setProfile(np); updateProfile(np);
-    // Remove giving from unlocked, add receiving
+    // Update unlocked: remove given, add received
     const nu=new Set([...unlockedIds]);
     nu.delete(giving.id);
-    nu.add(receiving.id);
+    nu.add(fullReceiving.id);
     setUnlockedIds(nu);
-    localStorage.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
-    // Update team: remove traded away
-    setTeam(t=>t.filter(m=>m.id!==giving.id));
-    pushHomeLog(`Traded ${giving.name} for ${receiving.name}!`);
+    const store=profile?.isGuest?sessionStorage:localStorage;
+    store.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
+    // Update team: replace traded-away pokemon with received one
+    setTeam(t=>t.map(m=>m.id===giving.id?fullReceiving:m));
+    // If traded the starter, update starter to received
+    if(starterPokemon?.id===giving.id){
+      setStarterPokemon(fullReceiving);
+      store.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(fullReceiving));
+    }
+    pushHomeLog(`✅ Traded ${giving.name} → ${fullReceiving.name}! (-${cost}🪙)`);
     setShowTrade(false);
   }
 
@@ -3383,9 +3675,12 @@ function App(){
       setStarterPokemon(p);
       const store=profile?.isGuest?sessionStorage:localStorage;
       store.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(p));
-      const nu=new Set([...unlockedIds,p.id]);
+      const nu=new Set([p.id]); // only the starter — fresh start
       setUnlockedIds(nu);
       store.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
+      // Reset streak for fresh account
+      setWinStreak(0);
+      if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile.name}`,"0");
       setScreen(MODES.HOME);
     }}/>;
   }
@@ -3421,6 +3716,13 @@ function App(){
         @keyframes megaGlow{0%,100%{box-shadow:0 0 20px #7C4DFF}50%{box-shadow:0 0 50px #7C4DFF,0 0 90px #F06292}}
         @keyframes gigaGlow{0%,100%{box-shadow:0 0 20px #FFD54F}50%{box-shadow:0 0 50px #FFD54F,0 0 90px #FF6B35}}
         @keyframes zPulse{0%,100%{box-shadow:0 0 20px #FF6B35}50%{box-shadow:0 0 50px #FF6B35,0 0 90px #FFD54F}}
+        @keyframes loginBlob1{0%{transform:translate(0,0) scale(1)}100%{transform:translate(5%,8%) scale(1.1)}}
+        @keyframes loginBlob2{0%{transform:translate(0,0) scale(1)}100%{transform:translate(-6%,4%) scale(1.08)}}
+        @keyframes loginBlob3{0%{transform:translate(0,0) scale(1)}100%{transform:translate(3%,-5%) scale(1.06)}}
+        @keyframes floatParticle0{0%{transform:translateY(0)}100%{transform:translateY(-18px)}}
+        @keyframes floatParticle1{0%{transform:translateY(0)}100%{transform:translateY(-12px)}}
+        @keyframes floatParticle2{0%{transform:translateY(0)}100%{transform:translateY(-22px)}}
+        @keyframes floatParticle3{0%{transform:translateY(0)}100%{transform:translateY(-15px)}}
 
         /* ── Interactive ── */
         .pcard:hover:not([disabled]){transform:translateY(-4px) scale(1.06)!important;z-index:2}
@@ -3482,7 +3784,7 @@ function App(){
       <div style={{position:"fixed",inset:0,backgroundImage:"linear-gradient(rgba(124,77,255,0.035)1px,transparent 1px),linear-gradient(90deg,rgba(124,77,255,0.035)1px,transparent 1px)",backgroundSize:"36px 36px",pointerEvents:"none"}}/>
 
       {/* ── TOP BAR ─────────────────────────────────────── */}
-      {screen!==MODES.HOME&&screen!==MODES.CHAR&&screen!==MODES.STARTER&&(
+      {screen!==MODES.HOME&&screen!==MODES.CHAR&&screen!==MODES.STARTER&&screen!==MODES.MP_SOON&&(
         <div style={{position:"fixed",top:12,left:12,zIndex:300}}>
           <button className="btn" onClick={e=>{
             e.stopPropagation();
@@ -3504,7 +3806,7 @@ function App(){
         </div>
       )}
 
-      <div style={{position:"fixed",top:12,right:12,display:"flex",gap:6,zIndex:300,flexWrap:"wrap",justifyContent:"flex-end"}}>
+      {screen!==MODES.MP_SOON&&<div style={{position:"fixed",top:12,right:12,display:"flex",gap:6,zIndex:300,flexWrap:"wrap",justifyContent:"flex-end"}}>
         {screen!==MODES.HOME&&(
           <button onClick={e=>{e.stopPropagation();AUDIO.stop();AUDIO.theme=null;setScreen(MODES.HOME);setBusy(false);setAnim(null);setWinner(null);if(musicOn&&musicStarted.current)setTimeout(()=>AUDIO.play("home"),80);}}
             className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"7px 11px",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,2vw,14px)"}}>
@@ -3520,7 +3822,7 @@ function App(){
           className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:8,padding:"7px 10px",color:musicOn?"#FFD54F":"#333",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"14px"}}>
           {musicOn?"♪":"♩"}
         </button>
-      </div>
+      </div>}
 
       {showBoard&&<HallOfFame onClose={()=>setShowBoard(false)} currentName={profile?.name}/>}
       {showChallenges&&<DailyChallengesScreen challenges={challenges} onClose={()=>setShowChallenges(false)}/>}
@@ -3529,10 +3831,12 @@ function App(){
       {showStreakBanner&&<StreakBanner streak={winStreak+1}/>}
 
       {/* ── HEADER ──────────────────────────────────────── */}
+      {screen!==MODES.MP_SOON&&(
       <div style={{textAlign:"center",marginBottom:"clamp(14px,3vw,24px)",paddingTop:"clamp(6px,1.5vw,10px)"}}>
         <div style={{fontSize:"clamp(18px,4.5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:4,fontFamily:"'Press Start 2P',monospace"}}>⚡ POKÉMON</div>
         <div style={{fontSize:"clamp(7px,1.5vw,11px)",color:"#252535",letterSpacing:5,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
       </div>
+      )}
 
       {/* ══════════════════════════════════════════════════
           HOME SCREEN
@@ -3596,8 +3900,8 @@ function App(){
               {icon:"👥", label:"TEAM",           sub:"Manage roster",     col:"#4FC3F7", action:()=>setScreen(MODES.TEAM)},
               {icon:"🛒", label:"SHOP",           sub:"Spend coins",       col:"#FFD54F", action:()=>setScreen(MODES.SHOP)},
               {icon:"🏥", label:"POKÉMON\nCENTER",sub:"Heal fainted",      col:"#f44336", action:()=>setScreen(MODES.HEAL)},
-              {icon:"🌐", label:"MULTIPLAYER",    sub:"Fight friends",     col:"#7C4DFF", action:()=>setScreen(MODES.SELECT)},
-              {icon:"📖", label:"POKÉDEX",        sub:`${[...unlockedIds].length+(starterPokemon?1:0)} caught`, col:"#4FC3F7", action:()=>setScreen(MODES.DEX)},
+              {icon:"🌐", label:"MULTIPLAYER",    sub:"Coming soon!",      col:"#7C4DFF", action:()=>setScreen(MODES.MP_SOON)},
+              {icon:"📖", label:"POKÉDEX",        sub:`${unlockedIds.size} caught`, col:"#4FC3F7", action:()=>setScreen(MODES.DEX)},
               {icon:"📅", label:"CHALLENGES",     sub:`${challenges.filter(c=>!c.done).length} remaining`, col:"#66BB6A", action:()=>setShowChallenges(true),
                 badge: challenges.filter(c=>!c.done).length>0 ? challenges.filter(c=>!c.done).length : null},
               {icon:"🎴", label:"TRAINER CARD",   sub:"View your record",  col:"#CE93D8", action:()=>setScreen(MODES.CARD)},
@@ -4140,51 +4444,10 @@ function App(){
       )}
 
       {/* ══════════════════════════════════════════════════
-          MULTIPLAYER PANEL (on SELECT screen)
+          MULTIPLAYER — COMING SOON FULL PAGE
       ══════════════════════════════════════════════════ */}
-      {(screen===MODES.SELECT||screen===MODES.UNLOCK)&&(
-        <div style={{position:"fixed",bottom:16,right:16,background:"rgba(3,3,12,0.98)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:14,padding:"14px 16px",minWidth:240,maxWidth:280,boxShadow:"0 0 28px rgba(124,77,255,0.1)",zIndex:100}}>
-          <div style={{color:"#7C4DFF",fontSize:"clamp(9px,1.8vw,11px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8,letterSpacing:1}}>🌐 MULTIPLAYER</div>
-          <div style={{color:"#333",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace",marginBottom:10,lineHeight:1.8}}>
-            Requires a second player.<br/>Both must be connected.
-          </div>
-          <div style={{color:"#1e1e2e",fontSize:"clamp(7px,1.2vw,9px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>
-            Status: <span style={{color:wsStatus==="connected"?"#4CAF50":wsStatus==="connecting"?"#FFD54F":"#f44336"}}>{wsStatus.toUpperCase()}</span>
-          </div>
-
-          {wsStatus==="disconnected"&&(
-            <button onClick={connectWS} className="btn" style={{width:"100%",background:"rgba(124,77,255,0.12)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:7,padding:"clamp(7px,1.5vw,10px)",color:"#aaa",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",marginBottom:4}}>CONNECT</button>
-          )}
-
-          {wsStatus==="connected"&&(
-            <>
-              <div style={{background:"rgba(76,175,80,0.08)",border:"1px solid rgba(76,175,80,0.2)",borderRadius:8,padding:"8px 10px",marginBottom:10}}>
-                <div style={{color:"#4CAF50",fontSize:"clamp(7px,1.2vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>✅ Connected!</div>
-                <div style={{color:"#1a3a1a",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>Share room code with friend</div>
-              </div>
-              <div style={{display:"flex",gap:4,marginBottom:8}}>
-                <button onClick={()=>setMpMode("create")} style={{flex:1,background:mpMode==="create"?"rgba(124,77,255,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="create"?"rgba(124,77,255,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"clamp(5px,1vw,7px)",color:mpMode==="create"?"#9C7DFF":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>CREATE</button>
-                <button onClick={()=>setMpMode("join")} style={{flex:1,background:mpMode==="join"?"rgba(79,195,247,0.2)":"rgba(255,255,255,0.02)",border:`1px solid ${mpMode==="join"?"rgba(79,195,247,0.4)":"rgba(255,255,255,0.06)"}`,borderRadius:6,padding:"clamp(5px,1vw,7px)",color:mpMode==="join"?"#4FC3F7":"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)"}}>JOIN</button>
-              </div>
-              {mpMode==="create"?(
-                <button onClick={()=>{ if(!pMon){alert("Select a Pokémon first!");return;} createRoom(); }} className="btn"
-                  style={{width:"100%",background:pMon?"rgba(124,77,255,0.15)":"rgba(255,255,255,0.02)",border:`1px solid ${pMon?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.06)"}`,borderRadius:8,padding:"clamp(8px,1.5vw,10px)",color:pMon?"#9C7DFF":"#333",cursor:pMon?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.4vw,10px)",marginBottom:4}}>
-                  {pMon?"🎲 CREATE ROOM":"Pick Pokémon first"}
-                </button>
-              ):(
-                <>
-                  <input value={roomInput} onChange={e=>setRoomInput(e.target.value.toUpperCase())} placeholder="ROOM CODE" maxLength={6}
-                    style={{width:"100%",background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:6,padding:"clamp(7px,1.4vw,9px)",color:"#fff",fontSize:"clamp(10px,1.8vw,13px)",fontFamily:"'Press Start 2P',monospace",marginBottom:6,letterSpacing:6,textAlign:"center"}}/>
-                  <button onClick={()=>{ if(!pMon){alert("Select a Pokémon first!");return;} joinRoom(); }} disabled={!roomInput||roomInput.length<4} className="btn"
-                    style={{width:"100%",background:"rgba(79,195,247,0.12)",border:"1px solid rgba(79,195,247,0.25)",borderRadius:7,padding:"clamp(7px,1.4vw,9px)",color:roomInput.length>=4?"#4FC3F7":"#333",cursor:roomInput.length>=4?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.4vw,10px)"}}>
-                    JOIN BATTLE
-                  </button>
-                </>
-              )}
-              <div style={{color:"#111",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:8,textAlign:"center"}}>⚠️ Requires server.js running</div>
-            </>
-          )}
-        </div>
+      {screen===MODES.MP_SOON&&(
+        <MultiplayerComingSoonPage onBack={()=>setScreen(MODES.HOME)}/>
       )}
 
       {/* ══════════════════════════════════════════════════
@@ -4261,14 +4524,11 @@ function App(){
 }
 
 
-    /* ── Mount the app ── */
-    const container = document.getElementById('root');
-    const domRoot = ReactDOM.createRoot(container);
+
+    const container=document.getElementById('root');
+    const domRoot=ReactDOM.createRoot(container);
     domRoot.render(React.createElement(App));
-
-    /* ── Hide loading screen once React is ready ── */
-    document.getElementById('loading').style.display = 'none';
+    document.getElementById('loading').style.display='none';
   </script>
-
 </body>
 </html>
