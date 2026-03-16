@@ -1831,13 +1831,18 @@ function CharacterScreen({onDone}){
       const user=db[key]||Object.values(db).find(u=>u.username.toLowerCase()===key);
       if(!user){setError("No account found. Please register!");setLoading(false);return;}
       if(user.password!==hash(password)){setError("Wrong password. Try again!");setLoading(false);return;}
+      // Check if profile already exists on this device
       const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
       const prof=profiles.find(p=>p.name===user.username);
-      if(prof){setLoading(false);supaLogin(user.username,user.email||"");onDone(prof);return;}
-      const np={name:user.username,avatar:user.avatar||"🔴",avatarData:user.avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
-      localStorage.setItem("pkmn_profiles",JSON.stringify([...profiles,np]));
-      supaLogin(user.username,user.email||"");
-      setLoading(false);onDone(np);
+      if(prof){
+        // Returning user on this device — go straight in, no need to re-pick avatar
+        setLoading(false);supaLogin(user.username,user.email||"");onDone(prof);return;
+      }
+      // First login on this device — send to avatar screen so they can customise their look
+      setLoading(false);
+      setUsername(user.username);
+      setPendingProfile({email:user.email||key,username:user.username,password:user.password,isGoogle:false,isReturning:true});
+      setMode("avatar");
     },500);
   }
 
@@ -1860,13 +1865,41 @@ function CharacterScreen({onDone}){
     const av=builderMode?"[built]":emojiAvatar;
     const db=getDB();
     const uname=pendingProfile?.username||username.trim()||"Trainer";
-    db[pendingProfile.email]={username:uname,email:pendingProfile.email,password:pendingProfile.password||null,googleId:pendingProfile.googleId||null,avatar:av,avatarData};
+    // Save avatar back to auth db
+    db[pendingProfile.email]={
+      ...(db[pendingProfile.email]||{}),
+      username:uname,
+      email:pendingProfile.email,
+      password:pendingProfile.password||null,
+      googleId:pendingProfile.googleId||null,
+      avatar:av,
+      avatarData,
+    };
     saveDB(db);
-    const profile={name:uname,avatar:av,avatarData,coins:500,wins:0,losses:0,createdAt:Date.now()};
+
+    // For returning login users: restore existing profile stats if any
     const all=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-    localStorage.setItem("pkmn_profiles",JSON.stringify([...all,profile]));
-    // Track to Supabase — register for new accounts, login for Google returning users
-    if(pendingProfile.isGoogle){
+    const existingProf=all.find(p=>p.name===uname);
+    const profile={
+      name:uname,
+      avatar:av,
+      avatarData,
+      coins:existingProf?.coins??500,
+      wins:existingProf?.wins??0,
+      losses:existingProf?.losses??0,
+      createdAt:existingProf?.createdAt??Date.now(),
+    };
+
+    // Update or add the profile
+    const updated=existingProf
+      ? all.map(p=>p.name===uname?profile:p)
+      : [...all,profile];
+    localStorage.setItem("pkmn_profiles",JSON.stringify(updated));
+
+    // Track to Supabase
+    if(pendingProfile.isReturning){
+      supaLogin(uname, pendingProfile.email||"");
+    } else if(pendingProfile.isGoogle){
       supaLogin(uname, pendingProfile.email||"");
     } else {
       supaRegister(uname, pendingProfile.email||"", pendingProfile.password||"", av);
@@ -1883,8 +1916,15 @@ function CharacterScreen({onDone}){
         <div style={{width:"100%",maxWidth:560}}>
           <div style={{textAlign:"center",marginBottom:"clamp(20px,4vw,32px)"}}>
             <div style={{fontSize:"clamp(28px,7vw,48px)",marginBottom:8}}>⚡</div>
-            <div style={{fontSize:"clamp(14px,3.5vw,22px)",fontFamily:"'Press Start 2P',monospace",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>PICK YOUR LOOK</div>
-            <div style={{fontSize:"clamp(9px,1.8vw,12px)",color:"#555",fontFamily:"'Press Start 2P',monospace"}}>Welcome, {pendingProfile?.username||username}!</div>
+            <div style={{fontSize:"clamp(14px,3.5vw,22px)",fontFamily:"'Press Start 2P',monospace",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",marginBottom:8}}>
+              {pendingProfile?.isReturning?"WELCOME BACK!":"PICK YOUR LOOK"}
+            </div>
+            <div style={{fontSize:"clamp(9px,1.8vw,12px)",color:"#555",fontFamily:"'Press Start 2P',monospace"}}>
+              {pendingProfile?.isReturning
+                ? `Set your avatar, ${pendingProfile?.username||username}!`
+                : `Welcome, ${pendingProfile?.username||username}!`
+              }
+            </div>
           </div>
           <div style={{background:"rgba(8,8,24,0.97)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:24,padding:"clamp(20px,5vw,36px)",boxShadow:"0 0 80px rgba(124,77,255,0.1)"}}>
             <div style={{display:"flex",gap:8,marginBottom:"clamp(16px,3.5vw,24px)",background:"rgba(0,0,0,0.3)",borderRadius:12,padding:4}}>
