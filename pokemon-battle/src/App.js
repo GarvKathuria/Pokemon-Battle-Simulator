@@ -4104,15 +4104,25 @@ function App(){
   const canGiga=!usedGiga&&pMon?.canGiga&&(bagItems.dynamax_band||0)>0;
 
   return(
-    <div style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"clamp(12px,3vw,24px) clamp(10px,3vw,20px)",position:"relative",overflowX:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"clamp(8px,2vw,20px) clamp(8px,2vw,18px)",position:"relative",overflowX:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
-        /* ── Responsive font base ── */
-        html{ font-size:18px; }
-        @media(max-width:1200px){ html{ font-size:17px; } }
-        @media(max-width:768px){ html{ font-size:16px; } }
-        @media(max-width:480px){ html{ font-size:14px; } }
+        /* ── Reset & Base ── */
+        *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+        html,body{margin:0;padding:0;overflow-x:hidden;}
+        input,select,textarea{outline:none!important;-webkit-appearance:none;}
+        select option{background:#0a0a1a;color:#ccc;}
+        img{max-width:100%;}
+
+        /* ── Font base ── */
+        html{font-size:16px;}
+        @media(max-width:480px){html{font-size:14px;}}
+        @media(max-width:360px){html{font-size:12px;}}
+
+        /* ── Touch targets ── */
+        button{min-height:44px;touch-action:manipulation;-webkit-user-select:none;user-select:none;}
+        @media(min-width:768px){button{min-height:36px;}}
 
         /* ── Keyframes ── */
         @keyframes shake{0%,100%{transform:translateX(0)scale(1.42)}25%{transform:translateX(-14px)scale(1.42)}75%{transform:translateX(14px)scale(1.42)}}
@@ -4141,53 +4151,48 @@ function App(){
         .btn:active:not(:disabled){transform:scale(0.95);}
 
         /* ── Scrollbar ── */
-        ::-webkit-scrollbar{width:5px}::-webkit-scrollbar-track{background:#080816}::-webkit-scrollbar-thumb{background:#1e1e32;border-radius:4px}
+        ::-webkit-scrollbar{width:4px}
+        ::-webkit-scrollbar-track{background:#080816}
+        ::-webkit-scrollbar-thumb{background:#1e1e32;border-radius:4px}
 
-        /* ── Base ── */
-        input,select{outline:none!important}
-        *{box-sizing:border-box}
+        /* ── Home grid — 2 cols on mobile, 3 on tablet, 4 on desktop ── */
+        .home-grid{
+          display:grid;
+          grid-template-columns:repeat(2,1fr);
+          gap:10px;
+        }
+        @media(min-width:500px){.home-grid{grid-template-columns:repeat(3,1fr);}}
+        @media(min-width:700px){.home-grid{grid-template-columns:repeat(4,1fr);}}
 
-        /* ── Touch targets ── */
-        button{min-height:36px; touch-action:manipulation;}
-        @media(max-width:480px){ button{min-height:44px;} }
-
-        /* ── Battle responsive ── */
-        @media(max-width:600px){
-          .battle-arena{flex-direction:column!important;gap:8px!important}
-          .move-grid{grid-template-columns:1fr 1fr!important}
-          .battle-sprite{width:80px!important}
+        /* ── Battle arena ── */
+        .battle-arena{display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;}
+        @media(max-width:560px){
+          .battle-arena{flex-direction:column;gap:6px;}
+          .battle-arena>*{min-width:0!important;flex:1 1 100%!important;}
         }
 
-        /* ── Home grid responsive ── */
-        @media(max-width:400px){
-          .home-grid{grid-template-columns:1fr 1fr!important}
+        /* ── Move grid ── */
+        .move-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+        @media(max-width:360px){.move-grid{grid-template-columns:1fr;}}
+
+        /* ── Battle sprite ── */
+        @media(max-width:480px){.battle-sprite{width:72px!important}}
+
+        /* ── Top bar — shrink on very small screens ── */
+        @media(max-width:360px){
+          .top-bar-btn{padding:5px 8px!important;font-size:9px!important;}
         }
 
-        /* ── Text scaling ── */
-        .ps2{font-family:'Press Start 2P',monospace!important}
-        .t-xs{font-size:clamp(7px,1.5vw,10px)}
-        .t-sm{font-size:clamp(9px,1.8vw,12px)}
-        .t-md{font-size:clamp(11px,2.2vw,15px)}
-        .t-lg{font-size:clamp(14px,2.8vw,20px)}
-        .t-xl{font-size:clamp(18px,4vw,28px)}
-
-        /* ── Card spacing ── */
-        .game-card{
-          background:rgba(10,10,28,0.98);
-          border-radius:clamp(10px,2vw,16px);
-          padding:clamp(12px,3vw,20px);
+        /* ── Profile bar responsive ── */
+        .profile-bar{display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:nowrap;}
+        @media(max-width:480px){
+          .profile-bar{flex-wrap:wrap;gap:8px;}
+          .profile-bar .starter-chip{display:none;}
         }
 
-        /* ── Input style ── */
-        .game-input{
-          width:100%;
-          background:rgba(255,255,255,0.05);
-          border:1.5px solid rgba(124,77,255,0.3);
-          border-radius:10px;
-          padding:clamp(10px,2vw,13px);
-          color:#fff;
-          font-size:clamp(11px,2vw,14px);
-          font-family:'Press Start 2P',monospace;
+        /* ── Input/select on mobile ── */
+        @media(max-width:480px){
+          input,select{font-size:16px!important;} /* prevents iOS zoom */
         }
       `}</style>
 
@@ -4243,9 +4248,9 @@ function App(){
 
       {/* ── HEADER ──────────────────────────────────────── */}
       {screen!==MODES.MP_SOON&&(
-      <div style={{textAlign:"center",marginBottom:"clamp(14px,3vw,24px)",paddingTop:"clamp(6px,1.5vw,10px)"}}>
-        <div style={{fontSize:"clamp(18px,4.5vw,32px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:4,fontFamily:"'Press Start 2P',monospace"}}>⚡ POKÉMON</div>
-        <div style={{fontSize:"clamp(7px,1.5vw,11px)",color:"#252535",letterSpacing:5,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
+      <div style={{textAlign:"center",marginBottom:"clamp(10px,2.5vw,20px)",paddingTop:"clamp(50px,10vw,64px)"}}>
+        <div style={{fontSize:"clamp(16px,4vw,28px)",background:"linear-gradient(135deg,#FF6B35,#FFD54F,#4FC3F7,#7C4DFF,#F06292)",WebkitBackgroundClip:"text",WebkitTextFillColor:"transparent",letterSpacing:2,marginBottom:4,fontFamily:"'Press Start 2P',monospace"}}>⚡ POKÉMON</div>
+        <div style={{fontSize:"clamp(6px,1.3vw,10px)",color:"#252535",letterSpacing:5,fontFamily:"'Press Start 2P',monospace"}}>BATTLE ARENA</div>
       </div>
       )}
 
@@ -4253,7 +4258,7 @@ function App(){
           HOME SCREEN
       ══════════════════════════════════════════════════ */}
       {screen===MODES.HOME&&(
-        <div style={{width:"100%",maxWidth:720,display:"flex",flexDirection:"column",gap:14}}>
+        <div style={{width:"100%",maxWidth:720,display:"flex",flexDirection:"column",gap:12}}>
           {/* Guest sign-in banner */}
           {profile?.isGuest&&(
             <div style={{background:"linear-gradient(135deg,rgba(124,77,255,0.15),rgba(79,195,247,0.1))",border:"1.5px solid rgba(124,77,255,0.4)",borderRadius:14,padding:"clamp(12px,2.5vw,16px) clamp(14px,3vw,20px)",display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:10,marginBottom:4}}>
@@ -4268,7 +4273,7 @@ function App(){
           )}
 
           {/* Profile bar */}
-          <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+          <div className="profile-bar" style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"12px 14px"}}>
 
             {/* Left: avatar + name + stats */}
             <div style={{display:"flex",alignItems:"center",gap:12,minWidth:0}}>
@@ -4287,7 +4292,7 @@ function App(){
 
             {/* Center: starter pokemon */}
             {starterPokemon&&(
-              <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"6px 12px"}}>
+              <div className="starter-chip" style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"6px 10px"}}>
                 <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${starterPokemon.id}.png`} style={{width:30,imageRendering:"pixelated"}}/>
                 <div>
                   <div style={{color:"#FFD54F",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginBottom:2}}>STARTER</div>
@@ -4303,8 +4308,8 @@ function App(){
               setProfile(null); setScreen(MODES.CHAR);
               setStarterPokemon(null); setUnlockedIds(new Set());
               setTeam([]); setFaintedTeam([]); setBattleHistory([]);
-            }} className="btn" style={{background:"rgba(244,67,54,0.08)",border:"1px solid rgba(244,67,54,0.2)",borderRadius:8,padding:"8px 14px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)",whiteSpace:"nowrap",flexShrink:0}}>
-              🚪 SIGN OUT
+            }} className="btn" style={{background:"rgba(244,67,54,0.08)",border:"1px solid rgba(244,67,54,0.25)",borderRadius:8,padding:"9px 14px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",whiteSpace:"nowrap",flexShrink:0,display:"flex",alignItems:"center",gap:5}}>
+              🚪 <span>SIGN OUT</span>
             </button>
 
           </div>
@@ -4323,7 +4328,7 @@ function App(){
           )}
 
           {/* Main actions */}
-          <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(clamp(120px,20vw,160px),1fr))",gap:10}}>
+          <div className="home-grid">
             {[
               {icon:"⚔️", label:"BATTLE",        sub:"VS CPU",            col:"#FF6B35", action:()=>setScreen(MODES.SELECT)},
               {icon:"👥", label:"TEAM",           sub:"Manage roster",     col:"#4FC3F7", action:()=>setScreen(MODES.TEAM)},
@@ -4339,11 +4344,11 @@ function App(){
               {icon:"📜", label:"BATTLE LOG",      sub:`${battleHistory.length} battles`,  col:"#9E9E9E", action:()=>setScreen(MODES.HISTORY)},
               {icon:"🔄", label:"TRADE",           sub:"Swap Pokémon",       col:"#66BB6A", action:()=>setShowTrade(true)},
             ].map((b,i)=>(
-              <div key={i} onClick={b.action} className="btn pcard" style={{background:`linear-gradient(160deg,rgba(14,14,36,0.98),rgba(6,6,22,0.99))`,border:`1.5px solid ${b.col}33`,borderRadius:14,padding:"18px 14px",cursor:"pointer",textAlign:"center",transition:"all 0.16s",boxShadow:`0 4px 20px ${b.col}18`,position:"relative"}}>
-                {b.badge&&<div style={{position:"absolute",top:8,right:8,background:"#f44336",color:"#fff",fontSize:"7px",borderRadius:"50%",width:16,height:16,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Press Start 2P',monospace"}}>{b.badge}</div>}
-                <div style={{fontSize:"clamp(24px,4vw,34px)",marginBottom:6}}>{b.icon}</div>
-                <div style={{color:"#fff",fontSize:"clamp(10px,2vw,15px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4,whiteSpace:"pre-line",lineHeight:1.6}}>{b.label}</div>
-                <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>{b.sub}</div>
+              <div key={i} onClick={b.action} className="btn pcard" style={{background:`linear-gradient(160deg,rgba(14,14,36,0.98),rgba(6,6,22,0.99))`,border:`1.5px solid ${b.col}33`,borderRadius:12,padding:"clamp(12px,3vw,18px) clamp(8px,2vw,14px)",cursor:"pointer",textAlign:"center",transition:"all 0.16s",boxShadow:`0 4px 20px ${b.col}18`,position:"relative"}}>
+                {b.badge&&<div style={{position:"absolute",top:6,right:6,background:"#f44336",color:"#fff",fontSize:"7px",borderRadius:"50%",width:16,height:16,display:"flex",alignItems:"center",justifyContent:"center",fontFamily:"'Press Start 2P',monospace"}}>{b.badge}</div>}
+                <div style={{fontSize:"clamp(20px,4vw,30px)",marginBottom:4}}>{b.icon}</div>
+                <div style={{color:"#fff",fontSize:"clamp(8px,1.6vw,12px)",fontFamily:"'Press Start 2P',monospace",marginBottom:3,whiteSpace:"pre-line",lineHeight:1.5}}>{b.label}</div>
+                <div style={{color:"#333",fontSize:"clamp(6px,1.1vw,8px)",fontFamily:"'Press Start 2P',monospace"}}>{b.sub}</div>
               </div>
             ))}
           </div>
@@ -4381,7 +4386,7 @@ function App(){
           BATTLE SELECT — owned Pokémon only
       ══════════════════════════════════════════════════ */}
       {screen===MODES.SELECT&&(
-        <div style={{width:"100%",maxWidth:960}}>
+        <div style={{width:"100%",maxWidth:960,paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{textAlign:"center",marginBottom:"clamp(12px,2.5vw,18px)"}}>
             <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>⚔️ CHOOSE YOUR FIGHTER</div>
             <div style={{fontSize:"clamp(8px,1.5vw,11px)",color:"#333",fontFamily:"'Press Start 2P',monospace"}}>
@@ -4450,7 +4455,7 @@ function App(){
           UNLOCK SHOP — browse all Pokémon, buy what you want
       ══════════════════════════════════════════════════ */}
       {screen===MODES.UNLOCK&&(
-        <div style={{width:"100%",maxWidth:960}}>
+        <div style={{width:"100%",maxWidth:960,paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{textAlign:"center",marginBottom:"clamp(12px,2.5vw,18px)"}}>
             <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#4FC3F7",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>🔓 UNLOCK POKÉMON</div>
             <div style={{fontSize:"clamp(8px,1.5vw,11px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace"}}>
@@ -4519,7 +4524,7 @@ function App(){
           TEAM MANAGEMENT
       ══════════════════════════════════════════════════ */}
       {screen===MODES.TEAM&&(
-        <div style={{width:"100%",maxWidth:900}}>
+        <div style={{width:"100%",maxWidth:900,paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,16px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>YOUR TEAM ({team.length}/6)</div>
           {team.length>0&&(
             <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:14,padding:"14px",marginBottom:16}}>
@@ -4558,7 +4563,7 @@ function App(){
           SHOP
       ══════════════════════════════════════════════════ */}
       {screen===MODES.SHOP&&(
-        <div style={{width:"100%",maxWidth:680}}>
+        <div style={{width:"100%",maxWidth:680,paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,16px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4,textAlign:"center"}}>🛒 SHOP</div>
           <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:16,textAlign:"center"}}>Balance: <span style={{color:"#FFD54F"}}>{profile?.coins||0}🪙</span></div>
           <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(160px,1fr))",gap:10}}>
@@ -4586,7 +4591,7 @@ function App(){
           HEAL CENTER
       ══════════════════════════════════════════════════ */}
       {screen===MODES.HEAL&&(
-        <div style={{width:"100%",maxWidth:560,textAlign:"center"}}>
+        <div style={{width:"100%",maxWidth:560,textAlign:"center",paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{color:"#4FC3F7",fontSize:"13px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>🏥 POKÉMON CENTER</div>
           <div style={{color:"#1a2a3a",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:18}}>— NURSE JOY WELCOMES YOU —</div>
 
@@ -4722,7 +4727,7 @@ function App(){
           BATTLE SCREEN
       ══════════════════════════════════════════════════ */}
       {screen===MODES.BATTLE&&pMon&&eMon&&(
-        <div style={{width:"100%",maxWidth:740}}>
+        <div style={{width:"100%",maxWidth:740,paddingTop:"clamp(52px,11vw,68px)"}}>
           <div style={{background:"linear-gradient(180deg,#070714,#0a0a1e)",border:"1px solid rgba(255,255,255,0.04)",borderRadius:16,padding:"18px",marginBottom:12,position:"relative",overflow:"hidden",boxShadow:"0 0 50px rgba(124,77,255,0.07)"}}>
             {/* Weather + status row */}
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:8,flexWrap:"wrap",gap:6}}>
