@@ -2312,38 +2312,37 @@ function PokemonCard({mon, onSelect, selected, unlocked, coins, onUnlock, cost, 
 // ══════════════════════════════════════════════════════════════════════
 function HallOfFame({onClose, currentName}){
   const [allPlayers, setAllPlayers] = useState(()=>{
-    // Start with local profiles immediately
-    return JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").filter(p=>!p.isGuest);
+    // Start with all local profiles immediately (including guests on this device)
+    return JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
   });
   const [loading, setLoading] = useState(true);
 
   useEffect(()=>{
-    // Fetch global leaderboard from Supabase
     const SUPA_URL_HOF="https://hoqsdlpsqdtpvskbfafh.supabase.co";
     const SUPA_KEY_HOF="sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
-    fetch(`${SUPA_URL_HOF}/rest/v1/players?select=username,wins,losses,avatar&action=eq.stats_update&order=wins.desc&limit=100`,{
+    // Fetch ALL users who have stats recorded — no action filter so guests are included
+    fetch(`${SUPA_URL_HOF}/rest/v1/players?select=username,wins,losses,avatar,action&order=wins.desc&limit=200`,{
       headers:{"apikey":SUPA_KEY_HOF,"Authorization":`Bearer ${SUPA_KEY_HOF}`}
     })
     .then(r=>r.json())
     .then(rows=>{
       if(!Array.isArray(rows)) return;
-      // Build a map of best stats per username from Supabase
+      // Build best stats per username from Supabase (keep row with highest wins)
       const supaMap={};
       rows.forEach(r=>{
         if(!r.username) return;
         const ex=supaMap[r.username];
+        // Only use stats_update rows for the leaderboard (ignore register/login/guest_start session rows)
+        if(r.action!=="stats_update") return;
         if(!ex||r.wins>ex.wins) supaMap[r.username]={name:r.username,wins:r.wins||0,losses:r.losses||0,avatar:r.avatar||"🔴"};
       });
-      // Merge: local profiles take precedence for avatar/avatarData, supabase for stats
-      const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").filter(p=>!p.isGuest);
-      const localMap={};
-      local.forEach(p=>{ localMap[p.name]=p; });
-      // Combine: all supabase users + any local-only users
+      // Merge with local profiles (local takes precedence for avatar/avatarData)
+      const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
       const merged={...supaMap};
       local.forEach(p=>{ merged[p.name]={...supaMap[p.name],...p}; });
-      setAllPlayers(Object.values(merged).filter(p=>!p.isGuest));
+      setAllPlayers(Object.values(merged));
     })
-    .catch(()=>{}) // silently keep local data on error
+    .catch(()=>{})
     .finally(()=>setLoading(false));
   },[]);
 
@@ -2924,12 +2923,35 @@ function ProfileScreen({profile, onSave, onBack}){
     if(!/^[a-zA-Z0-9_-]+$/.test(u)){setMsg({text:"Letters, numbers, _ - only",ok:false});return;}
     const db=getDB();
     if(Object.values(db).find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.username!==profile.name)){setMsg({text:"Username taken!",ok:false});return;}
-    // Update auth db
-    const entry=Object.values(db).find(x=>x.username===profile.name);
-    if(entry){ const key=Object.keys(db).find(k=>db[k].username===profile.name); db[key]={...db[key],username:u}; saveDB(db); }
-    // Update profiles list
+
+    const oldName=profile.name;
+
+    // Update auth db (works for both email and Google accounts)
+    const key=Object.keys(db).find(k=>db[k].username===oldName);
+    if(key){ db[key]={...db[key],username:u}; saveDB(db); }
+
+    // Update pkmn_profiles list
     const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-    localStorage.setItem("pkmn_profiles",JSON.stringify(profiles.map(p=>p.name===profile.name?{...p,name:u}:p)));
+    localStorage.setItem("pkmn_profiles",JSON.stringify(profiles.map(p=>p.name===oldName?{...p,name:u}:p)));
+
+    // Update all per-profile localStorage keys to use new name
+    const keysToRename=[
+      `pkmn_unlocked_${oldName}`,`pkmn_inv_${oldName}`,`pkmn_fainted_${oldName}`,
+      `pkmn_team_${oldName}`,`pkmn_levels_${oldName}`,`pkmn_starter_${oldName}`,
+      `pkmn_exp_${oldName}`,`pkmn_history_${oldName}`,`pkmn_streak_${oldName}`,
+    ];
+    keysToRename.forEach(k=>{
+      const val=localStorage.getItem(k);
+      if(val!==null){
+        localStorage.setItem(k.replace(oldName,u),val);
+        localStorage.removeItem(k);
+      }
+    });
+
+    // Update active session so refresh restores correct name
+    const sess=localStorage.getItem("pkmn_active_session");
+    if(sess){ try{ const s=JSON.parse(sess); if(s.name===oldName){ localStorage.setItem("pkmn_active_session",JSON.stringify({...s,name:u})); } }catch{} }
+
     onSave({...profile,name:u});
     setMsg({text:"✅ Username updated!",ok:true});
   }
@@ -3834,7 +3856,7 @@ function App(){
     setTimeout(async()=>{
       pushLog(`💀 ${pMon.name.toUpperCase()} fainted!`);
       setProfile(p=>{const np={...p,losses:(p.losses||0)+1};updateProfile(np);
-        if(!np.isGuest) supaUpdateStats(np.name,np.wins||0,np.losses,np.coins||0);
+        supaUpdateStats(np.name,np.wins||0,np.losses,np.coins||0); // track all users
         return np;});
       markNeedsHeal(pMon, true);
       setWinStreak(0); if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile?.name}`,"0");
@@ -3867,7 +3889,7 @@ function App(){
       pushLog(`+${reward} 🪙 earned!${streakMult>1?` 🔥 ×${streakMult} STREAK BONUS!`:""}`);
       pushLog(`Win streak: ${curStreak} 🔥`);
       setProfile(p=>{ const np={...p,wins:(p.wins||0)+1}; updateProfile(np);
-        if(!np.isGuest) supaUpdateStats(np.name,np.wins,np.losses||0,np.coins||0);
+        supaUpdateStats(np.name,np.wins,np.losses||0,np.coins||0); // track all users
         return np; });
       markNeedsHeal(pMon, false, pHP); // track remaining HP after winning
       // Daily wins
