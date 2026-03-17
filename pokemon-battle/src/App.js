@@ -204,7 +204,7 @@ const STARTER_CHOICES = [
   {id:906,name:"Sprigatito"},{id:909,name:"Fuecoco"},{id:912,name:"Quaxly"},
 ];
 
-const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",MP_SOON:"mp_soon",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history"};
+const MODES = {CHAR:"char",STARTER:"starter",HOME:"home",SELECT:"select",UNLOCK:"unlock",TEAM:"team",BATTLE:"battle",OVER:"over",WAIT:"wait",MP:"mp",MP_SOON:"mp_soon",SHOP:"shop",HEAL:"heal",DEX:"dex",CARD:"card",CHALLENGES:"challenges",STORY:"story",HISTORY:"history",PROFILE:"profile"};
 
 // ══════════════════════════════════════════════════════════════════════
 // SUPABASE DATABASE SETUP
@@ -2071,29 +2071,54 @@ function CharacterScreen({onDone}){
             </div>
           </div>
         </div>
-        {/* Quick login — registered users only, no guests */}
-        {existing.filter(p=>!p.isGuest).length>0&&(
-          <div style={{marginTop:20}}>
-            <div style={{color:"#1a1a2a",fontSize:"clamp(8px,1.5vw,10px)",textAlign:"center",marginBottom:12,fontFamily:"'Press Start 2P',monospace"}}>— QUICK LOGIN —</div>
-            <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
-              {existing.filter(p=>!p.isGuest).slice(-5).map(p=>(
-                <button key={p.name} onClick={()=>onDone(p)} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",minWidth:72}}>
-                  <div style={{fontSize:"clamp(22px,4.5vw,30px)",marginBottom:6}}>
-                    {p.avatarData?.type==="built"?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>:p.avatar}
-                  </div>
-                  <div style={{color:"#aaa",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>{p.name}</div>
-                  <div style={{color:"#333",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{p.wins||0}W {p.losses||0}L</div>
-                </button>
-              ))}
+        {/* Quick login — only show profiles that have a valid auth record */}
+        {(()=>{
+          const db=getDB();
+          // Include profile if it has an auth db entry (email+password OR google) OR if it was Google-created
+          const validProfiles=existing.filter(p=>{
+            if(p.isGuest) return false;
+            // check auth db by username match
+            return Object.values(db).some(u=>u.username===p.name);
+          });
+          if(validProfiles.length===0) return null;
+          return(
+            <div style={{marginTop:20}}>
+              <div style={{color:"#1a1a2a",fontSize:"clamp(8px,1.5vw,10px)",textAlign:"center",marginBottom:12,fontFamily:"'Press Start 2P',monospace"}}>— QUICK LOGIN —</div>
+              <div style={{display:"flex",gap:10,flexWrap:"wrap",justifyContent:"center"}}>
+                {validProfiles.slice(-5).map(p=>{
+                  const authEntry=Object.values(db).find(u=>u.username===p.name);
+                  const isGoogle=authEntry?.googleId;
+                  return(
+                    <div key={p.name} style={{position:"relative"}}>
+                      <button onClick={()=>onDone(p)} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"clamp(10px,2vw,14px)",cursor:"pointer",textAlign:"center",minWidth:72,display:"block"}}>
+                        <div style={{fontSize:"clamp(22px,4.5vw,30px)",marginBottom:4}}>
+                          {p.avatarData?.type==="built"?<AvatarPreview hair={p.avatarData.hair} face={p.avatarData.face} skin={p.avatarData.skin} hairColor={p.avatarData.hairColor} eyes={p.avatarData.eyes} size={36}/>:p.avatar}
+                        </div>
+                        <div style={{color:"#aaa",fontSize:"clamp(7px,1.3vw,9px)",fontFamily:"'Press Start 2P',monospace"}}>{p.name}</div>
+                        <div style={{color:"#333",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{p.wins||0}W {p.losses||0}L</div>
+                        {isGoogle&&<div style={{color:"#4FC3F7",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>G</div>}
+                      </button>
+                      {/* Remove from quick login */}
+                      <button onClick={e=>{
+                        e.stopPropagation();
+                        const all=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+                        localStorage.setItem("pkmn_profiles",JSON.stringify(all.filter(x=>x.name!==p.name)));
+                        // force re-render by changing a dummy key — reload page section
+                        window.location.reload();
+                      }} style={{position:"absolute",top:-6,right:-6,background:"rgba(244,67,54,0.8)",border:"none",borderRadius:"50%",width:18,height:18,display:"flex",alignItems:"center",justifyContent:"center",cursor:"pointer",fontSize:"9px",color:"#fff",fontFamily:"monospace",lineHeight:1}}>✕</button>
+                    </div>
+                  );
+                })}
+              </div>
             </div>
-          </div>
-        )}
+          );
+        })()}
       </div>
     </div>
   );
 }
 
-function StarterScreen({onDone, allPokemon}){
+function StarterScreen({onDone, allPokemon, onBack}){
   const [chosen, setChosen] = useState(null);
   const [genFilt, setGenFilt] = useState("all");
   const allStarters = allPokemon.filter(p=>STARTER_CHOICES.some(s=>s.id===p.id));
@@ -2106,6 +2131,12 @@ function StarterScreen({onDone, allPokemon}){
 
   return(
     <div style={{minHeight:"100vh",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",background:"#05050d",padding:"20px"}}>
+      {/* Back button for guests */}
+      {onBack&&(
+        <div style={{position:"fixed",top:14,left:14,zIndex:100}}>
+          <button onClick={onBack} className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.12)",borderRadius:9,padding:"7px 14px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)",display:"flex",alignItems:"center",gap:5}}>← LOGIN</button>
+        </div>
+      )}
       <div style={{fontSize:"clamp(11px,2.5vw,15px)",fontFamily:"'Press Start 2P',monospace",color:"#FFD54F",marginBottom:6,textAlign:"center"}}>🌟 CHOOSE YOUR STARTER!</div>
       <div style={{fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",color:"#555",marginBottom:16,textAlign:"center"}}>Your partner Pokémon — choose wisely!</div>
 
@@ -2217,9 +2248,44 @@ function PokemonCard({mon, onSelect, selected, unlocked, coins, onUnlock, cost, 
 //  HALL OF FAME — proper ranked ladder with tiers
 // ══════════════════════════════════════════════════════════════════════
 function HallOfFame({onClose, currentName}){
-  const profiles = JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+  const [allPlayers, setAllPlayers] = useState(()=>{
+    // Start with local profiles immediately
+    return JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").filter(p=>!p.isGuest);
+  });
+  const [loading, setLoading] = useState(true);
+
+  useEffect(()=>{
+    // Fetch global leaderboard from Supabase
+    const SUPA_URL_HOF="https://hoqsdlpsqdtpvskbfafh.supabase.co";
+    const SUPA_KEY_HOF="sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
+    fetch(`${SUPA_URL_HOF}/rest/v1/players?select=username,wins,losses,avatar&action=eq.stats_update&order=wins.desc&limit=100`,{
+      headers:{"apikey":SUPA_KEY_HOF,"Authorization":`Bearer ${SUPA_KEY_HOF}`}
+    })
+    .then(r=>r.json())
+    .then(rows=>{
+      if(!Array.isArray(rows)) return;
+      // Build a map of best stats per username from Supabase
+      const supaMap={};
+      rows.forEach(r=>{
+        if(!r.username) return;
+        const ex=supaMap[r.username];
+        if(!ex||r.wins>ex.wins) supaMap[r.username]={name:r.username,wins:r.wins||0,losses:r.losses||0,avatar:r.avatar||"🔴"};
+      });
+      // Merge: local profiles take precedence for avatar/avatarData, supabase for stats
+      const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]").filter(p=>!p.isGuest);
+      const localMap={};
+      local.forEach(p=>{ localMap[p.name]=p; });
+      // Combine: all supabase users + any local-only users
+      const merged={...supaMap};
+      local.forEach(p=>{ merged[p.name]={...supaMap[p.name],...p}; });
+      setAllPlayers(Object.values(merged).filter(p=>!p.isGuest));
+    })
+    .catch(()=>{}) // silently keep local data on error
+    .finally(()=>setLoading(false));
+  },[]);
+
   // Score formula: wins * 100 + win_rate_bonus - losses * 10
-  const scored = profiles.map(p=>{
+  const scored = allPlayers.map(p=>{
     const total = (p.wins||0) + (p.losses||0);
     const wr = total>0 ? (p.wins||0)/total : 0;
     const score = (p.wins||0)*100 + Math.round(wr*500) - (p.losses||0)*10;
@@ -2251,7 +2317,8 @@ function HallOfFame({onClose, currentName}){
         {/* Header */}
         <div style={{textAlign:"center",marginBottom:20}}>
           <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"16px",color:"#FFD54F",marginBottom:4}}>🏆 HALL OF FAME</div>
-          <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333",marginBottom:12}}>WORLD TRAINER RANKINGS</div>
+          <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333",marginBottom:4}}>🌐 GLOBAL TRAINER RANKINGS</div>
+          {loading&&<div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#7C4DFF",marginBottom:8,animation:"pulse 1s infinite"}}>Loading global data…</div>}
           {/* Tier legend */}
           <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:4}}>
             {[{name:"CHAMPION",color:"#FFD700",icon:"👑"},{name:"ELITE 4",color:"#C0C0C0",icon:"⭐"},{name:"GYM LEADER",color:"#9C7DFF",icon:"🏅"},{name:"ACE",color:"#4FC3F7",icon:"🎖️"}].map(t=>(
@@ -2739,6 +2806,251 @@ function MultiplayerComingSoonPage({onBack}){
   );
 }
 
+// ══════════════════════════════════════════════════════════════════════
+//  PROFILE SCREEN — edit avatar, username, password, email
+// ══════════════════════════════════════════════════════════════════════
+function ProfileScreen({profile, onSave, onBack}){
+  const [tab,setTab]=useState("avatar"); // "avatar" | "account"
+  const [builderMode,setBuilderMode]=useState(profile?.avatarData?.type==="built");
+  const [emojiAvatar,setEmojiAvatar]=useState(profile?.avatar||"🔴");
+  const [hair,setHair]=useState(profile?.avatarData?.hair||"short-dark");
+  const [face,setFace]=useState(profile?.avatarData?.face||"round");
+  const [skin,setSkin]=useState(profile?.avatarData?.skin||"#FDDBB4");
+  const [hairColor,setHairColor]=useState(profile?.avatarData?.hairColor||"#1a0a00");
+  const [eyes,setEyes]=useState(profile?.avatarData?.eyes||"👀");
+  // Account fields
+  const [newUsername,setNewUsername]=useState(profile?.name||"");
+  const [newEmail,setNewEmail]=useState("");
+  const [newPass,setNewPass]=useState("");
+  const [confirmPass,setConfirmPass]=useState("");
+  const [verifyCode,setVerifyCode]=useState("");
+  const [sentCode,setSentCode]=useState(null); // simulated code
+  const [verifyField,setVerifyField]=useState(null); // "email"|"password"
+  const [msg,setMsg]=useState({text:"",ok:true});
+  const [saving,setSaving]=useState(false);
+
+  const EMOJIS=["🔴","🔵","🟡","🟢","🟣","🟠","⚫","⚪","🌟","🔥","💧","⚡","🌿","❄️","👾","🎮","🦊","🐉","🦁","🐺","🦅","🌙","☀️","🎯","💀","👑","🎃","🤖","🦋","🐬"];
+  const HAIR_OPTS=["short-dark","long-dark","short-blonde","long-blonde","short-red","curly-brown","afro-black","braids-brown","spiky-blue"];
+  const HAIR_COLS=["#1a0a00","#3b1f00","#8B4513","#D4A017","#C0392B","#F0F0F0","#2C3E50","#9B59B6","#1ABC9C"];
+  const SKIN_OPTS=["#FDDBB4","#EDB98A","#D08B5B","#AE5D29","#694C3B","#F2DCC9","#FDEDCA","#C68642"];
+  const EYE_OPTS=["👀","🔵","🟤","🟢","⚫","🔴","💜","🌟"];
+
+  function getDB(){try{return JSON.parse(localStorage.getItem("pkmn_auth_db")||"{}")}catch{return{}}}
+  function saveDB(db){localStorage.setItem("pkmn_auth_db",JSON.stringify(db));}
+  function hash(p){let h=0;for(let i=0;i<p.length;i++){h=(h<<5)-h+p.charCodeAt(i);h|=0;}return String(h);}
+
+  function saveAvatar(){
+    setSaving(true);
+    const avatarData=builderMode?{type:"built",hair,face,skin,hairColor,eyes}:{type:"emoji",emoji:emojiAvatar};
+    const av=builderMode?"[built]":emojiAvatar;
+    // Update auth db
+    const db=getDB();
+    const entry=Object.values(db).find(u=>u.username===profile.name);
+    if(entry){ const key=Object.keys(db).find(k=>db[k].username===profile.name); db[key]={...db[key],avatar:av,avatarData}; saveDB(db); }
+    // Update profile
+    const updated={...profile,avatar:av,avatarData};
+    onSave(updated);
+    setMsg({text:"✅ Avatar saved!",ok:true});
+    setSaving(false);
+  }
+
+  function saveUsername(){
+    const u=newUsername.trim();
+    if(!u||u===profile.name){setMsg({text:"Enter a new username",ok:false});return;}
+    if(u.length<2||u.length>16){setMsg({text:"Username: 2–16 characters",ok:false});return;}
+    if(!/^[a-zA-Z0-9_-]+$/.test(u)){setMsg({text:"Letters, numbers, _ - only",ok:false});return;}
+    const db=getDB();
+    if(Object.values(db).find(x=>x.username.toLowerCase()===u.toLowerCase()&&x.username!==profile.name)){setMsg({text:"Username taken!",ok:false});return;}
+    // Update auth db
+    const entry=Object.values(db).find(x=>x.username===profile.name);
+    if(entry){ const key=Object.keys(db).find(k=>db[k].username===profile.name); db[key]={...db[key],username:u}; saveDB(db); }
+    // Update profiles list
+    const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+    localStorage.setItem("pkmn_profiles",JSON.stringify(profiles.map(p=>p.name===profile.name?{...p,name:u}:p)));
+    onSave({...profile,name:u});
+    setMsg({text:"✅ Username updated!",ok:true});
+  }
+
+  function requestEmailChange(){
+    if(!newEmail.includes("@")||!newEmail.includes(".")){setMsg({text:"Enter a valid email",ok:false});return;}
+    const code=Math.floor(100000+Math.random()*900000).toString();
+    setSentCode(code); setVerifyField("email");
+    if(window.emailjs){
+      window.emailjs.send("service_hjpc4ci","template_y5vlzuf",{
+        to_email: newEmail,
+        verification_code: code,
+        username: profile?.name,
+      },"rUzcEDHNBzkCWPmBs").catch(()=>{});
+    }
+    setMsg({text:"📧 Verification code sent to your email!",ok:true});
+  }
+
+  function requestPasswordChange(){
+    if(newPass.length<6){setMsg({text:"Password needs 6+ characters",ok:false});return;}
+    if(newPass!==confirmPass){setMsg({text:"Passwords don't match",ok:false});return;}
+    const code=Math.floor(100000+Math.random()*900000).toString();
+    setSentCode(code); setVerifyField("password");
+    const db=getDB();
+    const entry=Object.values(db).find(u=>u.username===profile?.name);
+    if(window.emailjs&&entry?.email){
+      window.emailjs.send("service_hjpc4ci","template_y5vlzuf",{
+        to_email: entry.email,
+        verification_code: code,
+        username: profile?.name,
+      },"rUzcEDHNBzkCWPmBs").catch(()=>{});
+    }
+    setMsg({text:"📧 Verification code sent to your email!",ok:true});
+  }
+
+  function submitVerification(){
+    if(verifyCode.trim()!==sentCode){setMsg({text:"Wrong code. Try again.",ok:false});return;}
+    const db=getDB();
+    const key=Object.keys(db).find(k=>db[k].username===profile.name);
+    if(!key){setMsg({text:"Account not found",ok:false});return;}
+    if(verifyField==="email"){
+      db[newEmail]={...db[key]}; delete db[key]; db[newEmail].email=newEmail;
+      saveDB(db);
+      setMsg({text:"✅ Email updated!",ok:true});
+    } else {
+      db[key]={...db[key],password:hash(newPass)};
+      saveDB(db);
+      setMsg({text:"✅ Password updated!",ok:true});
+    }
+    setSentCode(null); setVerifyField(null); setVerifyCode(""); setNewPass(""); setConfirmPass(""); setNewEmail("");
+  }
+
+  const inputStyle={width:"100%",background:"rgba(255,255,255,0.06)",border:"1.5px solid rgba(124,77,255,0.3)",borderRadius:10,padding:"clamp(10px,2vw,13px)",color:"#fff",fontSize:"clamp(11px,2vw,14px)",fontFamily:"'Press Start 2P',monospace",marginBottom:8};
+  const btnStyle=(col="#7C4DFF")=>({width:"100%",background:`rgba(${col==="green"?"76,175,80":"124,77,255"},0.2)`,border:`1.5px solid rgba(${col==="green"?"76,175,80":"124,77,255"},0.5)`,borderRadius:10,padding:"clamp(11px,2.2vw,14px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,1.8vw,13px)",marginTop:4});
+
+  return(
+    <div style={{width:"100%",maxWidth:580,margin:"0 auto"}}>
+      <div style={{textAlign:"center",marginBottom:20}}>
+        <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>👤 MY PROFILE</div>
+        <div style={{color:"#444",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+      </div>
+
+      {/* Tabs */}
+      <div style={{display:"flex",gap:6,marginBottom:20,background:"rgba(0,0,0,0.3)",borderRadius:12,padding:4}}>
+        {[["avatar","🎭 AVATAR"],["account","⚙️ ACCOUNT"]].map(([t,lbl])=>(
+          <button key={t} onClick={()=>{setTab(t);setMsg({text:"",ok:true});}} style={{flex:1,padding:"clamp(10px,2vw,13px)",background:tab===t?"rgba(124,77,255,0.4)":"transparent",border:`1px solid ${tab===t?"rgba(124,77,255,0.6)":"transparent"}`,borderRadius:10,color:tab===t?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(9px,1.8vw,12px)"}}>{lbl}</button>
+        ))}
+      </div>
+
+      <div style={{background:"rgba(8,8,24,0.97)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:20,padding:"clamp(18px,4vw,28px)"}}>
+
+        {/* ── AVATAR TAB ── */}
+        {tab==="avatar"&&(
+          <>
+            <div style={{display:"flex",gap:6,marginBottom:18,background:"rgba(0,0,0,0.25)",borderRadius:10,padding:4}}>
+              {[["🎭 EMOJI",false],["✏️ BUILD",true]].map(([lbl,bm])=>(
+                <button key={lbl} onClick={()=>setBuilderMode(bm)} style={{flex:1,padding:"clamp(8px,1.6vw,11px)",background:builderMode===bm?"rgba(124,77,255,0.35)":"transparent",border:`1.5px solid ${builderMode===bm?"rgba(124,77,255,0.7)":"transparent"}`,borderRadius:8,color:builderMode===bm?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)"}}>{lbl}</button>
+              ))}
+            </div>
+            {!builderMode?(
+              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6,marginBottom:16}}>
+                {EMOJIS.map(a=>(
+                  <button key={a} onClick={()=>setEmojiAvatar(a)} style={{aspectRatio:"1",background:emojiAvatar===a?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.08)"}`,borderRadius:10,cursor:"pointer",fontSize:"clamp(18px,3.5vw,24px)",transform:emojiAvatar===a?"scale(1.12)":"scale(1)",transition:"all 0.14s",display:"flex",alignItems:"center",justifyContent:"center"}}>{a}</button>
+                ))}
+              </div>
+            ):(
+              <div style={{marginBottom:16}}>
+                <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+                  <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.2)",borderRadius:16,padding:16,display:"inline-flex",flexDirection:"column",alignItems:"center",gap:8}}>
+                    <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={90}/>
+                    <div style={{color:"#ccc",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+                  </div>
+                </div>
+                {[
+                  {label:"FACE SHAPE",opts:["round","oval","square","heart"],val:face,set:setFace},
+                ].map(({label,opts,val,set})=>(
+                  <div key={label} style={{marginBottom:12}}>
+                    <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>{label}</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{opts.map(o=><button key={o} onClick={()=>set(o)} style={{padding:"7px 12px",background:val===o?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${val===o?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:val===o?"#fff":"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",textTransform:"capitalize"}}>{o}</button>)}</div>
+                  </div>
+                ))}
+                <div style={{marginBottom:12}}>
+                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>HAIR STYLE</div>
+                  <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{HAIR_OPTS.map(h=><button key={h} onClick={()=>setHair(h)} style={{padding:"6px 10px",background:hair===h?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${hair===h?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:7,color:hair===h?"#fff":"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(6px,1.1vw,8px)"}}>{h.replace(/-/g," ")}</button>)}</div>
+                </div>
+                <div style={{marginBottom:12}}>
+                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>HAIR COLOR</div>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{HAIR_COLS.map(c=><button key={c} onClick={()=>setHairColor(c)} style={{width:28,height:28,background:c,border:`2.5px solid ${hairColor===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===c?"scale(1.25)":"scale(1)",transition:"transform 0.14s"}}/>)}</div>
+                </div>
+                <div style={{marginBottom:12}}>
+                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>SKIN TONE</div>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{SKIN_OPTS.map(c=><button key={c} onClick={()=>setSkin(c)} style={{width:28,height:28,background:c,border:`2.5px solid ${skin===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===c?"scale(1.25)":"scale(1)",transition:"transform 0.14s"}}/>)}</div>
+                </div>
+                <div style={{marginBottom:8}}>
+                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>EYES</div>
+                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{EYE_OPTS.map(e=><button key={e} onClick={()=>setEyes(e)} style={{padding:"7px",background:eyes===e?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${eyes===e?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.08)"}`,borderRadius:9,cursor:"pointer",fontSize:"clamp(16px,3vw,22px)",transition:"all 0.14s",transform:eyes===e?"scale(1.12)":"scale(1)"}}>{e}</button>)}</div>
+                </div>
+              </div>
+            )}
+            <button onClick={saveAvatar} disabled={saving} style={btnStyle("green")}>💾 SAVE AVATAR</button>
+          </>
+        )}
+
+        {/* ── ACCOUNT TAB ── */}
+        {tab==="account"&&(
+          <div style={{display:"flex",flexDirection:"column",gap:20}}>
+
+            {/* Username */}
+            <div>
+              <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>USERNAME</div>
+              <input value={newUsername} onChange={e=>setNewUsername(e.target.value)} placeholder={profile?.name} style={inputStyle}/>
+              <button onClick={saveUsername} style={btnStyle()}>UPDATE USERNAME</button>
+            </div>
+
+            <div style={{height:1,background:"rgba(255,255,255,0.06)"}}/>
+
+            {/* Email change */}
+            {!sentCode&&(
+              <div>
+                <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE EMAIL</div>
+                <input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="new@email.com" type="email" style={inputStyle}/>
+                <button onClick={requestEmailChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
+              </div>
+            )}
+
+            {/* Password change */}
+            {!sentCode&&(
+              <>
+                <div style={{height:1,background:"rgba(255,255,255,0.06)"}}/>
+                <div>
+                  <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE PASSWORD</div>
+                  <input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="New password (6+ chars)" type="password" style={inputStyle}/>
+                  <input value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="Confirm new password" type="password" style={{...inputStyle,marginTop:0}}/>
+                  <button onClick={requestPasswordChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
+                </div>
+              </>
+            )}
+
+            {/* Verification code input */}
+            {sentCode&&(
+              <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:14,padding:18}}>
+                <div style={{color:"#FFD54F",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>
+                  {verifyField==="email"?"📧 VERIFY EMAIL CHANGE":"🔑 VERIFY PASSWORD CHANGE"}
+                </div>
+                <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:14,lineHeight:1.8}}>
+                  Enter the 6-digit code sent to your email.
+                </div>
+                <input value={verifyCode} onChange={e=>setVerifyCode(e.target.value)} placeholder="000000" maxLength={6} style={{...inputStyle,letterSpacing:8,textAlign:"center"}}/>
+                <div style={{display:"flex",gap:8}}>
+                  <button onClick={()=>{setSentCode(null);setVerifyField(null);setVerifyCode("");}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>CANCEL</button>
+                  <button onClick={submitVerification} style={{...btnStyle("green"),flex:2,marginTop:0}}>✅ VERIFY &amp; SAVE</button>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {msg.text&&<div style={{marginTop:14,padding:"10px 14px",background:msg.ok?"rgba(76,175,80,0.1)":"rgba(244,67,54,0.1)",border:`1px solid ${msg.ok?"rgba(76,175,80,0.4)":"rgba(244,67,54,0.4)"}`,borderRadius:9,color:msg.ok?"#4CAF50":"#f44336",fontSize:"clamp(8px,1.5vw,10px)",fontFamily:"'Press Start 2P',monospace",lineHeight:1.8}}>{msg.text}</div>}
+      </div>
+
+    </div>
+  );
+}
+
 const WS_URL = "ws://localhost:3001";
 const STARTER_COUNT = 6;
 const UNLOCK_COST = 300;
@@ -2746,10 +3058,36 @@ const PAGE = 30;
 
 function App(){
   // ── Profile ──────────────────────────────────────────────
-  const [profile,setProfile]=useState(null);
-  const [screen,setScreen]=useState(MODES.CHAR);
+  // ── Session persistence ───────────────────────────────────
+  // On refresh: registered users restore their session; guests always reset to login
+  const [profile,setProfile]=useState(()=>{
+    try{
+      const sess=localStorage.getItem("pkmn_active_session");
+      if(!sess) return null;
+      const {name, ts}=JSON.parse(sess);
+      // Session valid for 30 days
+      if(Date.now()-ts > 30*24*60*60*1000){ localStorage.removeItem("pkmn_active_session"); return null; }
+      const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+      const prof=profiles.find(p=>p.name===name&&!p.isGuest);
+      return prof||null;
+    }catch{ return null; }
+  });
+  const [screen,setScreen]=useState(()=>{
+    try{
+      const sess=localStorage.getItem("pkmn_active_session");
+      if(!sess) return MODES.CHAR;
+      const {name}=JSON.parse(sess);
+      const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+      const prof=profiles.find(p=>p.name===name&&!p.isGuest);
+      if(!prof) return MODES.CHAR;
+      // Check if they have a starter saved
+      const hasSt=localStorage.getItem(`pkmn_starter_${name}`);
+      return hasSt ? MODES.HOME : MODES.STARTER;
+    }catch{ return MODES.CHAR; }
+  });
   const [musicOn,setMusicOn]=useState(true);
   const musicStarted=useRef(false);
+  const profileRef=useRef(null); // always holds latest profile, safe to use in async/setTimeout
   const [starterPokemon,setStarterPokemon]=useState(null); // the chosen starter
 
   // ── Pokédex ──────────────────────────────────────────────
@@ -2788,6 +3126,7 @@ function App(){
   const [winner,setWinner]=useState(null);
   const [anim,setAnim]=useState(null);
   const [showItems,setShowItems]=useState(false);
+  const [showSwitch,setShowSwitch]=useState(false); // mid-battle pokemon switch
   const [bagItems,setBagItems]=useState({});
   const [pMega,setPMega]=useState(false);
   const [pMegaSlug,setPMegaSlug]=useState(null);
@@ -2899,11 +3238,36 @@ function App(){
     // sessionStorage auto-clears on tab close
   },[]);
 
-  const firstClick=()=>{
-    if(musicStarted.current) return;
-    musicStarted.current=true;
-    if(musicOn) AUDIO.play("home");
-  };
+  // ── Auto-start music on first interaction or immediately ─────
+  useEffect(()=>{
+    if(!musicOn) return;
+    // Try immediate autoplay
+    const tryPlay=()=>{
+      if(musicStarted.current) return;
+      musicStarted.current=true;
+      if(screen===MODES.HOME||screen===MODES.CHAR) AUDIO.play("home");
+      else if(screen===MODES.BATTLE) AUDIO.play("battle");
+      else AUDIO.play("home");
+    };
+    // Browsers block audio until user interacts — listen for first interaction
+    const onFirst=()=>{
+      tryPlay();
+      document.removeEventListener("click",onFirst,true);
+      document.removeEventListener("keydown",onFirst,true);
+      document.removeEventListener("touchstart",onFirst,true);
+    };
+    document.addEventListener("click",onFirst,true);
+    document.addEventListener("keydown",onFirst,true);
+    document.addEventListener("touchstart",onFirst,true);
+    // Also try immediately (works on some browsers/reload scenarios)
+    tryPlay();
+    return()=>{
+      document.removeEventListener("click",onFirst,true);
+      document.removeEventListener("keydown",onFirst,true);
+      document.removeEventListener("touchstart",onFirst,true);
+    };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  },[musicOn]);
 
   // ── Load Pokémon ─────────────────────────────────────────
   useEffect(()=>{
@@ -3003,7 +3367,8 @@ function App(){
     }
   },[profile]);
 
-  useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_fainted_${profile.name}`,JSON.stringify(faintedTeam)); },[faintedTeam,profile]);
+  useEffect(()=>{ profileRef.current=profile; },[profile]);
+  useEffect(()=>{ if(profile&&!profile.isGuest) localStorage.setItem(`pkmn_fainted_${profile.name}`,JSON.stringify(faintedTeam)); },[faintedTeam,profile]);
   useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_team_${profile.name}`,JSON.stringify(team)); },[team,profile]);
   useEffect(()=>{ if(profile) localStorage.setItem(`pkmn_exp_${profile.name}`,JSON.stringify(expMap)); },[expMap,profile]);
   // Trigger evolution animation when pendingEvo arrives
@@ -3062,19 +3427,31 @@ function App(){
     });
   }
 
-  function markNeedsHeal(mon, didFaint){
+  function markNeedsHeal(mon, didFaint, remainingHP=0){
+    const p=profileRef.current;
+    const newEntry={id:mon.id,name:mon.name,fainted:!!didFaint,hp:didFaint?0:remainingHP};
     setFaintedTeam(ft=>{
       const exists=ft.some(f=>f.id===mon.id);
-      if(exists) return ft.map(f=>f.id===mon.id?{...f,fainted:f.fainted||didFaint}:f);
-      return [...ft,{id:mon.id,name:mon.name,fainted:!!didFaint}];
+      const updated=exists
+        ? ft.map(f=>f.id===mon.id?{...f,fainted:f.fainted||didFaint,hp:didFaint?0:remainingHP}:f)
+        : [...ft,newEntry];
+      // Synchronous write — survives navigation and refresh immediately
+      if(p&&!p.isGuest){
+        try{ localStorage.setItem(`pkmn_fainted_${p.name}`,JSON.stringify(updated)); }catch{}
+      }
+      return updated;
     });
   }
 
   // ── Battle start ──────────────────────────────────────────
   function startBattle(mon){
     if(!mon) return;
-    const fainted=faintedTeam.map(f=>f.id);
-    if(fainted.includes(mon.id)){ alert(`${mon.name.toUpperCase()} needs healing!`); return; }
+    // Block only pokemon that have truly fainted (hp=0), not just injured
+    const trulyFainted=faintedTeam.filter(f=>f.fainted);
+    if(trulyFainted.some(f=>f.id===mon.id)){
+      alert(`${mon.name.toUpperCase()} has fainted! Take them to the Pokémon Center first.`);
+      return;
+    }
     const pool=allPokemon.filter(x=>x.id!==mon.id&&x.legendary===mon.legendary);
     const enemy=pool[Math.floor(Math.random()*pool.length)];
     if(!enemy) return;
@@ -3086,7 +3463,7 @@ function App(){
     setPLevel(lvl);
     setLog([`⚔️ A wild ${enemy.name.toUpperCase()} appeared!`,`Go, ${mon.name.toUpperCase()}! (Lv${lvl})`]);
     setFaintP(false); setFaintE(false); setHitP(false); setHitE(false);
-    setWinner(null); setBusy(false); setAnim(null); setShowItems(false);
+    setWinner(null); setBusy(false); setAnim(null); setShowItems(false); setShowSwitch(false);
     setBattleTurns(0); setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false); setIsMpBattle(false);
     battleEndedRef.current = false; // reset guard for new battle
     // Pick random weather
@@ -3108,6 +3485,26 @@ function App(){
 
   const sleep=ms=>new Promise(r=>setTimeout(r,ms));
   const pushLog=msg=>setLog(l=>[...l.slice(-12),msg]);
+
+  // ── Mid-battle Pokémon switch ─────────────────────────────
+  async function switchPokemon(newMon){
+    if(busy||!newMon||newMon.id===pMon?.id) return;
+    if(faintedTeam.some(f=>f.id===newMon.id&&f.fainted)){ pushLog(`${newMon.name.toUpperCase()} has fainted and can't battle!`); return; }
+    setBusy(true); setShowSwitch(false);
+    const lvl=teamLevels[newMon.id]||50;
+    const newMax=(newMon.hp+lvl)*2;
+    pushLog(`Come back, ${pMon.name.toUpperCase()}!`);
+    await sleep(500);
+    setPMon(newMon); setPLevel(lvl);
+    setPMaxHP(newMax); setPHP(newMax);
+    setPMega(false); setPMegaSlug(null); setPGiga(false);
+    pushLog(`Go, ${newMon.name.toUpperCase()}! (Lv${lvl})`);
+    await sleep(400);
+    // Enemy gets a free attack for switching
+    await enemyAttackTurn();
+    await sleep(300);
+    setBusy(false);
+  }
 
   // ── Mega Evolution ────────────────────────────────────────
   function doMega(){
@@ -3394,20 +3791,22 @@ function App(){
       // Streak
       setWinStreak(prev=>{
         const ns=prev+1;
-        localStorage.setItem(`pkmn_streak_${profile?.name}`,String(ns));
+        if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile?.name}`,String(ns));
         if(ns>=3){ setShowStreakBanner(true); setTimeout(()=>setShowStreakBanner(false),3500); }
         return ns;
       });
-      const curStreak=winStreak+1;
-      const streakMult=curStreak>=5?3:curStreak>=3?2:1;
+      const curStreak=winStreak+1; // accurate current streak value
+      // x2 coins only when streak is strictly more than 2 wins (3+)
+      const streakMult=curStreak>2?2:1;
       const baseReward=eMon.legendary?300:100;
       const reward=baseReward*streakMult;
       addCoins(reward);
-      pushLog(`+${reward} 🪙 earned!${streakMult>1?` 🔥 STREAK ×${streakMult}!`:""}`);
+      pushLog(`+${reward} 🪙 earned!${streakMult>1?` 🔥 ×${streakMult} STREAK BONUS!`:""}`);
+      pushLog(`Win streak: ${curStreak} 🔥`);
       setProfile(p=>{ const np={...p,wins:(p.wins||0)+1}; updateProfile(np);
         if(!np.isGuest) supaUpdateStats(np.name,np.wins,np.losses||0,np.coins||0);
         return np; });
-      markNeedsHeal(pMon, false);
+      markNeedsHeal(pMon, false, pHP); // track remaining HP after winning
       // Daily wins
       setDailyWins(prev=>{
         const nd=prev+1;
@@ -3481,17 +3880,27 @@ function App(){
     setSelectedToHeal(s=>{ const n=new Set(s); n.has(id)?n.delete(id):n.add(id); return n; });
   }
 
-  function submitHeal(){
-    const toHeal = faintedTeam.filter(m=>selectedToHeal.has(m.id));
-    // If none selected but there are fainted, heal all; otherwise respect selection
-    const target = toHeal.length>0 ? toHeal : faintedTeam;
+  function submitHeal(targetOverride){
+    const p=profileRef.current;
+    const target = targetOverride
+      ? targetOverride
+      : faintedTeam.filter(m=>selectedToHeal.has(m.id)).length>0
+        ? faintedTeam.filter(m=>selectedToHeal.has(m.id))
+        : faintedTeam;
     if(target.length===0){ setHealDone(true); return; }
     setHealQueue([...target]);
     setHealDone(false);
     AUDIO.sfx("heal_chime");
     setTimeout(()=>{
       const healedIds = new Set(target.map(m=>m.id));
-      setFaintedTeam(ft=>ft.filter(m=>!healedIds.has(m.id)));
+      setFaintedTeam(ft=>{
+        const remaining=ft.filter(m=>!healedIds.has(m.id));
+        // Synchronously clear healed pokemon from localStorage
+        if(p&&!p.isGuest){
+          try{ localStorage.setItem(`pkmn_fainted_${p.name}`,JSON.stringify(remaining)); }catch{}
+        }
+        return remaining;
+      });
       setSelectedToHeal(new Set());
       setHealQueue([]);
       setHealDone(true);
@@ -3623,12 +4032,14 @@ function App(){
   if(screen===MODES.CHAR){
     return <CharacterScreen onDone={p=>{
       if(p.isGuest){
-        // Guest gets avatar (already picked in CharacterScreen) then starter
+        // Guests: no session saved — they always go back to login on refresh
         setProfile(p);
-        setScreen(MODES.STARTER); // let guest pick starter too
+        setScreen(MODES.STARTER);
         setTimeout(()=>{ musicStarted.current=true; if(musicOn) AUDIO.play("select"); },200);
         return;
       }
+      // Registered user: save session so refresh restores them
+      localStorage.setItem("pkmn_active_session",JSON.stringify({name:p.name,ts:Date.now()}));
       setProfile(p);
       const savedStarter=localStorage.getItem(`pkmn_starter_${p.name}`);
       if(savedStarter){ setStarterPokemon(JSON.parse(savedStarter)); setScreen(MODES.HOME); }
@@ -3649,7 +4060,7 @@ function App(){
         </div>
       </div>
     );
-    return <StarterScreen allPokemon={allPokemon} onDone={p=>{
+    return <StarterScreen allPokemon={allPokemon} onBack={profile?.isGuest?()=>{setProfile(null);setScreen(MODES.CHAR);}:null} onDone={p=>{
       setStarterPokemon(p);
       const store=profile?.isGuest?sessionStorage:localStorage;
       store.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(p));
@@ -3671,7 +4082,7 @@ function App(){
   const canGiga=!usedGiga&&pMon?.canGiga&&(bagItems.dynamax_band||0)>0;
 
   return(
-    <div onClick={firstClick} style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"clamp(12px,3vw,24px) clamp(10px,3vw,20px)",position:"relative",overflowX:"hidden"}}>
+    <div style={{minHeight:"100vh",background:"#05050d",fontFamily:"'Press Start 2P',monospace",display:"flex",flexDirection:"column",alignItems:"center",padding:"clamp(12px,3vw,24px) clamp(10px,3vw,20px)",position:"relative",overflowX:"hidden"}}>
       <style>{`
         @import url('https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap');
 
@@ -3835,27 +4246,45 @@ function App(){
           )}
 
           {/* Profile bar */}
-          <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"16px 20px",display:"flex",flexWrap:"wrap",gap:14,alignItems:"center",justifyContent:"space-between"}}>
-            <div style={{display:"flex",alignItems:"center",gap:12}}>
-              <ProfileAvatar profile={profile} size={40}/>
-              <div>
-                <div style={{color:"#fff",fontSize:"clamp(13px,2.5vw,18px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}{profile?.isGuest&&<span style={{color:"#555",fontSize:"clamp(7px,1.2vw,9px)",marginLeft:8}}>(Guest)</span>}</div>
-                <div style={{color:"#444",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>{profile?.wins||0}W / {profile?.losses||0}L · {profile?.coins||0}🪙</div>
+          <div style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"14px 18px",display:"flex",alignItems:"center",justifyContent:"space-between",gap:12,flexWrap:"wrap"}}>
+
+            {/* Left: avatar + name + stats */}
+            <div style={{display:"flex",alignItems:"center",gap:12,minWidth:0}}>
+              <ProfileAvatar profile={profile} size={42}/>
+              <div style={{minWidth:0}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,flexWrap:"wrap"}}>
+                  <span style={{color:"#fff",fontSize:"clamp(11px,2vw,16px)",fontFamily:"'Press Start 2P',monospace",whiteSpace:"nowrap"}}>{profile?.name}</span>
+                  {profile?.isGuest&&<span style={{color:"#555",fontSize:"clamp(6px,1vw,8px)",fontFamily:"'Press Start 2P',monospace",background:"rgba(255,255,255,0.05)",borderRadius:4,padding:"2px 6px"}}>GUEST</span>}
+                </div>
+                <div style={{color:"#444",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginTop:4,display:"flex",gap:10,flexWrap:"wrap"}}>
+                  <span><span style={{color:"#4CAF50"}}>{profile?.wins||0}</span>W / <span style={{color:"#f44336"}}>{profile?.losses||0}</span>L</span>
+                  <span style={{color:"#FFD54F"}}>🪙{profile?.coins||0}</span>
+                </div>
               </div>
             </div>
+
+            {/* Center: starter pokemon */}
             {starterPokemon&&(
-              <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.03)",borderRadius:10,padding:"6px 12px"}}>
-                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${starterPokemon.id}.png`} style={{width:32,imageRendering:"pixelated"}}/>
+              <div style={{display:"flex",alignItems:"center",gap:8,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:10,padding:"6px 12px"}}>
+                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${starterPokemon.id}.png`} style={{width:30,imageRendering:"pixelated"}}/>
                 <div>
-                  <div style={{color:"#FFD54F",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>STARTER</div>
-                  <div style={{color:"#fff",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{starterPokemon.name}</div>
+                  <div style={{color:"#FFD54F",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginBottom:2}}>STARTER</div>
+                  <div style={{color:"#fff",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{starterPokemon.name}</div>
                 </div>
               </div>
             )}
-            <div style={{display:"flex",alignItems:"center",gap:6}}>
-              <span style={{fontSize:"20px"}}>🪙</span>
-              <span style={{color:"#FFD54F",fontSize:"clamp(12px,2.5vw,17px)",fontFamily:"'Press Start 2P',monospace"}}>{profile?.coins||0}</span>
-            </div>
+
+            {/* Right: sign out */}
+            <button onClick={()=>{
+              localStorage.removeItem("pkmn_active_session");
+              AUDIO.stop(); AUDIO.theme=null;
+              setProfile(null); setScreen(MODES.CHAR);
+              setStarterPokemon(null); setUnlockedIds(new Set());
+              setTeam([]); setFaintedTeam([]); setBattleHistory([]);
+            }} className="btn" style={{background:"rgba(244,67,54,0.08)",border:"1px solid rgba(244,67,54,0.2)",borderRadius:8,padding:"8px 14px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.2vw,9px)",whiteSpace:"nowrap",flexShrink:0}}>
+              🚪 SIGN OUT
+            </button>
+
           </div>
 
           {/* Injured warning */}
@@ -3867,7 +4296,7 @@ function App(){
                   {faintedTeam.map(f=><span key={f.id} style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>💀{f.name}</span>)}
                 </div>
               </div>
-              <button onClick={()=>setScreen(MODES.HEAL)} className="btn" style={{background:"rgba(244,67,54,0.15)",border:"1px solid rgba(244,67,54,0.4)",borderRadius:9,padding:"9px 14px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>🏥 HEAL NOW</button>
+              <button onClick={()=>{setHealDone(false);setScreen(MODES.HEAL);}} className="btn" style={{background:"rgba(244,67,54,0.15)",border:"1px solid rgba(244,67,54,0.4)",borderRadius:9,padding:"9px 14px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>🏥 HEAL NOW</button>
             </div>
           )}
 
@@ -3877,7 +4306,8 @@ function App(){
               {icon:"⚔️", label:"BATTLE",        sub:"VS CPU",            col:"#FF6B35", action:()=>setScreen(MODES.SELECT)},
               {icon:"👥", label:"TEAM",           sub:"Manage roster",     col:"#4FC3F7", action:()=>setScreen(MODES.TEAM)},
               {icon:"🛒", label:"SHOP",           sub:"Spend coins",       col:"#FFD54F", action:()=>setScreen(MODES.SHOP)},
-              {icon:"🏥", label:"POKÉMON\nCENTER",sub:"Heal fainted",      col:"#f44336", action:()=>setScreen(MODES.HEAL)},
+              {icon:"🏥", label:"POKÉMON\nCENTER",sub:"Heal fainted",      col:"#f44336", action:()=>{setHealDone(false);setScreen(MODES.HEAL);}},
+              {icon:"👤", label:"PROFILE",        sub:"Edit avatar & account",col:"#CE93D8", action:()=>setScreen(MODES.PROFILE)},
               {icon:"🌐", label:"MULTIPLAYER",    sub:"Coming soon!",      col:"#7C4DFF", action:()=>setScreen(MODES.MP_SOON)},
               {icon:"📖", label:"POKÉDEX",        sub:`${unlockedIds.size} caught`, col:"#4FC3F7", action:()=>setScreen(MODES.DEX)},
               {icon:"📅", label:"CHALLENGES",     sub:`${challenges.filter(c=>!c.done).length} remaining`, col:"#66BB6A", action:()=>setShowChallenges(true),
@@ -3968,12 +4398,26 @@ function App(){
             );
             return(
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(clamp(120px,16vw,160px),1fr))",gap:"clamp(8px,1.5vw,12px)",marginBottom:16}}>
-                {owned.map(p=>(
-                  <div key={p.id} className="pcard">
-                    <PokemonCard mon={p} onSelect={m=>startBattle(m)} selected={false}
-                      unlocked={true} coins={profile?.coins||0} onUnlock={()=>{}} cost={0}/>
-                  </div>
-                ))}
+                {owned.map(p=>{
+                  const isTrulyFainted=faintedTeam.some(f=>f.id===p.id&&f.fainted);
+                  return(
+                    <div key={p.id} className="pcard" style={{position:"relative"}}>
+                      <PokemonCard mon={p} onSelect={m=>{
+                        if(isTrulyFainted){
+                          setHealDone(false); setScreen(MODES.HEAL);
+                        } else {
+                          startBattle(m);
+                        }
+                      }} selected={false} unlocked={true} coins={profile?.coins||0} onUnlock={()=>{}} cost={0}/>
+                      {isTrulyFainted&&(
+                        <div style={{position:"absolute",inset:0,background:"rgba(0,0,0,0.72)",borderRadius:"inherit",display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",gap:6,pointerEvents:"none"}}>
+                          <div style={{fontSize:"22px"}}>💀</div>
+                          <div style={{color:"#f44336",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",textAlign:"center",lineHeight:1.6}}>FAINTED<br/><span style={{color:"#888",fontSize:"6px"}}>Heal first</span></div>
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             );
           })()}
@@ -4213,10 +4657,16 @@ function App(){
                           color: m.fainted ? "#f44336" : "#FFC107",
                           fontSize:"7px",fontFamily:"'Press Start 2P',monospace",
                           background: m.fainted ? "rgba(244,67,54,0.12)" : "rgba(255,193,7,0.1)",
-                          borderRadius:4, padding:"2px 5px", display:"inline-block"
+                          borderRadius:4, padding:"2px 5px", display:"inline-block", marginBottom:2
                         }}>
-                          {m.fainted ? "💀 FAINTED" : "❤️ TIRED"}
+                          {m.fainted ? "💀 FAINTED" : "❤️ INJURED"}
                         </div>
+                        {/* Show remaining HP if not fully fainted */}
+                        {!m.fainted&&m.hp>0&&(
+                          <div style={{color:"#888",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>
+                            HP: {m.hp} left
+                          </div>
+                        )}
                       </div>
                     );
                   })}
@@ -4229,9 +4679,13 @@ function App(){
                   <div style={{color:"#1a3a4a",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>
                     {selectedToHeal.size>0
                       ? `${selectedToHeal.size} Pokémon selected`
-                      : "Tap Pokémon to select, or heal all"}
+                      : "Tap Pokémon to select, or HEAL ALL"}
                   </div>
-                  <button onClick={submitHeal} className="btn"
+                  <button onClick={()=>{
+                    // Pass the target list directly — avoids stale closure on selectedToHeal
+                    const selected=faintedTeam.filter(m=>selectedToHeal.has(m.id));
+                    submitHeal(selected.length>0 ? selected : faintedTeam);
+                  }} className="btn"
                     style={{width:"100%",background:"linear-gradient(135deg,rgba(79,195,247,0.2),rgba(124,77,255,0.14))",border:"1.5px solid rgba(79,195,247,0.5)",borderRadius:12,padding:"13px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"11px",transition:"all 0.15s"}}>
                     ⚕️ {selectedToHeal.size>0 ? `HEAL ${selectedToHeal.size} POKÉMON` : "HEAL ALL"}
                   </button>
@@ -4289,7 +4743,23 @@ function App(){
             {canUseZ&&<button onClick={useZMove} disabled={busy} className="btn" style={{flex:1,background:"rgba(255,107,53,0.12)",border:"1.5px solid rgba(255,107,53,0.4)",borderRadius:9,padding:"9px 10px",color:"#FF6B35",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px",animation:"zPulse 2s ease-in-out infinite"}}>💎 Z-MOVE</button>}
           </div>
 
-          {showItems?(
+          {showSwitch?(
+            <div style={{background:"rgba(4,4,14,0.98)",border:"1px solid rgba(79,195,247,0.3)",borderRadius:12,padding:"14px"}}>
+              <div style={{color:"#4FC3F7",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>🔄 SWITCH POKÉMON</div>
+              <div style={{color:"#444",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>Enemy gets a free attack!</div>
+              <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(90px,1fr))",gap:7}}>
+                {allPokemon.filter(p=>isUnlocked(p)&&p.id!==pMon?.id&&!faintedTeam.some(f=>f.id===p.id&&f.fainted)).map(p=>(
+                  <button key={p.id} onClick={()=>switchPokemon(p)} disabled={busy} className="btn"
+                    style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:10,padding:"8px 4px",cursor:"pointer",textAlign:"center",opacity:busy?0.4:1}}>
+                    <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:40,imageRendering:"pixelated"}}/>
+                    <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",marginTop:2,lineHeight:1.3}}>{p.name}</div>
+                    <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>Lv{teamLevels[p.id]||50}</div>
+                  </button>
+                ))}
+              </div>
+              <button onClick={()=>setShowSwitch(false)} style={{width:"100%",marginTop:8,background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:8,padding:"8px",color:"#444",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>← BACK</button>
+            </div>
+          ):showItems?(
             <div style={{background:"rgba(4,4,14,0.98)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:12,padding:"14px"}}>
               <div style={{color:"#888",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",marginBottom:10}}>🎒 ITEMS & POKÉ BALLS</div>
               <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(140px,1fr))",gap:7}}>
@@ -4331,10 +4801,18 @@ function App(){
                   );
                 })}
               </div>
-              <button onClick={()=>setShowItems(true)} disabled={busy} className="btn"
-                style={{width:"100%",background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"10px",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>
-                🎒 ITEMS & POKÉ BALLS
-              </button>
+              <div style={{display:"flex",gap:8}}>
+                <button onClick={()=>{setShowItems(true);setShowSwitch(false);}} disabled={busy} className="btn"
+                  style={{flex:1,background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:10,padding:"10px",color:"#777",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>
+                  🎒 ITEMS
+                </button>
+                {!isMpBattle&&allPokemon.filter(p=>isUnlocked(p)&&p.id!==pMon?.id&&!faintedTeam.some(f=>f.id===p.id&&f.fainted)).length>0&&(
+                  <button onClick={()=>{setShowSwitch(true);setShowItems(false);}} disabled={busy} className="btn"
+                    style={{flex:1,background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.25)",borderRadius:10,padding:"10px",color:"#4FC3F7",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>
+                    🔄 SWITCH
+                  </button>
+                )}
+              </div>
             </div>
           )}
         </div>
@@ -4411,12 +4889,12 @@ function App(){
           <div style={{color:"#333",fontSize:"10px",fontFamily:"'Press Start 2P',monospace",marginBottom:6}}>
             {winner==="player"?`${pMon?.name.toUpperCase()} stood victorious!`:`${(eMon||oppMon)?.name.toUpperCase()} won this time…`}
           </div>
-          {winner==="enemy"&&<div style={{color:"#f44336",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>Visit Pokémon Center to heal!</div>}
+          {winner==="enemy"&&<div style={{color:"#f44336",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>Visit Pokémon Center to heal! 🏥</div>}
           <div style={{display:"flex",gap:8,justifyContent:"center",flexWrap:"wrap",marginBottom:12}}>
             <button onClick={()=>setScreen(MODES.SELECT)} className="btn" style={{background:"rgba(124,77,255,0.1)",border:"1px solid rgba(124,77,255,0.25)",borderRadius:10,padding:"11px 16px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>← CHOOSE</button>
-            {pMon&&<button onClick={()=>startBattle(pMon)} disabled={faintedTeam.some(f=>f.id===pMon?.id)} className="btn" style={{background:"rgba(255,107,53,0.1)",border:"1px solid rgba(255,107,53,0.25)",borderRadius:10,padding:"11px 16px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>⚡ REMATCH</button>}
-            {winner==="enemy"&&<button onClick={()=>setScreen(MODES.HEAL)} className="btn" style={{background:"rgba(244,67,54,0.1)",border:"1px solid rgba(244,67,54,0.3)",borderRadius:10,padding:"11px 16px",color:"#f44336",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>🏥 HEAL</button>}
+            {pMon&&winner==="player"&&<button onClick={()=>startBattle(pMon)} disabled={faintedTeam.some(f=>f.id===pMon?.id)} className="btn" style={{background:"rgba(255,107,53,0.1)",border:"1px solid rgba(255,107,53,0.25)",borderRadius:10,padding:"11px 16px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>⚡ REMATCH</button>}
             <button onClick={()=>setShowBoard(true)} className="btn" style={{background:"rgba(255,213,79,0.07)",border:"1px solid rgba(255,213,79,0.2)",borderRadius:10,padding:"11px 16px",color:"#FFD54F",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>🏆 HALL</button>
+            <button onClick={()=>setScreen(MODES.HOME)} className="btn" style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"11px 16px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>🏠 HOME</button>
           </div>
         </div>
       )}
@@ -4449,6 +4927,21 @@ function App(){
       ══════════════════════════════════════════════════ */}
       {screen===MODES.HISTORY&&(
         <HistoryScreen history={battleHistory} onBack={()=>setScreen(MODES.HOME)}/>
+      )}
+
+      {/* ══════════════════════════════════════════════════
+          PROFILE
+      ══════════════════════════════════════════════════ */}
+      {screen===MODES.PROFILE&&(
+        <ProfileScreen
+          profile={profile}
+          onBack={()=>setScreen(MODES.HOME)}
+          onSave={updated=>{
+            setProfile(updated);
+            updateProfile(updated);
+            setScreen(MODES.HOME);
+          }}
+        />
       )}
 
       {/* ══════════════════════════════════════════════════
