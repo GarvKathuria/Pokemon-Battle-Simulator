@@ -366,21 +366,166 @@ const EVOLVE_MAP = {
 };
 
 // Story mode gyms + Elite 4 + Champion
-const STORY_GYMS = [
-  {id:1, name:"Brock",    badge:"Boulder Badge",type:"rock",    level:14,icon:"⛰️", team:[74,95],       reward:500,  hint:"Use Water or Grass moves."},
-  {id:2, name:"Misty",   badge:"Cascade Badge",type:"water",   level:21,icon:"💧", team:[120,121],     reward:700,  hint:"Use Electric or Grass moves."},
-  {id:3, name:"Lt. Surge",badge:"Thunder Badge",type:"electric",level:28,icon:"⚡", team:[100,26],      reward:900,  hint:"Use Ground moves."},
-  {id:4, name:"Erika",   badge:"Rainbow Badge",type:"grass",   level:32,icon:"🌸", team:[71,114,182],  reward:1100, hint:"Use Fire or Flying moves."},
-  {id:5, name:"Koga",    badge:"Soul Badge",   type:"poison",  level:38,icon:"🌫️", team:[109,89,110],  reward:1300, hint:"Use Ground or Psychic moves."},
-  {id:6, name:"Sabrina", badge:"Marsh Badge",  type:"psychic", level:43,icon:"🔮", team:[64,122,65],   reward:1500, hint:"Use Bug, Ghost or Dark moves."},
-  {id:7, name:"Blaine",  badge:"Volcano Badge",type:"fire",    level:47,icon:"🔥", team:[58,77,78],    reward:1700, hint:"Use Water, Ground or Rock."},
-  {id:8, name:"Giovanni",badge:"Earth Badge",  type:"ground",  level:50,icon:"🌍", team:[111,51,112],  reward:2000, hint:"Use Water, Ice or Grass."},
-  {id:9, name:"Lorelei", badge:"Elite 4 I",    type:"ice",     level:54,icon:"❄️", team:[87,91,124,131,139],reward:2500,hint:"Elite 4. Use Electric, Rock or Steel."},
-  {id:10,name:"Bruno",   badge:"Elite 4 II",   type:"fighting",level:58,icon:"💪", team:[95,99,106,107,68],reward:3000,hint:"Elite 4. Use Psychic or Flying."},
-  {id:11,name:"Agatha",  badge:"Elite 4 III",  type:"ghost",   level:60,icon:"👻", team:[92,93,94,93,94],reward:3500,hint:"Elite 4. Use Ghost or Dark."},
-  {id:12,name:"Lance",   badge:"Elite 4 IV",   type:"dragon",  level:62,icon:"🐉", team:[148,148,130,142,149],reward:4000,hint:"Elite 4. Use Ice or Dragon."},
-  {id:13,name:"Blue",    badge:"Champion!",    type:"normal",  level:65,icon:"👑", team:[18,103,65,112,59,149],reward:5000,hint:"Champion. Mixed team. Bring your best!"},
+// ── Story Mode — All Regions ─────────────────────────────────────────
+// Each region has 8 gyms + Elite 4 (4 members) + Champion = 13 battles
+// Regions unlock sequentially after beating the previous Champion
+const STORY_REGIONS = [
+  {
+    id:"kanto", name:"Kanto", icon:"🔴", color:"#FF6B35",
+    desc:"The original region. 8 Gym Leaders + Elite 4 + Champion Blue.",
+    gyms:[
+      {id:1,  region:"kanto",name:"Brock",     badge:"Boulder Badge", type:"rock",     level:14,icon:"⛰️", reward:500,  hint:"Use Water or Grass moves."},
+      {id:2,  region:"kanto",name:"Misty",     badge:"Cascade Badge", type:"water",    level:21,icon:"💧", reward:700,  hint:"Use Electric or Grass moves."},
+      {id:3,  region:"kanto",name:"Lt. Surge", badge:"Thunder Badge", type:"electric", level:28,icon:"⚡", reward:900,  hint:"Use Ground moves."},
+      {id:4,  region:"kanto",name:"Erika",     badge:"Rainbow Badge", type:"grass",    level:32,icon:"🌸", reward:1100, hint:"Use Fire or Flying moves."},
+      {id:5,  region:"kanto",name:"Koga",      badge:"Soul Badge",    type:"poison",   level:38,icon:"🌫️", reward:1300, hint:"Use Ground or Psychic."},
+      {id:6,  region:"kanto",name:"Sabrina",   badge:"Marsh Badge",   type:"psychic",  level:43,icon:"🔮", reward:1500, hint:"Use Bug, Ghost or Dark."},
+      {id:7,  region:"kanto",name:"Blaine",    badge:"Volcano Badge", type:"fire",     level:47,icon:"🔥", reward:1700, hint:"Use Water, Ground or Rock."},
+      {id:8,  region:"kanto",name:"Giovanni",  badge:"Earth Badge",   type:"ground",   level:50,icon:"🌍", reward:2000, hint:"Use Water, Ice or Grass."},
+      {id:9,  region:"kanto",name:"Lorelei",   badge:"Elite 4 — I",   type:"ice",      level:54,icon:"❄️", reward:2500, hint:"Elite 4. Use Electric, Rock or Steel."},
+      {id:10, region:"kanto",name:"Bruno",     badge:"Elite 4 — II",  type:"fighting", level:58,icon:"💪", reward:3000, hint:"Elite 4. Use Psychic or Flying."},
+      {id:11, region:"kanto",name:"Agatha",    badge:"Elite 4 — III", type:"ghost",    level:60,icon:"👻", reward:3500, hint:"Elite 4. Use Ghost or Dark."},
+      {id:12, region:"kanto",name:"Lance",     badge:"Elite 4 — IV",  type:"dragon",   level:62,icon:"🐉", reward:4000, hint:"Elite 4. Use Ice or Dragon."},
+      {id:13, region:"kanto",name:"Blue",      badge:"Kanto Champion",type:"normal",   level:65,icon:"👑", reward:6000, hint:"Champion. Mixed team. Bring your best!"},
+    ]
+  },
+  {
+    id:"johto", name:"Johto", icon:"🟡", color:"#FFD54F",
+    desc:"Legends awaken. Defeat 8 Gym Leaders and the Johto Elite 4.",
+    gyms:[
+      {id:14, region:"johto",name:"Falkner",  badge:"Zephyr Badge",  type:"flying",   level:18,icon:"🦅", reward:600,  hint:"Use Electric or Rock moves."},
+      {id:15, region:"johto",name:"Bugsy",    badge:"Hive Badge",    type:"bug",      level:24,icon:"🐛", reward:800,  hint:"Use Fire, Flying or Rock."},
+      {id:16, region:"johto",name:"Whitney",  badge:"Plain Badge",   type:"normal",   level:30,icon:"🎀", reward:1000, hint:"Watch out for Miltank's Rollout!"},
+      {id:17, region:"johto",name:"Morty",    badge:"Fog Badge",     type:"ghost",    level:36,icon:"👁️", reward:1200, hint:"Use Dark or Ghost moves."},
+      {id:18, region:"johto",name:"Chuck",    badge:"Storm Badge",   type:"fighting", level:40,icon:"👊", reward:1400, hint:"Use Psychic or Flying moves."},
+      {id:19, region:"johto",name:"Jasmine",  badge:"Mineral Badge", type:"steel",    level:44,icon:"⚙️", reward:1600, hint:"Use Fire or Ground moves."},
+      {id:20, region:"johto",name:"Pryce",    badge:"Glacier Badge", type:"ice",      level:48,icon:"🧊", reward:1800, hint:"Use Fire, Rock or Steel."},
+      {id:21, region:"johto",name:"Clair",    badge:"Rising Badge",  type:"dragon",   level:52,icon:"🌊", reward:2200, hint:"Use Ice or Dragon moves."},
+      {id:22, region:"johto",name:"Will",     badge:"Elite 4 — I",   type:"psychic",  level:56,icon:"🌀", reward:2800, hint:"Elite 4. Use Dark or Ghost."},
+      {id:23, region:"johto",name:"Koga",     badge:"Elite 4 — II",  type:"poison",   level:58,icon:"☠️", reward:3200, hint:"Elite 4. Use Ground or Psychic."},
+      {id:24, region:"johto",name:"Bruno",    badge:"Elite 4 — III", type:"fighting", level:61,icon:"🥊", reward:3800, hint:"Elite 4. Use Psychic or Flying."},
+      {id:25, region:"johto",name:"Karen",    badge:"Elite 4 — IV",  type:"dark",     level:63,icon:"🌑", reward:4200, hint:"Elite 4. Use Fighting or Bug."},
+      {id:26, region:"johto",name:"Lance",    badge:"Johto Champion", type:"dragon",  level:67,icon:"👑", reward:7000, hint:"Champion. Dragon king. Bring Ice!"},
+    ]
+  },
+  {
+    id:"hoenn", name:"Hoenn", icon:"🟢", color:"#66BB6A",
+    desc:"Primal forces clash. Conquer the tropical Hoenn region.",
+    gyms:[
+      {id:27, region:"hoenn",name:"Roxanne",  badge:"Stone Badge",   type:"rock",     level:20,icon:"🪨", reward:700,  hint:"Use Water, Grass or Fighting."},
+      {id:28, region:"hoenn",name:"Brawly",   badge:"Knuckle Badge", type:"fighting", level:26,icon:"🥋", reward:900,  hint:"Use Psychic or Flying moves."},
+      {id:29, region:"hoenn",name:"Wattson",  badge:"Dynamo Badge",  type:"electric", level:32,icon:"⚡", reward:1100, hint:"Use Ground moves."},
+      {id:30, region:"hoenn",name:"Flannery", badge:"Heat Badge",    type:"fire",     level:38,icon:"🌋", reward:1300, hint:"Use Water, Ground or Rock."},
+      {id:31, region:"hoenn",name:"Norman",   badge:"Balance Badge", type:"normal",   level:43,icon:"⚖️", reward:1500, hint:"Use Fighting moves."},
+      {id:32, region:"hoenn",name:"Winona",   badge:"Feather Badge", type:"flying",   level:47,icon:"🕊️", reward:1700, hint:"Use Electric or Rock moves."},
+      {id:33, region:"hoenn",name:"Tate & Liza",badge:"Mind Badge",  type:"psychic",  level:51,icon:"🌙", reward:1900, hint:"Twin battle. Use Dark or Ghost."},
+      {id:34, region:"hoenn",name:"Wallace",  badge:"Rain Badge",    type:"water",    level:55,icon:"💎", reward:2300, hint:"Use Electric or Grass moves."},
+      {id:35, region:"hoenn",name:"Sidney",   badge:"Elite 4 — I",   type:"dark",     level:58,icon:"😈", reward:2900, hint:"Elite 4. Use Fighting or Bug."},
+      {id:36, region:"hoenn",name:"Phoebe",   badge:"Elite 4 — II",  type:"ghost",    level:61,icon:"🌸", reward:3400, hint:"Elite 4. Use Ghost or Dark."},
+      {id:37, region:"hoenn",name:"Glacia",   badge:"Elite 4 — III", type:"ice",      level:63,icon:"❄️", reward:4000, hint:"Elite 4. Use Fire, Rock or Steel."},
+      {id:38, region:"hoenn",name:"Drake",    badge:"Elite 4 — IV",  type:"dragon",   level:65,icon:"🐲", reward:4500, hint:"Elite 4. Use Ice or Dragon."},
+      {id:39, region:"hoenn",name:"Steven",   badge:"Hoenn Champion", type:"steel",   level:68,icon:"👑", reward:8000, hint:"Champion. Steel titan. Use Fire or Ground!"},
+    ]
+  },
+  {
+    id:"sinnoh", name:"Sinnoh", icon:"🔵", color:"#4FC3F7",
+    desc:"Myths of creation. The coldest, most challenging region yet.",
+    gyms:[
+      {id:40, region:"sinnoh",name:"Roark",    badge:"Coal Badge",    type:"rock",     level:24,icon:"⛏️", reward:800,  hint:"Use Water, Grass or Fighting."},
+      {id:41, region:"sinnoh",name:"Gardenia", badge:"Forest Badge",  type:"grass",    level:30,icon:"🌿", reward:1000, hint:"Use Fire, Ice or Flying."},
+      {id:42, region:"sinnoh",name:"Maylene",  badge:"Cobble Badge",  type:"fighting", level:36,icon:"🥊", reward:1200, hint:"Use Psychic or Flying."},
+      {id:43, region:"sinnoh",name:"Crasher Wake",badge:"Fen Badge",  type:"water",    level:41,icon:"🌊", reward:1400, hint:"Use Electric or Grass."},
+      {id:44, region:"sinnoh",name:"Fantina",  badge:"Relic Badge",   type:"ghost",    level:46,icon:"💃", reward:1600, hint:"Use Dark or Ghost moves."},
+      {id:45, region:"sinnoh",name:"Byron",    badge:"Mine Badge",    type:"steel",    level:50,icon:"🛡️", reward:1800, hint:"Use Fire, Ground or Water."},
+      {id:46, region:"sinnoh",name:"Candice",  badge:"Icicle Badge",  type:"ice",      level:54,icon:"🌨️", reward:2000, hint:"Use Fire, Rock or Steel."},
+      {id:47, region:"sinnoh",name:"Volkner",  badge:"Beacon Badge",  type:"electric", level:58,icon:"💡", reward:2400, hint:"Use Ground moves."},
+      {id:48, region:"sinnoh",name:"Aaron",    badge:"Elite 4 — I",   type:"bug",      level:61,icon:"🐞", reward:3000, hint:"Elite 4. Use Fire, Flying or Rock."},
+      {id:49, region:"sinnoh",name:"Bertha",   badge:"Elite 4 — II",  type:"ground",   level:63,icon:"🌍", reward:3600, hint:"Elite 4. Use Water, Ice or Grass."},
+      {id:50, region:"sinnoh",name:"Flint",    badge:"Elite 4 — III", type:"fire",     level:65,icon:"🔥", reward:4200, hint:"Elite 4. Use Water, Ground or Rock."},
+      {id:51, region:"sinnoh",name:"Lucian",   badge:"Elite 4 — IV",  type:"psychic",  level:67,icon:"📚", reward:4800, hint:"Elite 4. Use Dark or Ghost."},
+      {id:52, region:"sinnoh",name:"Cynthia",  badge:"Sinnoh Champion",type:"dragon",  level:70,icon:"👑", reward:9000, hint:"Champion. Strongest trainer ever. Good luck!"},
+    ]
+  },
+  {
+    id:"unova", name:"Unova", icon:"⚫", color:"#9E9E9E",
+    desc:"Truth vs Ideals. The most epic storyline in Pokémon history.",
+    gyms:[
+      {id:53, region:"unova",name:"Cilan",     badge:"Trio Badge",    type:"grass",    level:28,icon:"🍃", reward:900,  hint:"Use Fire, Ice or Flying."},
+      {id:54, region:"unova",name:"Lenora",    badge:"Basic Badge",   type:"normal",   level:33,icon:"📖", reward:1100, hint:"Use Fighting moves."},
+      {id:55, region:"unova",name:"Burgh",     badge:"Insect Badge",  type:"bug",      level:38,icon:"🦋", reward:1300, hint:"Use Fire, Flying or Rock."},
+      {id:56, region:"unova",name:"Elesa",     badge:"Bolt Badge",    type:"electric", level:43,icon:"⚡", reward:1500, hint:"Use Ground moves."},
+      {id:57, region:"unova",name:"Clay",      badge:"Quake Badge",   type:"ground",   level:48,icon:"🪨", reward:1700, hint:"Use Water, Ice or Grass."},
+      {id:58, region:"unova",name:"Skyla",     badge:"Jet Badge",     type:"flying",   level:52,icon:"✈️", reward:1900, hint:"Use Electric or Rock."},
+      {id:59, region:"unova",name:"Brycen",    badge:"Freeze Badge",  type:"ice",      level:56,icon:"🧊", reward:2100, hint:"Use Fire, Rock or Steel."},
+      {id:60, region:"unova",name:"Iris",      badge:"Legend Badge",  type:"dragon",   level:60,icon:"🐲", reward:2500, hint:"Use Ice or Dragon."},
+      {id:61, region:"unova",name:"Shauntal",  badge:"Elite 4 — I",   type:"ghost",    level:63,icon:"📜", reward:3200, hint:"Elite 4. Use Dark or Ghost."},
+      {id:62, region:"unova",name:"Marshal",   badge:"Elite 4 — II",  type:"fighting", level:65,icon:"🥋", reward:3800, hint:"Elite 4. Use Psychic or Flying."},
+      {id:63, region:"unova",name:"Grimsley",  badge:"Elite 4 — III", type:"dark",     level:67,icon:"🃏", reward:4400, hint:"Elite 4. Use Fighting or Bug."},
+      {id:64, region:"unova",name:"Caitlin",   badge:"Elite 4 — IV",  type:"psychic",  level:69,icon:"🌙", reward:5000, hint:"Elite 4. Use Dark or Ghost."},
+      {id:65, region:"unova",name:"Alder",     badge:"Unova Champion", type:"bug",     level:72,icon:"👑", reward:10000,hint:"Champion. Veteran master. Everything at once!"},
+    ]
+  },
+  {
+    id:"kalos", name:"Kalos", icon:"🔵", color:"#CE93D8",
+    desc:"The fashion capital. Mega Evolution makes every battle explosive.",
+    gyms:[
+      {id:66, region:"kalos",name:"Viola",     badge:"Bug Badge",     type:"bug",      level:32,icon:"📸", reward:1000, hint:"Use Fire, Flying or Rock."},
+      {id:67, region:"kalos",name:"Grant",     badge:"Cliff Badge",   type:"rock",     level:37,icon:"🧗", reward:1200, hint:"Use Water, Grass or Fighting."},
+      {id:68, region:"kalos",name:"Korrina",   badge:"Rumble Badge",  type:"fighting", level:42,icon:"🛹", reward:1400, hint:"Use Psychic or Flying."},
+      {id:69, region:"kalos",name:"Ramos",     badge:"Plant Badge",   type:"grass",    level:46,icon:"🌾", reward:1600, hint:"Use Fire, Ice or Flying."},
+      {id:70, region:"kalos",name:"Clemont",   badge:"Voltage Badge", type:"electric", level:50,icon:"💡", reward:1800, hint:"Use Ground moves."},
+      {id:71, region:"kalos",name:"Valerie",   badge:"Fairy Badge",   type:"fairy",    level:54,icon:"🧚", reward:2000, hint:"Use Steel or Poison."},
+      {id:72, region:"kalos",name:"Olympia",   badge:"Psychic Badge", type:"psychic",  level:58,icon:"🌌", reward:2200, hint:"Use Dark or Ghost."},
+      {id:73, region:"kalos",name:"Wulfric",   badge:"Iceberg Badge", type:"ice",      level:62,icon:"🏔️", reward:2600, hint:"Use Fire, Rock or Steel."},
+      {id:74, region:"kalos",name:"Malva",     badge:"Elite 4 — I",   type:"fire",     level:65,icon:"🔥", reward:3400, hint:"Elite 4. Use Water, Ground or Rock."},
+      {id:75, region:"kalos",name:"Siebold",   badge:"Elite 4 — II",  type:"water",    level:67,icon:"🍽️", reward:4000, hint:"Elite 4. Use Electric or Grass."},
+      {id:76, region:"kalos",name:"Wikstrom",  badge:"Elite 4 — III", type:"steel",    level:69,icon:"🛡️", reward:4600, hint:"Elite 4. Use Fire or Ground."},
+      {id:77, region:"kalos",name:"Drasna",    badge:"Elite 4 — IV",  type:"dragon",   level:71,icon:"🐉", reward:5200, hint:"Elite 4. Use Ice or Dragon."},
+      {id:78, region:"kalos",name:"Diantha",   badge:"Kalos Champion", type:"fairy",   level:74,icon:"👑", reward:11000,hint:"Champion. Mega Gardevoir. Bring Steel!"},
+    ]
+  },
+  {
+    id:"alola", name:"Alola", icon:"🌺", color:"#FF6B35",
+    desc:"No gyms — just brutal Island Trials and the fearsome Pokémon League.",
+    gyms:[
+      {id:79, region:"alola",name:"Ilima",     badge:"Normalium Z",   type:"normal",   level:36,icon:"🌟", reward:1100, hint:"Trial Captain. Use Fighting moves."},
+      {id:80, region:"alola",name:"Lana",      badge:"Waterium Z",    type:"water",    level:41,icon:"🎣", reward:1300, hint:"Trial Captain. Use Electric or Grass."},
+      {id:81, region:"alola",name:"Kiawe",     badge:"Firium Z",      type:"fire",     level:45,icon:"🌋", reward:1500, hint:"Trial Captain. Use Water, Ground or Rock."},
+      {id:82, region:"alola",name:"Mallow",    badge:"Grassium Z",    type:"grass",    level:49,icon:"🍄", reward:1700, hint:"Trial Captain. Use Fire, Ice or Flying."},
+      {id:83, region:"alola",name:"Sophocles", badge:"Electrium Z",   type:"electric", level:53,icon:"🔧", reward:1900, hint:"Trial Captain. Use Ground moves."},
+      {id:84, region:"alola",name:"Acerola",   badge:"Ghostium Z",    type:"ghost",    level:57,icon:"👻", reward:2100, hint:"Trial Captain. Use Ghost or Dark."},
+      {id:85, region:"alola",name:"Mina",      badge:"Fairium Z",     type:"fairy",    level:61,icon:"🎨", reward:2300, hint:"Trial Captain. Use Steel or Poison."},
+      {id:86, region:"alola",name:"Nanu",      badge:"Darkinium Z",   type:"dark",     level:64,icon:"😺", reward:2700, hint:"Kahuna. Use Fighting or Bug moves."},
+      {id:87, region:"alola",name:"Hala",      badge:"Elite 4 — I",   type:"fighting", level:66,icon:"🌺", reward:3600, hint:"Elite 4. Use Psychic or Flying."},
+      {id:88, region:"alola",name:"Olivia",    badge:"Elite 4 — II",  type:"rock",     level:68,icon:"💎", reward:4200, hint:"Elite 4. Use Water, Grass or Fighting."},
+      {id:89, region:"alola",name:"Acerola",   badge:"Elite 4 — III", type:"ghost",    level:70,icon:"👗", reward:4800, hint:"Elite 4. Use Ghost or Dark."},
+      {id:90, region:"alola",name:"Kahili",    badge:"Elite 4 — IV",  type:"flying",   level:72,icon:"🏌️", reward:5400, hint:"Elite 4. Use Electric or Rock."},
+      {id:91, region:"alola",name:"Kukui",     badge:"Alola Champion", type:"normal",  level:75,icon:"👑", reward:12000,hint:"Champion. Loves Z-Moves. Go all out!"},
+    ]
+  },
+  {
+    id:"galar", name:"Galar", icon:"🏴󠁧󠁢󠁥󠁮󠁧󠁿", color:"#7C4DFF",
+    desc:"The final frontier. Dynamax roars — only the Pokémon Master survives.",
+    gyms:[
+      {id:92, region:"galar",name:"Milo",      badge:"Grass Badge",   type:"grass",    level:40,icon:"🌾", reward:1200, hint:"Use Fire, Ice or Flying."},
+      {id:93, region:"galar",name:"Nessa",     badge:"Water Badge",   type:"water",    level:46,icon:"🌊", reward:1400, hint:"Use Electric or Grass."},
+      {id:94, region:"galar",name:"Kabu",      badge:"Fire Badge",    type:"fire",     level:52,icon:"🔥", reward:1600, hint:"Use Water, Ground or Rock."},
+      {id:95, region:"galar",name:"Bea",       badge:"Fighting Badge", type:"fighting", level:57,icon:"🥊", reward:1800, hint:"Use Psychic or Flying."},
+      {id:96, region:"galar",name:"Allister",  badge:"Ghost Badge",   type:"ghost",    level:61,icon:"🎭", reward:2000, hint:"Use Ghost or Dark."},
+      {id:97, region:"galar",name:"Gordie",    badge:"Rock Badge",    type:"rock",     level:65,icon:"⛰️", reward:2200, hint:"Use Water, Grass or Fighting."},
+      {id:98, region:"galar",name:"Melony",    badge:"Ice Badge",     type:"ice",      level:68,icon:"❄️", reward:2400, hint:"Use Fire, Rock or Steel."},
+      {id:99, region:"galar",name:"Piers",     badge:"Dark Badge",    type:"dark",     level:71,icon:"🎸", reward:2800, hint:"Use Fighting or Fairy."},
+      {id:100,region:"galar",name:"Marnie",    badge:"Elite 4 — I",   type:"dark",     level:73,icon:"🖤", reward:3800, hint:"Elite 4. Use Fighting or Fairy."},
+      {id:101,region:"galar",name:"Bede",      badge:"Elite 4 — II",  type:"fairy",    level:75,icon:"💜", reward:4500, hint:"Elite 4. Use Steel or Poison."},
+      {id:102,region:"galar",name:"Hop",       badge:"Elite 4 — III", type:"normal",   level:77,icon:"🏃", reward:5200, hint:"Elite 4. Mixed team. Be ready."},
+      {id:103,region:"galar",name:"Leon",      badge:"Elite 4 — IV",  type:"fire",     level:79,icon:"🔥", reward:6000, hint:"Elite 4 semifinal. Near-perfect trainer."},
+      {id:104,region:"galar",name:"Leon",      badge:"POKÉMON MASTER",type:"fire",     level:82,icon:"🌟", reward:20000,hint:"⚡ THE FINAL BATTLE. Undefeated Champion. PROVE YOURSELF!"},
+    ]
+  },
 ];
+
+// Flat list for backward compat
+const STORY_GYMS = STORY_REGIONS.flatMap(r=>r.gyms);
 const storyKey = name => `pkmn_story_${name}`;
 
 // Smarter AI — score each move, pick best
@@ -472,11 +617,18 @@ const caughtTodayKey = (profileName) => `pkmn_caught_${profileName}_${todayKey()
 //  COMBAT UTILS
 // ══════════════════════════════════════════════════════════════════════
 const getEff = (mt,dt) => { let m=1; for(const d of dt) m*=(TYPE_CHART[mt]||{})[d]??1; return m; };
-const calcDmg = (atk,move,def,level=50) => {
+
+// Scale a base stat by level (same formula Pokémon games use)
+const scaleStat = (base, level) => Math.max(1, Math.floor((2*base*level/100) + level + 10));
+
+const calcDmg = (atk,move,def,level=5) => {
   const eff=getEff(move.type,def.types), stab=atk.types.includes(move.type)?1.5:1;
-  const lvlMult = 1 + (level-50)*0.02;
   const rand=0.85+Math.random()*0.15;
-  const d=Math.floor(((((2*level)/5+2)*move.power*(atk.attack/def.defense))/50+2)*stab*eff*rand*lvlMult);
+  // Scale both attacker's ATK and defender's DEF by their respective levels
+  const atkStat=scaleStat(atk.attack||50, level);
+  const defStat=scaleStat(def.defense||50, def._eLvl||level); // use enemy level if set
+  // Standard Gen 3+ damage formula
+  const d=Math.floor(((((2*level)/5+2)*move.power*(atkStat/defStat))/50+2)*stab*eff*rand);
   return {dmg:Math.max(1,d), eff};
 };
 
@@ -1238,21 +1390,28 @@ function HPBar({cur,max}){
 }
 
 function PokemonSprite({id, isPlayer, shake, hit, faint, isMega, isGiga, megaSlug}){
-  // Animated GIF sprites from PokeAPI (Gen V style) with fallback to static
+  // Gen 9 IDs (906+) have no animated or back sprites — go straight to static
+  const isGen9 = id >= 906;
+
   const animUrl = isPlayer
-    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`
-    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`;
-  const normalUrl = isPlayer
-    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`
-    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
+    ? (isGen9
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${id}.png`)
+    : (isGen9
+        ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`
+        : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/versions/generation-v/black-white/animated/${id}.gif`);
+
+  // Fallback 1: official-artwork (works for all gens)
+  const fallback1Url = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${id}.png`;
+  // Fallback 2: plain static sprite
+  const normalUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${id}.png`;
 
   const megaUrl = megaSlug
     ? `https://img.pokemondb.net/sprites/x-y/normal/${megaSlug}.png`
-    : normalUrl;
+    : fallback1Url;
 
   const gigaUrl = id
     ? `https://img.pokemondb.net/sprites/sword-shield/normal/${
-        // map common gmax slugs
         id===6?"charizard-giga":id===25?"pikachu-giga":id===143?"snorlax-giga":
         id===131?"lapras-giga":id===94?"gengar-giga":id===68?"machamp-giga":
         id===99?"kingler-giga":id===569?"garbodor-giga":id===823?"corviknight-giga":
@@ -1261,17 +1420,23 @@ function PokemonSprite({id, isPlayer, shake, hit, faint, isMega, isGiga, megaSlu
         id===869?"alcremie-giga":id===884?"duraludon-giga":id===892?"urshifu-giga":
         id===898?"calyrex-giga":"charizard-giga"
       }.png`
-    : normalUrl;
+    : fallback1Url;
 
   const [src,setSrc]=useState(isMega?megaUrl:isGiga?gigaUrl:animUrl);
-  const [fallback,setFallback]=useState(false);
+  const [errCount,setErrCount]=useState(0);
 
   useEffect(()=>{
-    setFallback(false);
+    setErrCount(0);
     setSrc(isMega?megaUrl:isGiga?gigaUrl:animUrl);
   },[isMega,isGiga,megaSlug,id]);
 
-  function onErr(){ if(!fallback){ setFallback(true); setSrc(normalUrl); } }
+  function onErr(){
+    setErrCount(n=>{
+      if(n===0){ setSrc(fallback1Url); return 1; }
+      if(n===1){ setSrc(normalUrl); return 2; }
+      return 2; // give up
+    });
+  }
 
   let filter = "drop-shadow(0 0 14px rgba(255,255,255,0.22)) drop-shadow(0 6px 12px rgba(0,0,0,0.6))";
   if(faint) filter = "grayscale(1) brightness(0.1)";
@@ -1363,50 +1528,152 @@ function EXPBar({exp, level}){
 
 // ── Story Mode Screen ─────────────────────────────────────
 function StoryScreen({profile, storyProgress, onStartGym, onBack, allPokemon}){
-  return(
-    <div style={{width:"100%",maxWidth:720}}>
-      <div style={{textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:"28px",marginBottom:6}}>🗺️</div>
-        <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,15px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>STORY MODE</div>
-        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Defeat all 8 Gym Leaders, Elite 4 & Champion!</div>
-      </div>
-      <div style={{display:"flex",flexDirection:"column",gap:10}}>
-        {STORY_GYMS.map((gym,i)=>{
-          const done=storyProgress.includes(gym.id);
-          const prevDone=i===0||storyProgress.includes(STORY_GYMS[i-1].id);
-          const locked=!prevDone&&!done;
-          const typeCol=TC[gym.type]||"#888";
-          return(
-            <div key={gym.id} style={{background:done?"rgba(76,175,80,0.08)":locked?"rgba(4,4,12,0.8)":"rgba(10,10,28,0.98)",border:`1.5px solid ${done?"rgba(76,175,80,0.4)":locked?"rgba(255,255,255,0.04)":`${typeCol}44`}`,borderRadius:14,padding:"14px 16px",opacity:locked?0.5:1,transition:"all 0.2s"}}>
-              <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
-                <div style={{display:"flex",alignItems:"center",gap:12}}>
-                  <div style={{fontSize:"28px"}}>{gym.icon}</div>
-                  <div>
-                    <div style={{color:done?"#4CAF50":locked?"#333":"#fff",fontSize:"clamp(10px,2vw,13px)",fontFamily:"'Press Start 2P',monospace"}}>{gym.name}</div>
-                    <div style={{color:typeCol,fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginTop:3}}>{gym.badge}</div>
-                    <div style={{color:"#333",fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{gym.hint}</div>
-                  </div>
+  const [activeRegion, setActiveRegion] = useState("kanto");
+  const [showBadges, setShowBadges] = useState(false);
+
+  const totalBadges = storyProgress.length;
+  const totalGyms = STORY_GYMS.length;
+  const isMaster = storyProgress.includes(104); // Beat Leon in Galar = Pokémon Master
+
+  // Badge cabinet — all earned badges across all regions
+  function BadgeCabinet(){
+    return(
+      <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.95)",display:"flex",alignItems:"center",justifyContent:"center",zIndex:600,padding:16}} onClick={()=>setShowBadges(false)}>
+        <div style={{background:"#07070f",border:"1px solid rgba(255,213,79,0.3)",borderRadius:18,padding:"24px 20px",maxWidth:580,width:"100%",maxHeight:"90vh",overflowY:"auto"}} onClick={e=>e.stopPropagation()}>
+          <div style={{textAlign:"center",marginBottom:20}}>
+            <div style={{fontSize:"32px",marginBottom:6}}>🏅</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"13px",color:"#FFD54F",marginBottom:4}}>BADGE CABINET</div>
+            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#444"}}>{totalBadges}/{totalGyms} earned</div>
+            {isMaster&&<div style={{marginTop:8,fontFamily:"'Press Start 2P',monospace",fontSize:"10px",color:"#FFD54F",animation:"glow 1.5s infinite"}}>🌟 POKÉMON MASTER 🌟</div>}
+          </div>
+          {STORY_REGIONS.map(region=>{
+            const earned=region.gyms.filter(g=>storyProgress.includes(g.id));
+            if(earned.length===0) return null;
+            return(
+              <div key={region.id} style={{marginBottom:18}}>
+                <div style={{display:"flex",alignItems:"center",gap:8,marginBottom:10}}>
+                  <span style={{fontSize:"18px"}}>{region.icon}</span>
+                  <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:region.color}}>{region.name.toUpperCase()}</div>
+                  <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#444"}}>{earned.length}/{region.gyms.length}</div>
                 </div>
-                <div style={{display:"flex",alignItems:"center",gap:10}}>
-                  <div style={{textAlign:"right"}}>
-                    <div style={{color:"#FFD54F",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Lv {gym.level}</div>
-                    <div style={{color:"#444",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>+{gym.reward}🪙</div>
-                  </div>
-                  {done?(
-                    <div style={{background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.4)",borderRadius:8,padding:"6px 10px",color:"#4CAF50",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>✅ DONE</div>
-                  ):locked?(
-                    <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:8,padding:"6px 10px",color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>🔒</div>
-                  ):(
-                    <button onClick={()=>onStartGym(gym)} className="btn" style={{background:`linear-gradient(135deg,${typeCol}22,${typeCol}11)`,border:`1.5px solid ${typeCol}66`,borderRadius:8,padding:"8px 14px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>
-                      CHALLENGE →
-                    </button>
-                  )}
+                <div style={{display:"flex",flexWrap:"wrap",gap:8}}>
+                  {earned.map(g=>(
+                    <div key={g.id} style={{background:`${region.color}14`,border:`1px solid ${region.color}44`,borderRadius:10,padding:"8px 10px",textAlign:"center",minWidth:80}}>
+                      <div style={{fontSize:"20px",marginBottom:3}}>{g.icon}</div>
+                      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"6px",color:region.color,lineHeight:1.5}}>{g.badge}</div>
+                    </div>
+                  ))}
                 </div>
               </div>
-            </div>
+            );
+          })}
+          {totalBadges===0&&<div style={{textAlign:"center",color:"#333",fontFamily:"'Press Start 2P',monospace",fontSize:"9px",padding:28}}>No badges yet.<br/>Start your journey!</div>}
+          <button onClick={()=>setShowBadges(false)} style={{width:"100%",marginTop:12,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:10,padding:"10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>← CLOSE</button>
+        </div>
+      </div>
+    );
+  }
+
+  const region = STORY_REGIONS.find(r=>r.id===activeRegion);
+  const regionDone = region.gyms.every(g=>storyProgress.includes(g.id));
+
+  // Region is unlocked if previous region's champion is beaten (or it's Kanto)
+  function isRegionUnlocked(r){
+    const idx=STORY_REGIONS.findIndex(x=>x.id===r.id);
+    if(idx===0) return true;
+    const prev=STORY_REGIONS[idx-1];
+    return storyProgress.includes(prev.gyms[prev.gyms.length-1].id);
+  }
+
+  return(
+    <div style={{width:"100%",maxWidth:760}}>
+      {showBadges&&<BadgeCabinet/>}
+
+      {/* Header */}
+      <div style={{textAlign:"center",marginBottom:16}}>
+        <div style={{fontSize:"28px",marginBottom:4}}>🗺️</div>
+        <div style={{color:"#FFD54F",fontSize:"clamp(11px,2.5vw,15px)",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>
+          {isMaster?"🌟 POKÉMON MASTER 🌟":"STORY MODE"}
+        </div>
+        <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:12}}>
+          {totalBadges}/{totalGyms} badges · {STORY_REGIONS.filter(r=>isRegionUnlocked(r)).length}/{STORY_REGIONS.length} regions unlocked
+        </div>
+        {/* Progress bar */}
+        <div style={{maxWidth:400,margin:"0 auto 12px",background:"rgba(255,255,255,0.04)",borderRadius:4,height:6,overflow:"hidden"}}>
+          <div style={{width:`${(totalBadges/totalGyms)*100}%`,background:"linear-gradient(90deg,#7C4DFF,#FFD54F)",height:"100%",transition:"width 0.5s"}}/>
+        </div>
+        <button onClick={()=>setShowBadges(true)} className="btn" style={{background:"linear-gradient(135deg,rgba(255,213,79,0.15),rgba(124,77,255,0.1))",border:"1.5px solid rgba(255,213,79,0.4)",borderRadius:10,padding:"9px 18px",color:"#FFD54F",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px",display:"inline-flex",alignItems:"center",gap:6}}>
+          🏅 VIEW BADGE CABINET ({totalBadges})
+        </button>
+      </div>
+
+      {/* Region tabs */}
+      <div style={{display:"flex",gap:6,flexWrap:"wrap",marginBottom:16,justifyContent:"center"}}>
+        {STORY_REGIONS.map(r=>{
+          const unlocked=isRegionUnlocked(r);
+          const done=r.gyms.every(g=>storyProgress.includes(g.id));
+          const earned=r.gyms.filter(g=>storyProgress.includes(g.id)).length;
+          return(
+            <button key={r.id} onClick={()=>unlocked&&setActiveRegion(r.id)} className="btn"
+              style={{padding:"7px 12px",background:activeRegion===r.id?`${r.color}22`:done?"rgba(76,175,80,0.08)":"rgba(255,255,255,0.03)",border:`1.5px solid ${activeRegion===r.id?r.color:done?"rgba(76,175,80,0.3)":"rgba(255,255,255,0.08)"}`,borderRadius:9,color:activeRegion===r.id?r.color:done?"#4CAF50":unlocked?"#888":"#333",cursor:unlocked?"pointer":"not-allowed",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",display:"flex",alignItems:"center",gap:4,opacity:unlocked?1:0.4}}>
+              {r.icon} {r.name} {done?"✅":`${earned}/${r.gyms.length}`} {!unlocked&&"🔒"}
+            </button>
           );
         })}
       </div>
+
+      {/* Active region */}
+      {region&&(
+        <div>
+          <div style={{background:`${region.color}0a`,border:`1px solid ${region.color}33`,borderRadius:14,padding:"12px 16px",marginBottom:14,display:"flex",alignItems:"center",gap:12}}>
+            <span style={{fontSize:"24px"}}>{region.icon}</span>
+            <div>
+              <div style={{color:region.color,fontFamily:"'Press Start 2P',monospace",fontSize:"11px",marginBottom:3}}>{region.name} Region {regionDone&&"✅"}</div>
+              <div style={{color:"#444",fontFamily:"'Press Start 2P',monospace",fontSize:"7px",lineHeight:1.8}}>{region.desc}</div>
+            </div>
+          </div>
+
+          <div style={{display:"flex",flexDirection:"column",gap:8}}>
+            {region.gyms.map((gym,i)=>{
+              const done=storyProgress.includes(gym.id);
+              const prevDone=i===0?isRegionUnlocked(region):storyProgress.includes(region.gyms[i-1].id);
+              const locked=!prevDone&&!done;
+              const typeCol=TC[gym.type]||"#888";
+              const isFinal=gym.badge==="POKÉMON MASTER";
+              return(
+                <div key={gym.id} style={{background:done?"rgba(76,175,80,0.08)":locked?"rgba(4,4,12,0.8)":isFinal?"rgba(255,213,79,0.06)":"rgba(10,10,28,0.98)",border:`1.5px solid ${done?"rgba(76,175,80,0.4)":locked?"rgba(255,255,255,0.04)":isFinal?"rgba(255,213,79,0.4)":`${typeCol}44`}`,borderRadius:12,padding:"12px 14px",opacity:locked?0.45:1,transition:"all 0.2s",position:"relative",overflow:"hidden"}}>
+                  {isFinal&&!done&&<div style={{position:"absolute",inset:0,background:"linear-gradient(135deg,rgba(255,213,79,0.04),rgba(124,77,255,0.04))",pointerEvents:"none"}}/>}
+                  <div style={{display:"flex",alignItems:"center",justifyContent:"space-between",flexWrap:"wrap",gap:8}}>
+                    <div style={{display:"flex",alignItems:"center",gap:10}}>
+                      <div style={{fontSize:"clamp(18px,3.5vw,24px)"}}>{gym.icon}</div>
+                      <div>
+                        <div style={{color:done?"#4CAF50":locked?"#333":isFinal?"#FFD54F":"#fff",fontSize:"clamp(9px,1.8vw,12px)",fontFamily:"'Press Start 2P',monospace"}}>{gym.name}</div>
+                        <div style={{color:isFinal?"#FFD54F":typeCol,fontSize:"7px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{gym.badge}</div>
+                        <div style={{color:"#333",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",marginTop:1}}>{gym.hint}</div>
+                      </div>
+                    </div>
+                    <div style={{display:"flex",alignItems:"center",gap:8}}>
+                      <div style={{textAlign:"right"}}>
+                        <div style={{color:"#FFD54F",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>Lv {gym.level}</div>
+                        <div style={{color:"#444",fontSize:"7px",fontFamily:"'Press Start 2P',monospace"}}>+{gym.reward}🪙</div>
+                      </div>
+                      {done?(
+                        <div style={{background:"rgba(76,175,80,0.15)",border:"1px solid rgba(76,175,80,0.4)",borderRadius:7,padding:"5px 9px",color:"#4CAF50",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>✅</div>
+                      ):locked?(
+                        <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.06)",borderRadius:7,padding:"5px 9px",color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>🔒</div>
+                      ):(
+                        <button onClick={()=>onStartGym(gym)} className="btn" style={{background:isFinal?"linear-gradient(135deg,rgba(255,213,79,0.25),rgba(124,77,255,0.2))":typeCol+"22",border:`1.5px solid ${isFinal?"rgba(255,213,79,0.6)":typeCol+"66"}`,borderRadius:8,padding:"8px 12px",color:isFinal?"#FFD54F":"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px",animation:isFinal?"pulse 1.5s infinite":"none"}}>
+                          {isFinal?"⚡ FINAL":"FIGHT →"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -1576,6 +1843,11 @@ function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga, exp}){
   const isLeg=LEGENDARY_IDS.has(mon.id);
   const displayTypes = isMega&&mon.megaTypes ? mon.megaTypes : mon.types;
   const borderColor = isGiga?"#FFD54F":isMega?"#7C4DFF":`${c}55`;
+  const curLvl=level||5;
+  // Show level-scaled stats so players can see growth
+  const atkScaled=scaleStat(mon.attack||50, curLvl);
+  const defScaled=scaleStat(mon.defense||50, curLvl);
+  const spdScaled=scaleStat(mon.speed||50, curLvl);
   return(
     <div style={{background:"rgba(8,8,22,0.97)",border:`1.5px solid ${borderColor}`,borderRadius:12,padding:"12px 16px",minWidth:160,boxShadow:`0 0 20px ${c}22,${isGiga?"0 0 30px rgba(255,213,79,0.2)":isMega?"0 0 30px rgba(124,77,255,0.2)":""}`,position:"relative",overflow:"hidden",flex:1,transition:"border-color 0.5s,box-shadow 0.5s"}}>
       <div style={{position:"absolute",top:0,left:0,right:0,height:2.5,background:`linear-gradient(90deg,transparent,${borderColor},transparent)`}}/>
@@ -1586,7 +1858,7 @@ function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga, exp}){
           {isLeg&&<span style={{fontSize:"12px"}}>⭐</span>}
           {isMega&&<span style={{fontSize:"12px"}}>💎</span>}
           {isGiga&&<span style={{fontSize:"12px",animation:"pulse 1s infinite"}}>⭕</span>}
-          <span style={{fontSize:"10px",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace"}}>Lv{level||50}</span>
+          <span style={{fontSize:"10px",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace"}}>Lv{curLvl}</span>
         </div>
       </div>
       <div style={{display:"flex",gap:3,flexWrap:"wrap",marginBottom:7}}>
@@ -1598,11 +1870,10 @@ function BattleStatCard({mon, hp, maxHP, level, isMega, isGiga, exp}){
       </div>
       <HPBar cur={hp} max={maxHP}/>
       <div style={{display:"flex",gap:8,marginTop:6}}>
-        {[["ATK",mon.attack],["DEF",mon.defense],["SPD",mon.speed]].map(([k,v])=>(
+        {[["ATK",atkScaled],["DEF",defScaled],["SPD",spdScaled]].map(([k,v])=>(
           <span key={k} style={{fontSize:"9px",color:"#2a2a4a",fontFamily:"'Press Start 2P',monospace"}}>{k} {v}</span>
         ))}
       </div>
-      {exp!==undefined&&<EXPBar exp={exp} level={level||50}/>}
     </div>
   );
 }
@@ -1656,7 +1927,7 @@ function AvatarPreview({hair,face,skin,hairColor,eyes,size=80}){
 // ══════════════════════════════════════════════════════════════════════
 //  AUTH / LOGIN SCREEN — email+password, no external OAuth needed
 // ══════════════════════════════════════════════════════════════════════
-function CharacterScreen({onDone}){
+function CharacterScreen({onDone, onBack}){
   const [mode,setMode]=useState("login");
   const [email,setEmail]=useState("");
   const [password,setPassword]=useState("");
@@ -1971,6 +2242,14 @@ function CharacterScreen({onDone}){
 
       {/* Content */}
       <div style={{width:"100%",maxWidth:460,position:"relative",zIndex:1}}>
+        {/* Back to game button — shown only for guests who already have a game going */}
+        {onBack&&(
+          <div style={{marginBottom:14,textAlign:"center"}}>
+            <button onClick={onBack} className="btn" style={{background:"rgba(79,195,247,0.08)",border:"1.5px solid rgba(79,195,247,0.3)",borderRadius:10,padding:"10px 20px",color:"#4FC3F7",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)",display:"inline-flex",alignItems:"center",gap:8}}>
+              ← BACK TO MY GAME
+            </button>
+          </div>
+        )}
         {/* Pokéball logo */}
         <div style={{textAlign:"center",marginBottom:"clamp(16px,4vw,28px)"}}>
           <svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg" style={{width:"clamp(80px,18vw,120px)",height:"clamp(80px,18vw,120px)",filter:"drop-shadow(0 0 18px rgba(229,57,53,0.7)) drop-shadow(0 0 40px rgba(229,57,53,0.3))"}}>
@@ -3016,7 +3295,7 @@ function ProfileScreen({profile, onSave, onBack}){
         {tab==="account"&&(
           <div style={{display:"flex",flexDirection:"column",gap:20}}>
 
-            {/* Username */}
+            {/* Username — available to everyone including guests */}
             <div>
               <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>USERNAME</div>
               <input value={newUsername} onChange={e=>setNewUsername(e.target.value)} placeholder={profile?.name} style={inputStyle}/>
@@ -3025,43 +3304,59 @@ function ProfileScreen({profile, onSave, onBack}){
 
             <div style={{height:1,background:"rgba(255,255,255,0.06)"}}/>
 
-            {/* Email change */}
-            {!sentCode&&(
-              <div>
-                <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE EMAIL</div>
-                <input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="new@email.com" type="email" style={inputStyle}/>
-                <button onClick={requestEmailChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
+            {/* Email + Password — locked for guests */}
+            {profile?.isGuest ? (
+              <div style={{background:"rgba(255,255,255,0.02)",border:"1px solid rgba(255,255,255,0.08)",borderRadius:14,padding:"20px 18px",textAlign:"center"}}>
+                <div style={{fontSize:"28px",marginBottom:10}}>🔒</div>
+                <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>EMAIL &amp; PASSWORD</div>
+                <div style={{color:"#333",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",lineHeight:2,marginBottom:14}}>
+                  Create a registered account to<br/>set your email and password.
+                </div>
+                <button onClick={()=>{onBack();}} style={{background:"linear-gradient(135deg,rgba(124,77,255,0.3),rgba(79,195,247,0.2))",border:"1.5px solid rgba(124,77,255,0.5)",borderRadius:10,padding:"10px 18px",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>
+                  🔐 REGISTER NOW
+                </button>
               </div>
-            )}
-
-            {/* Password change */}
-            {!sentCode&&(
+            ) : (
               <>
-                <div style={{height:1,background:"rgba(255,255,255,0.06)"}}/>
-                <div>
-                  <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE PASSWORD</div>
-                  <input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="New password (6+ chars)" type="password" style={inputStyle}/>
-                  <input value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="Confirm new password" type="password" style={{...inputStyle,marginTop:0}}/>
-                  <button onClick={requestPasswordChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
-                </div>
-              </>
-            )}
+                {/* Email change */}
+                {!sentCode&&(
+                  <div>
+                    <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE EMAIL</div>
+                    <input value={newEmail} onChange={e=>setNewEmail(e.target.value)} placeholder="new@email.com" type="email" style={inputStyle}/>
+                    <button onClick={requestEmailChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
+                  </div>
+                )}
 
-            {/* Verification code input */}
-            {sentCode&&(
-              <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:14,padding:18}}>
-                <div style={{color:"#FFD54F",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>
-                  {verifyField==="email"?"📧 VERIFY EMAIL CHANGE":"🔑 VERIFY PASSWORD CHANGE"}
-                </div>
-                <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:14,lineHeight:1.8}}>
-                  Enter the 6-digit code sent to your email.
-                </div>
-                <input value={verifyCode} onChange={e=>setVerifyCode(e.target.value)} placeholder="000000" maxLength={6} style={{...inputStyle,letterSpacing:8,textAlign:"center"}}/>
-                <div style={{display:"flex",gap:8}}>
-                  <button onClick={()=>{setSentCode(null);setVerifyField(null);setVerifyCode("");}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>CANCEL</button>
-                  <button onClick={submitVerification} style={{...btnStyle("green"),flex:2,marginTop:0}}>✅ VERIFY &amp; SAVE</button>
-                </div>
-              </div>
+                {/* Password change */}
+                {!sentCode&&(
+                  <>
+                    <div style={{height:1,background:"rgba(255,255,255,0.06)"}}/>
+                    <div>
+                      <div style={{color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:8}}>CHANGE PASSWORD</div>
+                      <input value={newPass} onChange={e=>setNewPass(e.target.value)} placeholder="New password (6+ chars)" type="password" style={inputStyle}/>
+                      <input value={confirmPass} onChange={e=>setConfirmPass(e.target.value)} placeholder="Confirm new password" type="password" style={{...inputStyle,marginTop:0}}/>
+                      <button onClick={requestPasswordChange} style={btnStyle()}>SEND VERIFICATION CODE</button>
+                    </div>
+                  </>
+                )}
+
+                {/* Verification code input */}
+                {sentCode&&(
+                  <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:14,padding:18}}>
+                    <div style={{color:"#FFD54F",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>
+                      {verifyField==="email"?"📧 VERIFY EMAIL CHANGE":"🔑 VERIFY PASSWORD CHANGE"}
+                    </div>
+                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:14,lineHeight:1.8}}>
+                      Enter the 6-digit code sent to your email.
+                    </div>
+                    <input value={verifyCode} onChange={e=>setVerifyCode(e.target.value)} placeholder="000000" maxLength={6} style={{...inputStyle,letterSpacing:8,textAlign:"center"}}/>
+                    <div style={{display:"flex",gap:8}}>
+                      <button onClick={()=>{setSentCode(null);setVerifyField(null);setVerifyCode("");}} style={{flex:1,background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:9,padding:"10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"9px"}}>CANCEL</button>
+                      <button onClick={submitVerification} style={{...btnStyle("green"),flex:2,marginTop:0}}>✅ VERIFY &amp; SAVE</button>
+                    </div>
+                  </div>
+                )}
+              </>
             )}
           </div>
         )}
@@ -3117,6 +3412,8 @@ function App(){
   const [loading,setLoading]=useState(false);
   const [loadPct,setLoadPct]=useState(0);
   const [unlockedIds,setUnlockedIds]=useState(new Set());
+  // Fast starter preload — only fetches starter IDs so StarterScreen loads instantly
+  const [startersReady,setStartersReady]=useState([]);
 
   // ── Select screen ─────────────────────────────────────────
   const [searchQ,setSearchQ]=useState("");
@@ -3329,7 +3626,35 @@ function App(){
     load();
   },[]);
 
-  // ── Init after profile loads ──────────────────────────────
+  // ── Fast starter preload — fetches only the ~35 starter IDs immediately ──
+  useEffect(()=>{
+    const ids=STARTER_CHOICES.map(s=>s.id);
+    Promise.allSettled(ids.map(async id=>{
+      try{
+        const d=await fetch(`https://pokeapi.co/api/v2/pokemon/${id}`).then(r=>r.json());
+        const stats=Object.fromEntries(d.stats.map(s=>[s.stat.name,s.base_stat]));
+        const types=d.types.map(t=>t.type.name);
+        const isLeg=LEGENDARY_IDS.has(id);
+        const boost=isLeg?1.35:1;
+        return{id:d.id,name:d.name,types,
+          hp:Math.floor((stats.hp||45)*boost),
+          attack:Math.floor((stats.attack||50)*boost),
+          defense:Math.floor((stats.defense||50)*boost),
+          speed:Math.floor((stats.speed||50)*boost),
+          moves:getMoves(types[0]),
+          legendary:isLeg,canMega:!!MEGA_MAP[id],canGiga:GIGANTAMAX_IDS.has(id)};
+      }catch{return null;}
+    })).then(res=>{
+      const valid=res.filter(r=>r.status==="fulfilled"&&r.value).map(r=>r.value);
+      setStartersReady(valid);
+      // Also seed into allPokemon so they appear immediately in the main dex
+      setAllPokemon(prev=>{
+        const existIds=new Set(prev.map(p=>p.id));
+        const newOnes=valid.filter(p=>!existIds.has(p.id));
+        return newOnes.length>0?[...prev,...newOnes]:prev;
+      });
+    });
+  },[]);
   useEffect(()=>{
     if(!profile) return;
     const store=profile?.isGuest?sessionStorage:localStorage;
@@ -3354,7 +3679,9 @@ function App(){
     if(savedStarter) setStarterPokemon(JSON.parse(savedStarter));
     const savedExp=localStorage.getItem(`pkmn_exp_${profile.name}`);
     if(savedExp) try{setExpMap(JSON.parse(savedExp))}catch{}
-    const savedHistory=profile.isGuest ? null : localStorage.getItem(`pkmn_history_${profile.name}`);
+    const savedHistory=profile.isGuest
+      ? sessionStorage.getItem(`pkmn_history_${profile.name}`)
+      : localStorage.getItem(`pkmn_history_${profile.name}`);
     if(savedHistory) try{setBattleHistory(JSON.parse(savedHistory))}catch{}
     else setBattleHistory([]);
     const savedStory=localStorage.getItem(storyKey(profile.name));
@@ -3477,13 +3804,15 @@ function App(){
     const pool=allPokemon.filter(x=>x.id!==mon.id&&x.legendary===mon.legendary);
     const enemy=pool[Math.floor(Math.random()*pool.length)];
     if(!enemy) return;
-    const lvl=teamLevels[mon.id]||50;
-    const pMax=(mon.hp+lvl)*2, eMax=enemy.hp*2;
-    setPMon(mon); setEMon(enemy);
+    const lvl=teamLevels[mon.id]||5;
+    // Enemy level within ±2 of player level so early-game isn't a slaughter
+    const eLvl=Math.max(2, lvl + (Math.floor(Math.random()*5)-2));
+    const pMax=(mon.hp+lvl)*2, eMax=(enemy.hp+eLvl)*2;
+    setPMon(mon); setEMon({...enemy,_eLvl:eLvl});
     setPHP(pMax); setEHP(eMax);
     setPMaxHP(pMax); setEMaxHP(eMax);
     setPLevel(lvl);
-    setLog([`⚔️ A wild ${enemy.name.toUpperCase()} appeared!`,`Go, ${mon.name.toUpperCase()}! (Lv${lvl})`]);
+    setLog([`⚔️ A wild ${enemy.name.toUpperCase()} (Lv${eLvl}) appeared!`,`Go, ${mon.name.toUpperCase()}! (Lv${lvl})`]);
     setFaintP(false); setFaintE(false); setHitP(false); setHitE(false);
     setWinner(null); setBusy(false); setAnim(null); setShowItems(false); setShowSwitch(false);
     setBattleTurns(0); setPMega(false); setPMegaSlug(null); setPGiga(false); setUsedZ(false); setUsedMega(false); setUsedGiga(false); setShowMegaAnim(false); setShowGigaAnim(false); setIsMpBattle(false);
@@ -3513,7 +3842,7 @@ function App(){
     if(busy||!newMon||newMon.id===pMon?.id) return;
     if(faintedTeam.some(f=>f.id===newMon.id&&f.fainted)){ pushLog(`${newMon.name.toUpperCase()} has fainted and can't battle!`); return; }
     setBusy(true); setShowSwitch(false);
-    const lvl=teamLevels[newMon.id]||50;
+    const lvl=teamLevels[newMon.id]||5;
     const newMax=(newMon.hp+lvl)*2;
     pushLog(`Come back, ${pMon.name.toUpperCase()}!`);
     await sleep(500);
@@ -3715,7 +4044,8 @@ function App(){
     const eMove=aiPickMove(eMon,pMon,eStatus,weather);
     const wxMult=WEATHER_MULT(weather,eMove.type);
     const eBurnMult=(eStatus?.type==="burn")?STATUSES.burn.atkMult:1;
-    const{dmg:rawEDmg,eff:eEff}=calcDmg(eMon,eMove,pMon,50);
+    const eLvl=eMon?._eLvl||pLevel||5; // use stored enemy level, fallback to player level
+    const{dmg:rawEDmg,eff:eEff}=calcDmg(eMon,eMove,pMon,eLvl);
     const eDmg=Math.max(1,Math.floor(rawEDmg*wxMult*eBurnMult));
     // Status infliction on player
     if(!pStatus&&STATUS_CHANCE[eMove.type]&&Math.random()<STATUS_CHANCE[eMove.type]){
@@ -3799,7 +4129,13 @@ function App(){
       setWinStreak(0); if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile?.name}`,"0");
       const rec=makeBattleRecord(pMon,eMon,"enemy",battleTurns,pLevel);
       supaBattle(profile?.name||"unknown","enemy",pMon.name,eMon.name,battleTurns);
-      setBattleHistory(h=>{ const n=[rec,...h].slice(0,50); if(!profile?.isGuest) localStorage.setItem(`pkmn_history_${profile?.name}`,JSON.stringify(n)); return n; });
+      setBattleHistory(h=>{
+        const n=[rec,...h].slice(0,50);
+        const p=profileRef.current;
+        if(p?.isGuest) sessionStorage.setItem(`pkmn_history_${p.name}`,JSON.stringify(n));
+        else if(p) localStorage.setItem(`pkmn_history_${p.name}`,JSON.stringify(n));
+        return n;
+      });
       setWinner("enemy"); setScreen(MODES.OVER); setBusy(false);
     },700);
   }
@@ -3853,8 +4189,11 @@ function App(){
         updated.forEach((ch,i)=>{ if(ch.done&&!prev[i].done){ addCoins(ch.reward); pushLog(`🌟 Challenge: "${ch.desc}" done! +${ch.reward}🪙`); } });
         return updated;
       });
-      // ── EXP gain + evolution check ──────────────────────────
-      const expGain = Math.floor((eMon.legendary?300:eMon.hp*2+eMon.attack) * (1+(pLevel-50)*0.01));
+      // ── EXP gain: based on enemy level, so low-level fights give fair exp ──
+      const eLvlForExp = eMon?._eLvl || pLevel;
+      const expGain = Math.max(10, Math.floor(
+        (eMon.legendary ? 600 : 200) * eLvlForExp / (7 * pLevel + 1) * pLevel
+      ));
       setExpMap(prev=>{
         const cur=prev[pMon.id]||0;
         const newExp=cur+expGain;
@@ -3883,7 +4222,13 @@ function App(){
       // ── Save battle to history ──────────────────────────────
       const record=makeBattleRecord(pMon,eMon,"player",battleTurns,pLevel);
       supaBattle(profile?.name||"unknown","player",pMon.name,eMon.name,battleTurns);
-      setBattleHistory(h=>{ const n=[record,...h].slice(0,50); if(!profile?.isGuest) localStorage.setItem(`pkmn_history_${profile?.name}`,JSON.stringify(n)); return n; });
+      setBattleHistory(h=>{
+        const n=[record,...h].slice(0,50);
+        const p=profileRef.current;
+        if(p?.isGuest) sessionStorage.setItem(`pkmn_history_${p.name}`,JSON.stringify(n));
+        else if(p) localStorage.setItem(`pkmn_history_${p.name}`,JSON.stringify(n));
+        return n;
+      });
       // ── Story mode progress ─────────────────────────────────
       if(storyBattle!=null){
         setStoryProgress(prev=>{
@@ -3971,7 +4316,7 @@ function App(){
   function startStoryBattle(gym, allPokemon){
     const enemyMon = allPokemon.find(p=>p.id===gym.team[gym.team.length-1]) || allPokemon.find(p=>p.types.includes(gym.type)) || allPokemon[Math.floor(Math.random()*allPokemon.length)];
     if(!enemyMon||!pMon){ alert("Select your Pokémon from Team first!"); return; }
-    const lvl=teamLevels[pMon.id]||50;
+    const lvl=teamLevels[pMon.id]||5;
     const pMax=(pMon.hp+lvl)*2, eMax=(enemyMon.hp+gym.level)*2;
     setPMon(pMon); setEMon({...enemyMon,attack:Math.floor(enemyMon.attack*(1+(gym.level-50)*0.02)),defense:Math.floor(enemyMon.defense*(1+(gym.level-50)*0.02))});
     setPHP(pMax); setEHP(eMax); setPMaxHP(pMax); setEMaxHP(eMax); setPLevel(lvl);
@@ -4054,42 +4399,44 @@ function App(){
   if(screen===MODES.CHAR){
     return <CharacterScreen onDone={p=>{
       if(p.isGuest){
-        // Guests: no session saved — they always go back to login on refresh
         setProfile(p);
         setScreen(MODES.STARTER);
         setTimeout(()=>{ musicStarted.current=true; if(musicOn) AUDIO.play("select"); },200);
         return;
       }
-      // Registered user: save session so refresh restores them
       localStorage.setItem("pkmn_active_session",JSON.stringify({name:p.name,ts:Date.now()}));
       setProfile(p);
       const savedStarter=localStorage.getItem(`pkmn_starter_${p.name}`);
       if(savedStarter){ setStarterPokemon(JSON.parse(savedStarter)); setScreen(MODES.HOME); }
       else { setScreen(MODES.STARTER); }
       setTimeout(()=>{ musicStarted.current=true; if(musicOn) AUDIO.play("home"); },200);
-    }}/>;
+    }} onBack={profile?.isGuest&&starterPokemon?()=>setScreen(MODES.HOME):null}/>;
   }
 
   // ══════════════════════════════════════════════════════════
   //  STARTER SCREEN
   // ══════════════════════════════════════════════════════════
   if(screen===MODES.STARTER){
-    if(allPokemon.length<12) return(
+    // Show loading only if starters haven't loaded yet (usually < 2 seconds)
+    if(startersReady.length===0) return(
       <div style={{minHeight:"100vh",display:"flex",alignItems:"center",justifyContent:"center",background:"#05050d",color:"#555",fontFamily:"'Press Start 2P',monospace",fontSize:"10px",flexDirection:"column",gap:16}}>
-        <div style={{animation:"pulse 1.5s infinite"}}>Loading Pokémon… {loadPct}%</div>
+        <div style={{animation:"pulse 1.5s infinite"}}>Loading starters…</div>
         <div style={{background:"rgba(255,255,255,0.04)",borderRadius:3,height:4,width:220,overflow:"hidden"}}>
-          <div style={{width:`${loadPct}%`,background:"linear-gradient(90deg,#7C4DFF,#4FC3F7)",height:"100%",transition:"width 0.3s"}}/>
+          <div style={{width:"60%",background:"linear-gradient(90deg,#7C4DFF,#4FC3F7)",height:"100%",animation:"pulse 1s infinite"}}/>
         </div>
       </div>
     );
-    return <StarterScreen allPokemon={allPokemon} onBack={profile?.isGuest?()=>{setProfile(null);setScreen(MODES.CHAR);}:null} onDone={p=>{
+    // Use startersReady (fast, only ~35 Pokemon) instead of full allPokemon
+    const starterPool = startersReady.length > 0 ? startersReady : allPokemon;
+    return <StarterScreen allPokemon={starterPool} onBack={profile?.isGuest?()=>{setProfile(null);setScreen(MODES.CHAR);}:null} onDone={p=>{
       setStarterPokemon(p);
       const store=profile?.isGuest?sessionStorage:localStorage;
       store.setItem(`pkmn_starter_${profile.name}`,JSON.stringify(p));
-      const nu=new Set([p.id]); // only the starter — fresh start
+      const nu=new Set([p.id]);
       setUnlockedIds(nu);
       store.setItem(`pkmn_unlocked_${profile.name}`,JSON.stringify([...nu]));
-      // Reset streak for fresh account
+      // Start at level 5 — must level up through battles
+      setTeamLevels(tl=>{ const nl={...tl,[p.id]:5}; if(!profile?.isGuest) localStorage.setItem(`pkmn_levels_${profile.name}`,JSON.stringify(nl)); return nl; });
       setWinStreak(0);
       if(!profile?.isGuest) localStorage.setItem(`pkmn_streak_${profile.name}`,"0");
       setScreen(MODES.HOME);
@@ -4340,7 +4687,7 @@ function App(){
               {icon:"📅", label:"CHALLENGES",     sub:`${challenges.filter(c=>!c.done).length} remaining`, col:"#66BB6A", action:()=>setShowChallenges(true),
                 badge: challenges.filter(c=>!c.done).length>0 ? challenges.filter(c=>!c.done).length : null},
               {icon:"🎴", label:"TRAINER CARD",   sub:"View your record",  col:"#CE93D8", action:()=>setScreen(MODES.CARD)},
-              {icon:"🗺️", label:"STORY MODE",      sub:`${storyProgress.length}/13 gyms`, col:"#FF6B35", action:()=>setScreen(MODES.STORY)},
+              {icon:"🗺️", label:"STORY MODE",      sub:`${storyProgress.length}/${STORY_GYMS.length} badges`, col:"#FF6B35", action:()=>setScreen(MODES.STORY)},
               {icon:"📜", label:"BATTLE LOG",      sub:`${battleHistory.length} battles`,  col:"#9E9E9E", action:()=>setScreen(MODES.HISTORY)},
               {icon:"🔄", label:"TRADE",           sub:"Swap Pokémon",       col:"#66BB6A", action:()=>setShowTrade(true)},
             ].map((b,i)=>(
@@ -4532,7 +4879,7 @@ function App(){
               <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
                 {team.map(m=>{
                   const isFainted=faintedTeam.some(f=>f.id===m.id);
-                  const lvl=teamLevels[m.id]||50;
+                  const lvl=teamLevels[m.id]||5;
                   return(
                     <div key={m.id} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:4,opacity:isFainted?0.4:1}}>
                       <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${m.id}.png`} style={{width:44,imageRendering:"pixelated"}}/>
@@ -4742,8 +5089,8 @@ function App(){
               </div>
             </div>
             <div className="battle-arena" style={{display:"flex",justifyContent:"space-between",gap:10,marginBottom:14,flexWrap:"wrap"}}>
-              <BattleStatCard mon={pMon} hp={pHP} maxHP={pMaxHP} level={pLevel} isMega={pMega} isGiga={pGiga} exp={expMap[pMon?.id]}/>
-              <BattleStatCard mon={eMon} hp={eHP} maxHP={eMaxHP} level={50}/>
+              <BattleStatCard mon={pMon} hp={pHP} maxHP={pMaxHP} level={pLevel} isMega={pMega} isGiga={pGiga}/>
+              <BattleStatCard mon={eMon} hp={eHP} maxHP={eMaxHP} level={eMon?._eLvl||50}/>
             </div>
             <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-end",padding:"0 20px",minHeight:140,position:"relative"}}>
               <WeatherCanvas weather={weather}/>
@@ -4780,7 +5127,7 @@ function App(){
                     style={{background:"rgba(79,195,247,0.06)",border:"1px solid rgba(79,195,247,0.2)",borderRadius:10,padding:"8px 4px",cursor:"pointer",textAlign:"center",opacity:busy?0.4:1}}>
                     <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`} style={{width:40,imageRendering:"pixelated"}}/>
                     <div style={{color:"#ccc",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize",marginTop:2,lineHeight:1.3}}>{p.name}</div>
-                    <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>Lv{teamLevels[p.id]||50}</div>
+                    <div style={{color:"#FFD54F",fontSize:"6px",fontFamily:"'Press Start 2P',monospace"}}>Lv{teamLevels[p.id]||5}</div>
                   </button>
                 ))}
               </div>
