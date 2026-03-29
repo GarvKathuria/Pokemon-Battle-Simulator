@@ -1888,37 +1888,42 @@ const HAIR_COLORS = ["#1a0a00","#3b1f00","#8B4513","#D4A017","#C0392B","#F0F0F0"
 const EYE_OPTIONS = ["👀","🔵","🟤","🟢","⚫","🔴","💜","🌟"];
 
 function AvatarPreview({hair,face,skin,hairColor,eyes,size=80}){
-  // Build a face from HTML/CSS
   const faceStyles={
     round:{borderRadius:"50%"},
     oval:{borderRadius:"45% 45% 50% 50%"},
-    square:{borderRadius:"15%"},
+    square:{borderRadius:"16%"},
     heart:{borderRadius:"50% 50% 0 0",clipPath:"polygon(50% 100%,0 35%,15% 0,85% 0,100% 35%)"},
     diamond:{borderRadius:"10%",transform:"rotate(45deg) scale(0.72)"},
   };
   const hairDisplay={
-    "short-dark":{top:-size*0.22,left:"10%",width:"80%",height:size*0.35,borderRadius:"50% 50% 0 0",background:hairColor},
-    "long-dark":{top:-size*0.22,left:"5%",width:"90%",height:size*0.75,borderRadius:"50% 50% 10% 10%",background:hairColor},
-    "short-blonde":{top:-size*0.22,left:"10%",width:"80%",height:size*0.32,borderRadius:"50% 50% 0 0",background:hairColor},
-    "long-blonde":{top:-size*0.2,left:"5%",width:"90%",height:size*0.8,borderRadius:"50% 50% 10% 10%",background:hairColor},
-    "short-red":{top:-size*0.2,left:"12%",width:"76%",height:size*0.3,borderRadius:"60% 60% 10% 10%",background:hairColor},
-    "curly-brown":{top:-size*0.28,left:"5%",width:"90%",height:size*0.45,borderRadius:"50%",background:hairColor},
-    "short-white":{top:-size*0.2,left:"15%",width:"70%",height:size*0.3,borderRadius:"60% 60% 0 0",background:hairColor},
-    "afro-black":{top:-size*0.35,left:"-5%",width:"110%",height:size*0.65,borderRadius:"50%",background:hairColor},
-    "braids-brown":{top:-size*0.18,left:"10%",width:"80%",height:size*0.9,borderRadius:"30% 30% 0 0",background:hairColor},
-    "spiky-blue":{top:-size*0.3,left:"10%",width:"80%",height:size*0.5,clipPath:"polygon(20% 100%,0 0,40% 60%,50% 0,60% 60%,100% 0,80% 100%)",background:hairColor},
+    "short-dark":{top:-size*0.18,left:"8%",width:"84%",height:size*0.32,borderRadius:"50% 50% 10% 10%",background:hairColor},
+    "long-dark":{top:-size*0.18,left:"4%",width:"92%",height:size*0.82,borderRadius:"50% 50% 8% 8%",background:hairColor},
+    "short-blonde":{top:-size*0.18,left:"8%",width:"84%",height:size*0.3,borderRadius:"55% 55% 8% 8%",background:hairColor},
+    "long-blonde":{top:-size*0.18,left:"4%",width:"92%",height:size*0.85,borderRadius:"50% 50% 8% 8%",background:hairColor},
+    "short-red":{top:-size*0.16,left:"10%",width:"80%",height:size*0.28,borderRadius:"60% 60% 14% 14%",background:hairColor},
+    "curly-brown":{top:-size*0.3,left:"2%",width:"96%",height:size*0.52,borderRadius:"50%",background:hairColor,boxShadow:`0 0 0 ${size*0.06}px ${hairColor}`},
+    "short-white":{top:-size*0.16,left:"12%",width:"76%",height:size*0.28,borderRadius:"60% 60% 0 0",background:hairColor},
+    "afro-black":{top:-size*0.38,left:"-8%",width:"116%",height:size*0.72,borderRadius:"50%",background:hairColor},
+    "braids-brown":{top:-size*0.14,left:"8%",width:"84%",height:size*0.94,borderRadius:"28% 28% 4% 4%",background:`linear-gradient(180deg,${hairColor} 70%,transparent)`,borderLeft:`${size*0.04}px solid ${hairColor}99`,borderRight:`${size*0.04}px solid ${hairColor}99`},
+    "spiky-blue":{top:-size*0.34,left:"8%",width:"84%",height:size*0.55,clipPath:"polygon(10% 100%,0 20%,25% 65%,35% 5%,50% 70%,65% 5%,75% 65%,100% 20%,90% 100%)",background:hairColor},
   };
   const hd=hairDisplay[hair]||hairDisplay["short-dark"];
+  const noseSz=Math.max(3,size*0.05);
   return(
     <div style={{width:size,height:size,position:"relative",display:"inline-block"}}>
-      {/* Hair back */}
+      {/* Hair */}
       <div style={{position:"absolute",zIndex:0,...hd}}/>
       {/* Face */}
-      <div style={{width:size,height:size,background:skin,position:"relative",zIndex:1,...(faceStyles[face]||{}),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden",boxShadow:`0 2px 10px rgba(0,0,0,0.4)`}}>
+      <div style={{width:size,height:size,background:skin,position:"relative",zIndex:1,...(faceStyles[face]||{}),display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",overflow:"hidden",boxShadow:`0 3px 14px rgba(0,0,0,0.5),inset 0 -${size*0.04}px ${size*0.06}px rgba(0,0,0,0.12)`}}>
+        {/* Ears */}
+        <div style={{position:"absolute",left:-size*0.06,top:"38%",width:size*0.12,height:size*0.16,background:skin,borderRadius:"50%",boxShadow:`inset ${size*0.02}px 0 ${size*0.02}px rgba(0,0,0,0.15)`}}/>
+        <div style={{position:"absolute",right:-size*0.06,top:"38%",width:size*0.12,height:size*0.16,background:skin,borderRadius:"50%",boxShadow:`inset -${size*0.02}px 0 ${size*0.02}px rgba(0,0,0,0.15)`}}/>
         {/* Eyes */}
-        <div style={{fontSize:size*0.18,marginBottom:size*0.04,letterSpacing:size*0.04}}>{eyes}</div>
+        <div style={{fontSize:size*0.2,marginBottom:size*0.02,letterSpacing:size*0.05,lineHeight:1}}>{eyes}</div>
+        {/* Nose */}
+        <div style={{width:noseSz,height:noseSz*1.2,borderRadius:"50%",background:"rgba(0,0,0,0.18)",marginBottom:size*0.04}}/>
         {/* Mouth */}
-        <div style={{width:size*0.3,height:size*0.06,borderRadius:"0 0 50% 50%",background:"rgba(0,0,0,0.3)",marginTop:size*0.02}}/>
+        <div style={{width:size*0.32,height:size*0.07,borderRadius:"0 0 50% 50%",background:"rgba(0,0,0,0.25)"}}/>
       </div>
     </div>
   );
@@ -2528,38 +2533,60 @@ function PokemonCard({mon, onSelect, selected, unlocked, coins, onUnlock, cost, 
 // ══════════════════════════════════════════════════════════════════════
 function HallOfFame({onClose, currentName}){
   const [allPlayers, setAllPlayers] = useState(()=>{
-    // Start with all local profiles immediately (including guests on this device)
     return JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
   });
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(()=>{
-    const SUPA_URL_HOF="https://hoqsdlpsqdtpvskbfafh.supabase.co";
-    const SUPA_KEY_HOF="sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
-    // Fetch ALL users who have stats recorded — no action filter so guests are included
-    fetch(`${SUPA_URL_HOF}/rest/v1/players?select=username,wins,losses,avatar,action&order=wins.desc&limit=200`,{
-      headers:{"apikey":SUPA_KEY_HOF,"Authorization":`Bearer ${SUPA_KEY_HOF}`}
-    })
-    .then(r=>r.json())
-    .then(rows=>{
-      if(!Array.isArray(rows)) return;
-      // Build best stats per username from Supabase (keep row with highest wins)
-      const supaMap={};
-      rows.forEach(r=>{
-        if(!r.username) return;
-        const ex=supaMap[r.username];
-        // Only use stats_update rows for the leaderboard (ignore register/login/guest_start session rows)
-        if(r.action!=="stats_update") return;
-        if(!ex||r.wins>ex.wins) supaMap[r.username]={name:r.username,wins:r.wins||0,losses:r.losses||0,avatar:r.avatar||"🔴"};
-      });
-      // Merge with local profiles (local takes precedence for avatar/avatarData)
-      const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
-      const merged={...supaMap};
-      local.forEach(p=>{ merged[p.name]={...supaMap[p.name],...p}; });
-      setAllPlayers(Object.values(merged));
-    })
-    .catch(()=>{})
-    .finally(()=>setLoading(false));
+    const URL="https://hoqsdlpsqdtpvskbfafh.supabase.co";
+    const KEY="sb_publishable_-4k_spf5R3kfRVDWzF_38w_LMkv4ES2";
+    const headers={"apikey":KEY,"Authorization":`Bearer ${KEY}`};
+
+    // Fetch all stats_update rows, ordered by wins desc
+    // We aggregate by username keeping the row with the most wins
+    fetch(`${URL}/rest/v1/players?select=username,wins,losses,coins,avatar,score,action&action=eq.stats_update&order=wins.desc&limit=500`,{headers})
+      .then(r=>{
+        if(!r.ok) throw new Error(`HTTP ${r.status}`);
+        return r.json();
+      })
+      .then(rows=>{
+        if(!Array.isArray(rows)) throw new Error("bad response");
+
+        // Aggregate: best stats per username (highest wins wins)
+        const map={};
+        rows.forEach(r=>{
+          if(!r.username) return;
+          const ex=map[r.username];
+          if(!ex||(r.wins||0)>(ex.wins||0)){
+            map[r.username]={
+              name:r.username,
+              wins:r.wins||0,
+              losses:r.losses||0,
+              coins:r.coins||0,
+              avatar:r.avatar||"🔴",
+            };
+          }
+        });
+
+        // Merge with local profiles (local wins for avatar/avatarData since it's richer)
+        const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+        local.forEach(p=>{
+          if(!p.name) return;
+          map[p.name]={...(map[p.name]||{}), ...p};
+        });
+
+        const merged=Object.values(map).filter(p=>p.name);
+        setAllPlayers(merged.length>0 ? merged : local);
+        setError(null);
+      })
+      .catch(err=>{
+        setError("Could not load global data");
+        // Fallback: show local profiles only
+        const local=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+        setAllPlayers(local);
+      })
+      .finally(()=>setLoading(false));
   },[]);
 
   // Score formula: wins * 100 + win_rate_bonus - losses * 10
@@ -2595,8 +2622,10 @@ function HallOfFame({onClose, currentName}){
         {/* Header */}
         <div style={{textAlign:"center",marginBottom:20}}>
           <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"16px",color:"#FFD54F",marginBottom:4}}>🏆 HALL OF FAME</div>
-          <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333",marginBottom:4}}>🌐 GLOBAL TRAINER RANKINGS</div>
-          {loading&&<div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#7C4DFF",marginBottom:8,animation:"pulse 1s infinite"}}>Loading global data…</div>}
+          <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333",marginBottom:6}}>🌐 GLOBAL TRAINER RANKINGS</div>
+          {loading&&<div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#7C4DFF",marginBottom:8,animation:"pulse 1s infinite"}}>⏳ Fetching global data…</div>}
+          {error&&<div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#f44336",marginBottom:8}}>⚠️ {error} — showing local data</div>}
+          {!loading&&!error&&<div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#4CAF50",marginBottom:8}}>✅ {ranked.length} trainers worldwide</div>}
           {/* Tier legend */}
           <div style={{display:"flex",gap:6,flexWrap:"wrap",justifyContent:"center",marginBottom:4}}>
             {[{name:"CHAMPION",color:"#FFD700",icon:"👑"},{name:"ELITE 4",color:"#C0C0C0",icon:"⭐"},{name:"GYM LEADER",color:"#9C7DFF",icon:"🏅"},{name:"ACE",color:"#4FC3F7",icon:"🎖️"}].map(t=>(
@@ -3224,10 +3253,26 @@ function ProfileScreen({profile, onSave, onBack}){
   const btnStyle=(col="#7C4DFF")=>({width:"100%",background:`rgba(${col==="green"?"76,175,80":"124,77,255"},0.2)`,border:`1.5px solid rgba(${col==="green"?"76,175,80":"124,77,255"},0.5)`,borderRadius:10,padding:"clamp(11px,2.2vw,14px)",color:"#fff",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(10px,1.8vw,13px)",marginTop:4});
 
   return(
-    <div style={{width:"100%",maxWidth:580,margin:"0 auto"}}>
+    <div style={{width:"100%",maxWidth:600,margin:"0 auto"}}>
       <div style={{textAlign:"center",marginBottom:20}}>
-        <div style={{fontSize:"clamp(13px,3vw,20px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>👤 MY PROFILE</div>
-        <div style={{color:"#444",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+        <div style={{display:"flex",justifyContent:"center",marginBottom:12}}>
+          <div style={{position:"relative"}}>
+            <ProfileAvatar profile={profile} size={72}/>
+            <div style={{position:"absolute",bottom:-2,right:-2,width:20,height:20,background:"rgba(124,77,255,0.9)",borderRadius:"50%",display:"flex",alignItems:"center",justifyContent:"center",fontSize:10,border:"2px solid #0a0a1a"}}>✏️</div>
+          </div>
+        </div>
+        <div style={{fontSize:"clamp(13px,3vw,18px)",color:"#FFD54F",fontFamily:"'Press Start 2P',monospace",marginBottom:4}}>MY PROFILE</div>
+        <div style={{color:"#444",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}{profile?.isGuest&&<span style={{color:"#333",marginLeft:8}}>(Guest)</span>}</div>
+        {/* Quick stats */}
+        <div style={{display:"flex",gap:12,justifyContent:"center",marginTop:10}}>
+          {[["🏆",profile?.wins||0,"Wins"],["💀",profile?.losses||0,"Losses"],["🪙",profile?.coins||0,"Coins"]].map(([icon,val,lbl])=>(
+            <div key={lbl} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"8px 12px",textAlign:"center"}}>
+              <div style={{fontSize:16,marginBottom:3}}>{icon}</div>
+              <div style={{color:"#FFD54F",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}>{val}</div>
+              <div style={{color:"#333",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",marginTop:2}}>{lbl}</div>
+            </div>
+          ))}
+        </div>
       </div>
 
       {/* Tabs */}
@@ -3242,52 +3287,119 @@ function ProfileScreen({profile, onSave, onBack}){
         {/* ── AVATAR TAB ── */}
         {tab==="avatar"&&(
           <>
-            <div style={{display:"flex",gap:6,marginBottom:18,background:"rgba(0,0,0,0.25)",borderRadius:10,padding:4}}>
-              {[["🎭 EMOJI",false],["✏️ BUILD",true]].map(([lbl,bm])=>(
-                <button key={lbl} onClick={()=>setBuilderMode(bm)} style={{flex:1,padding:"clamp(8px,1.6vw,11px)",background:builderMode===bm?"rgba(124,77,255,0.35)":"transparent",border:`1.5px solid ${builderMode===bm?"rgba(124,77,255,0.7)":"transparent"}`,borderRadius:8,color:builderMode===bm?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,10px)"}}>{lbl}</button>
+            {/* Mode toggle */}
+            <div style={{display:"flex",gap:6,marginBottom:18,background:"rgba(0,0,0,0.3)",borderRadius:10,padding:4}}>
+              {[["🎭 EMOJI","emoji"],["✏️ BUILD","build"]].map(([lbl,bm])=>(
+                <button key={bm} onClick={()=>setBuilderMode(bm==="build")} style={{flex:1,padding:"clamp(9px,1.8vw,12px)",background:builderMode===(bm==="build")?"rgba(124,77,255,0.4)":"transparent",border:`1.5px solid ${builderMode===(bm==="build")?"rgba(124,77,255,0.7)":"transparent"}`,borderRadius:8,color:builderMode===(bm==="build")?"#fff":"#555",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(8px,1.5vw,11px)",transition:"all 0.15s"}}>{lbl}</button>
               ))}
             </div>
+
             {!builderMode?(
-              <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:6,marginBottom:16}}>
-                {EMOJIS.map(a=>(
-                  <button key={a} onClick={()=>setEmojiAvatar(a)} style={{aspectRatio:"1",background:emojiAvatar===a?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.08)"}`,borderRadius:10,cursor:"pointer",fontSize:"clamp(18px,3.5vw,24px)",transform:emojiAvatar===a?"scale(1.12)":"scale(1)",transition:"all 0.14s",display:"flex",alignItems:"center",justifyContent:"center"}}>{a}</button>
-                ))}
+              /* ── EMOJI PICKER ── */
+              <div>
+                <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:10,textAlign:"center"}}>PICK YOUR SYMBOL</div>
+                <div style={{display:"grid",gridTemplateColumns:"repeat(6,1fr)",gap:7,marginBottom:16}}>
+                  {EMOJIS.map(a=>(
+                    <button key={a} onClick={()=>setEmojiAvatar(a)} style={{aspectRatio:"1",background:emojiAvatar===a?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`2px solid ${emojiAvatar===a?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.07)"}`,borderRadius:12,cursor:"pointer",fontSize:"clamp(18px,3.5vw,26px)",transform:emojiAvatar===a?"scale(1.15)":"scale(1)",transition:"all 0.13s",display:"flex",alignItems:"center",justifyContent:"center",boxShadow:emojiAvatar===a?"0 0 12px rgba(124,77,255,0.4)":"none"}}>{a}</button>
+                  ))}
+                </div>
+                {/* Emoji preview */}
+                <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
+                  <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.2)",borderRadius:16,padding:"16px 28px",textAlign:"center"}}>
+                    <div style={{fontSize:52,marginBottom:8,lineHeight:1}}>{emojiAvatar}</div>
+                    <div style={{color:"#555",fontSize:"8px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+                  </div>
+                </div>
               </div>
             ):(
-              <div style={{marginBottom:16}}>
-                <div style={{display:"flex",justifyContent:"center",marginBottom:16}}>
-                  <div style={{background:"rgba(124,77,255,0.08)",border:"1px solid rgba(124,77,255,0.2)",borderRadius:16,padding:16,display:"inline-flex",flexDirection:"column",alignItems:"center",gap:8}}>
-                    <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={90}/>
-                    <div style={{color:"#ccc",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}>{profile?.name}</div>
+              /* ── CHARACTER BUILDER ── */
+              <div style={{display:"flex",gap:16,flexWrap:"wrap"}}>
+
+                {/* Left: live preview */}
+                <div style={{display:"flex",flexDirection:"column",alignItems:"center",gap:10,flex:"0 0 auto"}}>
+                  <div style={{background:"linear-gradient(160deg,rgba(124,77,255,0.1),rgba(79,195,247,0.06))",border:"1.5px solid rgba(124,77,255,0.25)",borderRadius:20,padding:"20px 24px",display:"flex",flexDirection:"column",alignItems:"center",gap:10,position:"sticky",top:0}}>
+                    <AvatarPreview hair={hair} face={face} skin={skin} hairColor={hairColor} eyes={eyes} size={110}/>
+                    <div style={{color:"#ccc",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",textAlign:"center"}}>{profile?.name}</div>
+                    <div style={{display:"flex",gap:5,flexWrap:"wrap",justifyContent:"center",maxWidth:120}}>
+                      {[face,hair.replace(/-/g," ")].map((l,i)=><span key={i} style={{color:"#444",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",background:"rgba(255,255,255,0.04)",borderRadius:4,padding:"2px 5px"}}>{l}</span>)}
+                    </div>
                   </div>
                 </div>
-                {[
-                  {label:"FACE SHAPE",opts:["round","oval","square","heart"],val:face,set:setFace},
-                ].map(({label,opts,val,set})=>(
-                  <div key={label} style={{marginBottom:12}}>
-                    <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>{label}</div>
-                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>{opts.map(o=><button key={o} onClick={()=>set(o)} style={{padding:"7px 12px",background:val===o?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${val===o?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:val===o?"#fff":"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",textTransform:"capitalize"}}>{o}</button>)}</div>
+
+                {/* Right: controls */}
+                <div style={{flex:"1 1 200px",display:"flex",flexDirection:"column",gap:14}}>
+
+                  {/* Skin tone */}
+                  <div>
+                    <div style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <span>🎨</span> SKIN TONE
+                    </div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {SKIN_OPTS.map(c=>(
+                        <button key={c} onClick={()=>setSkin(c)} title={c} style={{width:34,height:34,background:c,border:`3px solid ${skin===c?"#fff":"rgba(255,255,255,0.08)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===c?"scale(1.3)":"scale(1)",transition:"all 0.14s",boxShadow:skin===c?`0 0 0 2px rgba(255,255,255,0.3),0 0 10px rgba(255,255,255,0.2)`:"none"}}/>
+                      ))}
+                    </div>
                   </div>
-                ))}
-                <div style={{marginBottom:12}}>
-                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>HAIR STYLE</div>
-                  <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>{HAIR_OPTS.map(h=><button key={h} onClick={()=>setHair(h)} style={{padding:"6px 10px",background:hair===h?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${hair===h?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.1)"}`,borderRadius:7,color:hair===h?"#fff":"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(6px,1.1vw,8px)"}}>{h.replace(/-/g," ")}</button>)}</div>
-                </div>
-                <div style={{marginBottom:12}}>
-                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>HAIR COLOR</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{HAIR_COLS.map(c=><button key={c} onClick={()=>setHairColor(c)} style={{width:28,height:28,background:c,border:`2.5px solid ${hairColor===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===c?"scale(1.25)":"scale(1)",transition:"transform 0.14s"}}/>)}</div>
-                </div>
-                <div style={{marginBottom:12}}>
-                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>SKIN TONE</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{SKIN_OPTS.map(c=><button key={c} onClick={()=>setSkin(c)} style={{width:28,height:28,background:c,border:`2.5px solid ${skin===c?"#fff":"rgba(255,255,255,0.1)"}`,borderRadius:"50%",cursor:"pointer",transform:skin===c?"scale(1.25)":"scale(1)",transition:"transform 0.14s"}}/>)}</div>
-                </div>
-                <div style={{marginBottom:8}}>
-                  <div style={{color:"#555",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",marginBottom:7}}>EYES</div>
-                  <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>{EYE_OPTS.map(e=><button key={e} onClick={()=>setEyes(e)} style={{padding:"7px",background:eyes===e?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${eyes===e?"rgba(124,77,255,0.7)":"rgba(255,255,255,0.08)"}`,borderRadius:9,cursor:"pointer",fontSize:"clamp(16px,3vw,22px)",transition:"all 0.14s",transform:eyes===e?"scale(1.12)":"scale(1)"}}>{e}</button>)}</div>
+
+                  {/* Face shape */}
+                  <div>
+                    <div style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <span>😶</span> FACE SHAPE
+                    </div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {["round","oval","square","heart","diamond"].map(f=>(
+                        <button key={f} onClick={()=>setFace(f)} style={{padding:"6px 11px",background:face===f?"rgba(124,77,255,0.3)":"rgba(255,255,255,0.04)",border:`1.5px solid ${face===f?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.1)"}`,borderRadius:8,color:face===f?"#fff":"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(7px,1.3vw,9px)",textTransform:"capitalize",transition:"all 0.13s"}}>{f}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hair style — visual buttons */}
+                  <div>
+                    <div style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <span>💇</span> HAIR STYLE
+                    </div>
+                    <div style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:6}}>
+                      {HAIR_OPTS.map(h=>(
+                        <button key={h} onClick={()=>setHair(h)} style={{padding:"8px 6px",background:hair===h?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`1.5px solid ${hair===h?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.08)"}`,borderRadius:9,cursor:"pointer",display:"flex",flexDirection:"column",alignItems:"center",gap:4,transition:"all 0.13s",boxShadow:hair===h?"0 0 10px rgba(124,77,255,0.3)":"none"}}>
+                          {/* Mini hair preview */}
+                          <div style={{width:28,height:18,borderRadius:h.includes("long")?"40% 40% 5% 5%":h==="afro-black"?"50%":h==="spiky-blue"?"0":"40% 40% 8% 8%",background:hairColor,clipPath:h==="spiky-blue"?"polygon(10% 100%,0 20%,30% 60%,50% 0,70% 60%,100% 20%,90% 100%)":"none"}}/>
+                          <span style={{color:hair===h?"#c4b5fd":"#555",fontSize:"6px",fontFamily:"'Press Start 2P',monospace",textAlign:"center",lineHeight:1.4}}>{h.replace(/-/g,"\n")}</span>
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Hair color */}
+                  <div>
+                    <div style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <span>🎨</span> HAIR COLOR
+                    </div>
+                    <div style={{display:"flex",gap:8,flexWrap:"wrap"}}>
+                      {HAIR_COLS.map(c=>(
+                        <button key={c} onClick={()=>setHairColor(c)} title={c} style={{width:30,height:30,background:c,border:`3px solid ${hairColor===c?"#fff":"rgba(255,255,255,0.08)"}`,borderRadius:"50%",cursor:"pointer",transform:hairColor===c?"scale(1.3)":"scale(1)",transition:"all 0.14s",boxShadow:hairColor===c?`0 0 0 2px rgba(255,255,255,0.3)`:"none"}}/>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Eyes */}
+                  <div>
+                    <div style={{color:"#888",fontSize:"8px",fontFamily:"'Press Start 2P',monospace",marginBottom:8,display:"flex",alignItems:"center",gap:6}}>
+                      <span>👁️</span> EYES
+                    </div>
+                    <div style={{display:"flex",gap:7,flexWrap:"wrap"}}>
+                      {EYE_OPTS.map(e=>(
+                        <button key={e} onClick={()=>setEyes(e)} style={{width:40,height:40,background:eyes===e?"rgba(124,77,255,0.25)":"rgba(255,255,255,0.03)",border:`2px solid ${eyes===e?"rgba(124,77,255,0.8)":"rgba(255,255,255,0.08)"}`,borderRadius:10,cursor:"pointer",fontSize:20,transition:"all 0.13s",transform:eyes===e?"scale(1.15)":"scale(1)",display:"flex",alignItems:"center",justifyContent:"center"}}>{e}</button>
+                      ))}
+                    </div>
+                  </div>
+
                 </div>
               </div>
             )}
-            <button onClick={saveAvatar} disabled={saving} style={btnStyle("green")}>💾 SAVE AVATAR</button>
+
+            <button onClick={saveAvatar} disabled={saving} style={{...btnStyle("green"),marginTop:16}}>
+              💾 SAVE AVATAR
+            </button>
           </>
         )}
 
