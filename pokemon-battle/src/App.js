@@ -2720,14 +2720,17 @@ function ProfileAvatar({profile, size=32}){
 function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose, isGuest}){
   const [search,setSearch]=useState("");
   const [genFilt,setGenFilt]=useState("all");
+  const [selected,setSelected]=useState(null);
+  const [stats,setStats]=useState(null);
+  const [loadingStats,setLoadingStats]=useState(false);
+
   const owned=useMemo(()=>{
     const s=new Set(unlockedIds);
-    if(starterPokemon) s.add(starterPokemon.id);
+    if(starterPokemon && !s.has(starterPokemon.id)) s.add(starterPokemon.id);
     return s;
   },[unlockedIds,starterPokemon]);
 
-  // Guests only see their owned Pokémon — no silhouettes of everything else
-  const baseList = isGuest ? allPokemon.filter(p=>owned.has(p.id)) : allPokemon;
+  const baseList=isGuest?allPokemon.filter(p=>owned.has(p.id)):allPokemon;
 
   const filtered=useMemo(()=>{
     let f=baseList;
@@ -2738,18 +2741,42 @@ function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose, isGues
 
   const total=isGuest?owned.size:allPokemon.length;
   const ownedCount=[...owned].filter(id=>allPokemon.some(p=>p.id===id)).length;
+
+  function openDetail(p){
+    setSelected(p); setStats(null); setLoadingStats(true);
+    fetch(`https://pokeapi.co/api/v2/pokemon/${p.id}`)
+      .then(r=>r.json())
+      .then(data=>{
+        setStats({
+          hp:    data.stats.find(s=>s.stat.name==="hp")?.base_stat||0,
+          atk:   data.stats.find(s=>s.stat.name==="attack")?.base_stat||0,
+          def:   data.stats.find(s=>s.stat.name==="defense")?.base_stat||0,
+          spatk: data.stats.find(s=>s.stat.name==="special-attack")?.base_stat||0,
+          spdef: data.stats.find(s=>s.stat.name==="special-defense")?.base_stat||0,
+          speed: data.stats.find(s=>s.stat.name==="speed")?.base_stat||0,
+          height:data.height/10,
+          weight:data.weight/10,
+          abilities:data.abilities.map(a=>a.ability.name.replace(/-/g," ")),
+          artwork:data.sprites?.other?.["official-artwork"]?.front_default||`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
+        });
+      })
+      .catch(()=>setStats({}))
+      .finally(()=>setLoadingStats(false));
+  }
+
+  const STAT_LABELS=[["HP","hp","#f44336"],["ATK","atk","#FF6B35"],["DEF","def","#4FC3F7"],["SP.ATK","spatk","#9C7DFF"],["SP.DEF","spdef","#66BB6A"],["SPD","speed","#FFD54F"]];
+
   return(
-    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.96)",zIndex:400,display:"flex",flexDirection:"column",alignItems:"center",padding:"16px",overflowY:"auto"}}>
-      <div style={{width:"100%",maxWidth:860}}>
+    <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.97)",zIndex:400,display:"flex",flexDirection:"column",alignItems:"center",padding:"16px",overflowY:"auto"}}>
+      <div style={{width:"100%",maxWidth:900}}>
         <div style={{display:"flex",justifyContent:"space-between",alignItems:"center",marginBottom:14,flexWrap:"wrap",gap:8}}>
           <div>
             <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"14px",color:"#4FC3F7",marginBottom:4}}>📖 POKÉDEX</div>
             {isGuest
-              ? <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#555"}}>Your Pokémon: <span style={{color:"#FFD54F"}}>{ownedCount}</span> caught · <span style={{color:"#4FC3F7"}}>Register to track all 1,010!</span></div>
+              ? <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#555"}}>Your Pokémon: <span style={{color:"#FFD54F"}}>{ownedCount}</span> · <span style={{color:"#4FC3F7"}}>Register to track all 1,010!</span></div>
               : <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333"}}>Caught: <span style={{color:"#FFD54F"}}>{ownedCount}</span> / {total}</div>
             }
           </div>
-          {/* Progress bar — only for registered users */}
           {!isGuest&&<div style={{flex:1,maxWidth:200}}>
             <div style={{background:"rgba(255,255,255,0.04)",borderRadius:4,height:8,overflow:"hidden",border:"1px solid rgba(255,255,255,0.06)"}}>
               <div style={{width:`${(ownedCount/Math.max(1,total))*100}%`,background:"linear-gradient(90deg,#4FC3F7,#7C4DFF)",height:"100%",borderRadius:4,transition:"width 0.5s"}}/>
@@ -2759,39 +2786,131 @@ function PokedexScreen({allPokemon, unlockedIds, starterPokemon, onClose, isGues
           <button onClick={onClose} style={{background:"rgba(255,255,255,0.04)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 14px",color:"#888",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>✕</button>
         </div>
         <div style={{display:"flex",gap:6,marginBottom:10,flexWrap:"wrap",alignItems:"center"}}>
-          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search..." style={{flex:"1 1 120px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px",color:"#fff",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}/>
+          <input value={search} onChange={e=>setSearch(e.target.value)} placeholder="Search name or #..." style={{flex:"1 1 120px",background:"rgba(255,255,255,0.05)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px 12px",color:"#fff",fontSize:"10px",fontFamily:"'Press Start 2P',monospace"}}/>
           <select value={genFilt} onChange={e=>setGenFilt(e.target.value)} style={{background:"rgba(10,10,28,0.98)",border:"1px solid rgba(255,255,255,0.1)",borderRadius:8,padding:"8px",color:"#888",fontSize:"9px",fontFamily:"'Press Start 2P',monospace"}}>
             <option value="all">All Gens</option>
             {Object.entries(GENS).map(([g,d])=><option key={g} value={g}>Gen {g} {d.sub}</option>)}
           </select>
         </div>
 
-        {/* Guest empty state */}
         {isGuest&&filtered.length===0&&(
           <div style={{textAlign:"center",padding:"48px 0"}}>
             <div style={{fontSize:"48px",marginBottom:12}}>📖</div>
             <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"11px",color:"#333",marginBottom:8}}>No Pokémon yet!</div>
-            <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#222",marginBottom:4}}>Choose a starter to get your first one.</div>
             <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#4FC3F7",marginTop:8}}>Register an account to unlock more!</div>
           </div>
         )}
 
-        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(80px,1fr))",gap:6}}>
+        <div style={{display:"grid",gridTemplateColumns:"repeat(auto-fill,minmax(86px,1fr))",gap:7}}>
           {filtered.map(p=>{
             const isOwned=owned.has(p.id);
             const gen=getGen(p.id);
             return(
-              <div key={p.id} style={{background:isOwned?"rgba(14,14,36,0.98)":"rgba(4,4,10,0.8)",border:`1px solid ${isOwned?gen.col+"44":"rgba(255,255,255,0.04)"}`,borderRadius:10,padding:"8px 4px",textAlign:"center",position:"relative",transition:"all 0.15s"}}>
-                {isOwned&&<div style={{position:"absolute",top:3,right:3,fontSize:"7px",color:gen.col}}>●</div>}
-                <img src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
-                  style={{width:48,imageRendering:"pixelated",filter:isOwned?"none":"brightness(0) opacity(0.18)",transition:"filter 0.2s"}}/>
-                <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"6px",color:isOwned?"#ccc":"#222",textTransform:"capitalize",marginTop:2,lineHeight:1.3,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>{isOwned?p.name:`#${String(p.id).padStart(3,"0")}`}</div>
-                {isOwned&&<div style={{display:"flex",gap:2,justifyContent:"center",flexWrap:"wrap",marginTop:2}}>{p.types.map(t=><span key={t} style={{fontSize:"5px",color:TC[t]||"#888",background:`${TC[t]||"#888"}18`,borderRadius:3,padding:"1px 3px",fontFamily:"'Press Start 2P',monospace"}}>{t}</span>)}</div>}
+              <div key={p.id} onClick={()=>openDetail(p)}
+                style={{background:isOwned?"rgba(14,14,36,0.98)":"rgba(4,4,10,0.85)",
+                  border:`1.5px solid ${isOwned?gen.col+"55":"rgba(255,255,255,0.05)"}`,
+                  borderRadius:12,padding:"10px 6px",textAlign:"center",position:"relative",
+                  transition:"all 0.15s",cursor:"pointer",
+                  boxShadow:isOwned?`0 2px 12px ${gen.col}22`:"none"}}
+                onMouseEnter={e=>{e.currentTarget.style.transform="scale(1.06)";e.currentTarget.style.borderColor=isOwned?gen.col+"99":"rgba(255,255,255,0.15)";}}
+                onMouseLeave={e=>{e.currentTarget.style.transform="scale(1)";e.currentTarget.style.borderColor=isOwned?gen.col+"55":"rgba(255,255,255,0.05)";}}>
+                {isOwned&&<div style={{position:"absolute",top:4,right:5,fontSize:"7px",color:gen.col}}>●</div>}
+                <img
+                  src={`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`}
+                  alt={p.name}
+                  style={{width:52,height:52,imageRendering:"pixelated",objectFit:"contain",
+                    filter:isOwned?"drop-shadow(0 2px 4px rgba(0,0,0,0.4))":"brightness(0.08) contrast(1.2)",
+                    transition:"filter 0.2s"}}
+                  onError={e=>{e.target.style.display="none";}}
+                />
+                <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"6.5px",
+                  color:isOwned?"#ddd":"#1a1a2e",textTransform:"capitalize",
+                  marginTop:4,lineHeight:1.4,overflow:"hidden",textOverflow:"ellipsis",whiteSpace:"nowrap"}}>
+                  {isOwned?p.name:`#${String(p.id).padStart(3,"0")}`}
+                </div>
+                {isOwned&&(
+                  <div style={{display:"flex",gap:2,justifyContent:"center",flexWrap:"wrap",marginTop:3}}>
+                    {p.types.map(t=><span key={t} style={{fontSize:"5px",color:TC[t]||"#888",background:`${TC[t]||"#888"}20`,borderRadius:3,padding:"1px 4px",fontFamily:"'Press Start 2P',monospace"}}>{t}</span>)}
+                  </div>
+                )}
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Detail Modal */}
+      {selected&&(
+        <div style={{position:"fixed",inset:0,background:"rgba(0,0,0,0.88)",zIndex:500,display:"flex",alignItems:"center",justifyContent:"center",padding:16}} onClick={()=>setSelected(null)}>
+          <div onClick={e=>e.stopPropagation()} style={{background:"linear-gradient(160deg,#0a0a22,#05050d)",border:`2px solid ${TC[selected.types[0]]||"#444"}44`,borderRadius:22,padding:"clamp(18px,4vw,28px)",maxWidth:440,width:"100%",maxHeight:"90vh",overflowY:"auto",boxShadow:`0 0 60px ${TC[selected.types[0]]||"#7C4DFF"}22`,position:"relative"}}>
+            <button onClick={()=>setSelected(null)} style={{position:"absolute",top:12,right:14,background:"rgba(255,255,255,0.06)",border:"none",borderRadius:6,padding:"5px 10px",color:"#666",cursor:"pointer",fontFamily:"'Press Start 2P',monospace",fontSize:"10px"}}>✕</button>
+            <div style={{display:"flex",gap:16,alignItems:"center",marginBottom:16}}>
+              <img
+                src={stats?.artwork||`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${selected.id}.png`}
+                alt={selected.name}
+                style={{width:90,height:90,imageRendering:"pixelated",objectFit:"contain",
+                  filter:owned.has(selected.id)?`drop-shadow(0 0 12px ${TC[selected.types[0]]||"#fff"}66)`:"brightness(0.15)"}}
+                onError={e=>{e.target.src=`https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${selected.id}.png`;}}
+              />
+              <div>
+                <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#555",marginBottom:4}}>#{String(selected.id).padStart(3,"0")}</div>
+                <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"clamp(13px,3vw,17px)",color:"#fff",textTransform:"capitalize",marginBottom:8}}>{selected.name}</div>
+                <div style={{display:"flex",gap:5,flexWrap:"wrap"}}>
+                  {selected.types.map(t=><span key={t} style={{background:TC[t]||"#444",color:"#fff",borderRadius:6,padding:"4px 9px",fontSize:"9px",fontFamily:"'Press Start 2P',monospace",textTransform:"capitalize"}}>{t}</span>)}
+                </div>
+                {owned.has(selected.id)
+                  ?<div style={{marginTop:8,fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:getGen(selected.id).col}}>✅ Caught · Gen {getGen(selected.id).g}</div>
+                  :<div style={{marginTop:8,fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:"#333"}}>🔒 Not caught yet</div>
+                }
+              </div>
+            </div>
+
+            {loadingStats&&<div style={{textAlign:"center",padding:"20px 0",fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:"#555",animation:"pulse 1s infinite"}}>Loading stats…</div>}
+
+            {stats&&!loadingStats&&(
+              <>
+                <div style={{marginBottom:16}}>
+                  <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:"#FFD54F",marginBottom:12}}>BASE STATS</div>
+                  {STAT_LABELS.map(([label,key,col])=>{
+                    const val=stats[key]||0;
+                    const pct=Math.min(100,Math.round((val/255)*100));
+                    return(
+                      <div key={key} style={{display:"flex",alignItems:"center",gap:8,marginBottom:7}}>
+                        <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#444",width:46,textAlign:"right",flexShrink:0}}>{label}</div>
+                        <div style={{flex:1,background:"rgba(255,255,255,0.05)",borderRadius:4,height:8,overflow:"hidden"}}>
+                          <div style={{width:`${pct}%`,background:`linear-gradient(90deg,${col},${col}aa)`,height:"100%",borderRadius:4,transition:"width 0.4s ease"}}/>
+                        </div>
+                        <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"8px",color:col,width:28,textAlign:"left",flexShrink:0}}>{val}</div>
+                      </div>
+                    );
+                  })}
+                  <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#333",textAlign:"right",marginTop:4}}>
+                    Total: {STAT_LABELS.reduce((s,[,k])=>s+(stats[k]||0),0)}
+                  </div>
+                </div>
+                <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:8,marginBottom:14}}>
+                  {[["HEIGHT",`${stats.height}m`],["WEIGHT",`${stats.weight}kg`]].map(([l,v])=>(
+                    <div key={l} style={{background:"rgba(255,255,255,0.03)",border:"1px solid rgba(255,255,255,0.07)",borderRadius:10,padding:"10px 12px",textAlign:"center"}}>
+                      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"7px",color:"#444",marginBottom:5}}>{l}</div>
+                      <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"10px",color:"#ccc"}}>{v}</div>
+                    </div>
+                  ))}
+                </div>
+                {stats.abilities?.length>0&&(
+                  <div>
+                    <div style={{fontFamily:"'Press Start 2P',monospace",fontSize:"9px",color:"#FFD54F",marginBottom:8}}>ABILITIES</div>
+                    <div style={{display:"flex",gap:6,flexWrap:"wrap"}}>
+                      {stats.abilities.map(a=>(
+                        <span key={a} style={{background:"rgba(124,77,255,0.12)",border:"1px solid rgba(124,77,255,0.3)",borderRadius:7,padding:"5px 10px",fontFamily:"'Press Start 2P',monospace",fontSize:"7.5px",color:"#9C7DFF",textTransform:"capitalize"}}>{a}</span>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            )}
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -3197,8 +3316,8 @@ function ProfileScreen({profile, onSave, onBack}){
     const sess=localStorage.getItem("pkmn_active_session");
     if(sess){ try{ const s=JSON.parse(sess); if(s.name===oldName){ localStorage.setItem("pkmn_active_session",JSON.stringify({...s,name:u})); } }catch{} }
 
-    onSave({...profile,name:u});
-    setMsg({text:"✅ Username updated!",ok:true});
+    onSave({...profile,name:u}, false);
+    setMsg({text:"✅ Username updated! You can keep editing.",ok:true});
   }
 
   function requestEmailChange(){
@@ -5422,10 +5541,14 @@ function App(){
         <ProfileScreen
           profile={profile}
           onBack={()=>setScreen(MODES.HOME)}
-          onSave={updated=>{
+          onSave={(updated, navigateHome=true)=>{
             setProfile(updated);
-            updateProfile(updated);
-            setScreen(MODES.HOME);
+            // Clean replace — removes any entry with old OR new name, then pushes fresh
+            const profiles=JSON.parse(localStorage.getItem("pkmn_profiles")||"[]");
+            const cleaned=profiles.filter(p=>p.name!==updated.name&&p.name!==profile.name);
+            localStorage.setItem("pkmn_profiles",JSON.stringify([...cleaned,updated]));
+            localStorage.setItem("pkmn_active_session",JSON.stringify({name:updated.name,ts:Date.now()}));
+            if(navigateHome) setScreen(MODES.HOME);
           }}
         />
       )}
